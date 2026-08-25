@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return null;
+  return createClient(url, key);
 }
 
 export async function POST(request: NextRequest) {
@@ -19,8 +19,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Save to Supabase
-    const { error: dbError } = await getSupabase().from("leads").insert([
+    const supabase = getSupabase();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Supabase not configured. Set SUPABASE_SERVICE_ROLE_KEY." },
+        { status: 503 }
+      );
+    }
+
+    const { error: dbError } = await supabase.from("leads").insert([
       {
         client_name: clientName,
         client_contact: clientContact,
@@ -32,7 +39,7 @@ export async function POST(request: NextRequest) {
     if (dbError) {
       console.error("Supabase error:", dbError);
       return NextResponse.json(
-        { error: "Failed to save lead" },
+        { error: `Database error: ${dbError.message}` },
         { status: 500 }
       );
     }
@@ -66,7 +73,6 @@ export async function POST(request: NextRequest) {
         });
       } catch (emailError) {
         console.error("Email error:", emailError);
-        // Don't fail the request if email fails
       }
     }
 
@@ -80,19 +86,50 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const { data: leads, error } = await getSupabase()
+    // Check for auth token
+    const authHeader = request.headers.get("authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const adminUser = process.env.ADMIN_USERNAME || "agapitos";
+    const adminPass = process.env.ADMIN_PASSWORD || "atlas2026";
+
+    // Simple token check (base64 encoded credentials)
+    try {
+      const decoded = atob(token);
+      const [user, pass] = decoded.split(":");
+      if (user !== adminUser || pass !== adminPass) {
+        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
+      }
+    } catch {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    }
+
+    const supabase = getSupabase();
+    if (!supabase) {
+      return NextResponse.json(
+        { error: "Supabase not configured. Set SUPABASE_SERVICE_ROLE_KEY." },
+        { status: 503 }
+      );
+    }
+
+    const { data: leads, error } = await supabase
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: "Failed to fetch leads" }, { status: 500 });
+      console.error("Supabase fetch error:", error);
+      return NextResponse.json({ error: `Database error: ${error.message}` }, { status: 500 });
     }
 
     return NextResponse.json({ leads });
   } catch (error) {
+    console.error("Leads GET error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

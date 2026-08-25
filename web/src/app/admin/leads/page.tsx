@@ -24,19 +24,74 @@ export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [authenticated, setAuthenticated] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
   useEffect(() => {
-    fetchLeads();
+    const token = localStorage.getItem("crm_token");
+    if (token) {
+      setAuthenticated(true);
+      fetchLeads(token);
+    } else {
+      setLoading(false);
+    }
   }, []);
 
-  const fetchLeads = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginLoading(true);
+    setLoginError("");
+
     try {
-      const res = await fetch("/api/leads");
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
+
       const data = await res.json();
+
+      if (data.success && data.token) {
+        localStorage.setItem("crm_token", data.token);
+        setAuthenticated(true);
+        fetchLeads(data.token);
+      } else {
+        setLoginError(data.error || "Login failed");
+      }
+    } catch (e) {
+      setLoginError("Connection error");
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("crm_token");
+    setAuthenticated(false);
+    setLeads([]);
+    setUsername("");
+    setPassword("");
+  };
+
+  const fetchLeads = async (token: string) => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/leads", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+
       if (data.leads) {
         setLeads(data.leads);
+        setError("");
       } else if (data.error) {
         setError(data.error);
+        if (res.status === 401) {
+          handleLogout();
+        }
       }
     } catch (e) {
       setError("Failed to fetch leads");
@@ -45,9 +100,73 @@ export default function AdminLeadsPage() {
     }
   };
 
+  // Login Form
+  if (!authenticated) {
+    return (
+      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8">
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 bg-brand-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/25">
+                <span className="text-white font-bold text-xl">A</span>
+              </div>
+              <h1 className="text-2xl font-bold text-slate-900">CRM Dashboard</h1>
+              <p className="text-sm text-slate-500 mt-1">Sign in to manage your leads</p>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Username</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter username"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter password"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
+                  required
+                />
+              </div>
+
+              {loginError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm">
+                  {loginError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loginLoading}
+                className="w-full py-3 bg-brand-500 hover:bg-brand-600 disabled:opacity-50 text-white rounded-xl font-semibold transition-all shadow-lg shadow-brand-500/25"
+              >
+                {loginLoading ? "Signing in..." : "Sign In"}
+              </button>
+            </form>
+
+            <div className="mt-6 text-center">
+              <Link href="/" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">
+                ← Back to website
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // Dashboard
   return (
     <main className="min-h-screen bg-slate-50">
-      {/* Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -57,12 +176,20 @@ export default function AdminLeadsPage() {
             <div className="w-px h-6 bg-slate-200" />
             <h1 className="text-slate-900 font-semibold text-lg">CRM Lead Management</h1>
           </div>
-          <button
-            onClick={fetchLeads}
-            className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all"
-          >
-            Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => fetchLeads(localStorage.getItem("crm_token") || "")}
+              className="bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            >
+              Refresh
+            </button>
+            <button
+              onClick={handleLogout}
+              className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-all"
+            >
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 
