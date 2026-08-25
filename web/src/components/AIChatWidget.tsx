@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import { useLocale } from "@/contexts/LanguageContext";
 
@@ -11,35 +11,48 @@ interface Message {
   timestamp: Date;
 }
 
-const langNames: Record<string, string> = { en: "English", el: "Greek", fr: "French" };
-
 export default function AIChatWidget() {
   const { locale, t } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [prevLocale, setPrevLocale] = useState(locale);
+  const [localeReady, setLocaleReady] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const prevLocaleRef = useRef(locale);
 
-  // Initialize greeting and update on language change
+  // Wait for localStorage locale to load, then initialize greeting
   useEffect(() => {
-    if (locale !== prevLocale) {
-      setPrevLocale(locale);
-      setMessages((prev) => {
-        if (prev.length === 0) {
-          return [{ id: "1", role: "assistant", content: t.chat.greeting, timestamp: new Date() }];
-        }
-        // Update existing greeting message
-        return prev.map((msg, i) =>
-          i === 0 && msg.role === "assistant" ? { ...msg, content: t.chat.greeting } : msg
-        );
-      });
-    } else if (messages.length === 0) {
-      setMessages([{ id: "1", role: "assistant", content: t.chat.greeting, timestamp: new Date() }]);
+    if (!localeReady) {
+      setLocaleReady(true);
+      return;
     }
-  }, [locale, t, prevLocale, messages.length]);
+  }, [localeReady]);
+
+  // Initialize greeting once locale is ready
+  useEffect(() => {
+    if (!localeReady) return;
+
+    if (messages.length === 0) {
+      setMessages([{
+        id: "greeting",
+        role: "assistant",
+        content: t.chat.greeting,
+        timestamp: new Date(),
+      }]);
+    }
+
+    // When locale changes, update the greeting
+    if (prevLocaleRef.current !== locale) {
+      prevLocaleRef.current = locale;
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === "greeting" ? { ...msg, content: t.chat.greeting } : msg
+        )
+      );
+    }
+  }, [locale, t, localeReady, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
