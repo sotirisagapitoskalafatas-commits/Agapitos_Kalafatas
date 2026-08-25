@@ -1,0 +1,109 @@
+{
+  "nav": {
+    "about": "À propos",
+    "services": "Services",
+    "projects": "Projets",
+    "contact": "Contact",
+    "launchAtlas": "Lancer Atlas AI",
+    "home": "Accueil"
+  },
+  "hero": {
+    "badge": "AI & Hub d'Innovation Futuriste",
+    "title1": "AGAPITOS",
+    "title2": "KALAFATAS",
+    "subtitle": "Architecte SaaS Full-Stack & Stratégie des Opérations Numériques. Construire l'avenir avec des plateformes IA et des systèmes intelligents.",
+    "cta1": "Démarrer une Conversation",
+    "cta2": "Se connecter sur LinkedIn",
+    "aiPowered": "Alimenté par IA",
+    "autonomous": "Systèmes Autonomes",
+    "realTime": "Temps Réel",
+    "neural": "Traitement Neural"
+  },
+  "about": {
+    "badge": "Vision & Mission",
+    "title": "Architecturer l'avenir de l'IA",
+    "p1": "Fondateur & Architecte SaaS en chef chez Agapitos Kalafatas — plus de 12 ans à créer et développer des produits numériques transformatifs.",
+    "p2": "Avec plus de 16 ans d'expérience professionnelle, je conçois et développe des plateformes B2B SaaS complètes du concept à la production.",
+    "p3": "En train de construire RED-AI, une couche d'intelligence qui agrège et analyse les données immobilières de plus de 50 portails internationaux dans 30+ pays.",
+    "linkedin": "Profil LinkedIn",
+    "countries": "Pays couverts par l'intelligence RED-AI"
+  },
+  "services": {
+    "badge": "Capacités",
+    "title": "Services d'Innovation",
+    "subtitle": "Solutions IA et full-stack complètes conçues pour la scalabilité, la performance et l'automatisation intelligente.",
+    "items": [
+      { "title": "Architecture AI", "desc": "Conception de systèmes IA de bout en bout, de la topologie des réseaux neuronaux aux pipelines de déploiement." },
+      { "title": "Full-Stack SaaS", "desc": "Ingénierie complète de plateformes — frontend, backend, infrastructure et tout ce qui se trouve entre les deux." },
+      { "title": "Intelligence des Données", "desc": "Transformer les données brutes en informations exploitables avec l'analyse prédictive et les tableaux de bord en temps réel." },
+      { "title": "Cloud & DevOps", "desc": "Infrastructure évolutive sur AWS, Azure et GCP avec CI/CD et orchestration de conteneurs." },
+      { "title": "Stratégie Produit", "desc": "Du concept au product-market fit. Feuilles de route, design MVP et ingénierie de la croissance." },
+      { "title": "Transformation Numérique", "desc": "Moderniser les systèmes legacy avec des architectures cloud-native et des approches AI-first." }
+    ]
+  },
+  "projects": {
+    "badge": "Portfolio",
+    "title": "Projets AI",
+    "subtitle": "Systèmes intelligents qui repoussent les limites du possible avec l'IA et l'ingénierie full-stack.",
+    "items": [
+      { "title": "Intégration Ville Intelligente", "desc": "Infrastructure urbaine alimentée par l'IA en parfaite harmonie avec la nature. Données en temps réel pour l'énergie et la durabilité.", "tag": "Infrastructure AI" },
+      { "title": "Réseau d'Intelligence Mondial", "desc": "Visualisation holographique connectant les centres d'intelligence à travers l'Europe. Voies neurales de l'information.", "tag": "Réseaux Neuronaux" },
+      { "title": "Labo R&D & Innovation", "desc": "Installation R&D de nouvelle génération surplombant la Méditerranée. Algorithmes rencontre quantique.", "tag": "R&D" },
+      { "title": "Tableau de Bord Analytique", "desc": "Interface numérique ultra-moderne avec analyses IA en temps réel et visualisations 3D.", "tag": "Visualisation de Données" }
+    ]
+  },
+  "hub": {
+    "badge": "Collaboration",
+    "title": "Le Hub d'Innovation",
+    "p1": "Là où les esprits brillants convergent pour architecturer la prochaine génération de solutions IA.",
+    "p2": "Du brainstorming au déploiement, chaque projet bénéficie d'une pensée interdisciplinaire et d'une itération incessante."
+  },
+  "aiSolutions": {
+    "badge": "Solutions AI",
+    "title": "Innovations Neurales",
+    "desc": "Réseaux neuronaux de pointe et algorithmes quantiques pour résoudre les défis commerciaux complexes à une échelle sans précédent.",
+    "stats": [
+      { "value": "Deep Learning", "label": "Réseaux Neuronaux" },
+      { "value": "30+ Pays", "label": "Échelle Mondiale" },
+      { "value": "50M+ Quotidiennement", "label": "Points de Données" },
+      { "value": "<100ms", "label": "Temps de Réponse" }
+    ]
+  },
+  "rnd": {
+    "badge": "Recherche & Développement",
+    "title": "Repousser les Limites",
+    "desc": "Notre labo R&D surplombe la Méditerranée — là où les algorithmes rencontrent l'informatique quantique."
+  },
+  "contact": {
+    "badge": "Contactez-nous",
+    "title": "Construisons Ensemble",
+    "desc": "Prêt à transformer votre entreprise avec l'IA ? Discutons de comment les systèmes intelligents peuvent piloter votre prochaine percée.",
+    "linkedin": "LinkedIn",
+    "linkedinDesc": "Connexion professionnelle",
+    "atlas": "Agent Atlas AI",
+    "atlasDesc": "Démarrer une conversation maintenant"
+  },
+  "footer": {
+    "rights": "© 2026 Agapitos Kalafatas. Tous droits réservés."
+  },
+  "chat": {
+    "greeting": "Bonjour ! Je suis Atlas, l'agent IA créé par Agapitos Kalafatas. Je peux vous aider à comprendre son travail, discuter d'architecture full-stack, ou parler de n'importe quel sujet d'ingénierie logicielle. Comment puis-je vous aider ?",
+    "placeholder": "Demandez à Atlas n'importe quoi...",
+    "send": "Envoyer",
+    "poweredBy": "Atlas AI par Agapitos Kalafatas • Propulsé par Google Gemini",
+    "online": "En ligne",
+    "atlas": "Atlas",
+    "error": "J'ai des difficultés de connexion. Veuillez vérifier la configuration de l'API et réessayer."
+  },
+  "widget": {
+    "title": "Atlas AI",
+    "subtitle": "Demandez-moi n'importe quoi",
+    "placeholder": "Tapez votre message...",
+    "minimize": "Réduire le chat"
+  },
+  "lang": {
+    "en": "English",
+    "el": "Ελληνικά",
+    "fr": "Français"
+  }
+}

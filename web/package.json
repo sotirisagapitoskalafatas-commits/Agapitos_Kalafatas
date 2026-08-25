@@ -9,17 +9,21 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@react-three/drei": "^9.105.0",
+    "@react-three/fiber": "^8.16.0",
     "@supabase/supabase-js": "^2.45.0",
+    "ai": "^7.0.79",
     "framer-motion": "^11.3.0",
     "gsap": "^3.12.0",
     "next": "^14.2.0",
+    "next-intl": "^4.13.7",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.5.0",
+    "resend": "^6.22.1",
     "three": "^0.164.0",
-    "@react-three/fiber": "^8.16.0",
-    "@react-three/drei": "^9.105.0"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

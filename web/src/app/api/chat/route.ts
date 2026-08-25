@@ -16,7 +16,18 @@ When responding:
 - You can discuss software architecture, AI/ML, cloud computing, SaaS development, and business strategy
 - If asked about Agapitos's work, reference his experience with RED-AI and his full-stack expertise
 - Write clean, well-structured responses
-- Use markdown formatting when appropriate`;
+- Use markdown formatting when appropriate
+
+IMPORTANT - Lead Detection:
+When a user provides ALL THREE of the following details during conversation, include a JSON block at the very end of your response (after your normal message) in this EXACT format:
+<!--LEAD_DATA:{"clientName":"[their name]","clientContact":"[their email or phone]","projectDetails":"[summary of what they need]"}-->
+
+Only include this block when you have genuinely collected:
+1. Their full name
+2. Their email address or phone number
+3. A description of their project or service needs
+
+Do NOT include this block if any of the three pieces are missing. Ask naturally for missing information.`;
 
 export async function POST(request: NextRequest) {
   try {
@@ -29,10 +40,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build conversation history for Gemini
     const contents = [];
 
-    // Add history
     if (history && Array.isArray(history)) {
       for (const msg of history) {
         contents.push({
@@ -42,7 +51,6 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Add current message
     contents.push({
       role: "user",
       parts: [{ text: message }],
@@ -80,11 +88,24 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const text =
+    let text =
       data.candidates?.[0]?.content?.parts?.[0]?.text ||
       "I couldn't generate a response.";
 
-    return NextResponse.json({ response: text });
+    // Extract lead data if present
+    let lead = null;
+    const leadMatch = text.match(/<!--LEAD_DATA:(\{.*?\})-->/);
+    if (leadMatch) {
+      try {
+        lead = JSON.parse(leadMatch[1]);
+        // Remove the lead data block from the visible response
+        text = text.replace(/<!--LEAD_DATA:.*?-->/, "").trim();
+      } catch (e) {
+        // Invalid JSON in lead block, ignore
+      }
+    }
+
+    return NextResponse.json({ response: text, lead });
   } catch (error) {
     console.error("Chat API error:", error);
     return NextResponse.json(
