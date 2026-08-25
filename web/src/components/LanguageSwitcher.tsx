@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useLocale } from "@/contexts/LanguageContext";
 
+const LOCALES = ["en", "el", "fr"] as const;
+
 const FLAGS: Record<string, string> = {
   en: "🇬🇧",
   el: "🇬🇷",
@@ -45,7 +47,7 @@ export default function LanguageSwitcher() {
 
       {open && (
         <div className="absolute right-0 top-full mt-2 glass-strong rounded-xl shadow-xl border border-slate-200/50 overflow-hidden z-50 min-w-[140px]">
-          {Object.keys(translations).map((loc) => (
+          {LOCALES.map((loc) => (
             <button
               key={loc}
               onClick={() => {
