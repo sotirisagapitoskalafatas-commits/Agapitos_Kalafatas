@@ -4,7 +4,7 @@
   "greeting": "Hello Agapitos! I'm Atlas, your AI agent. How can I help you today?",
   "signoff": "Closing the voice line. I'll be here when you need me.",
   "gemini": {
-    "model": "gemini-2.5-flash",
+    "model": "gemini-3-flash-preview",
     "api_key_env": "GEMINI_API_KEY",
     "max_output_tokens": 8192,
     "temperature": 0.7,

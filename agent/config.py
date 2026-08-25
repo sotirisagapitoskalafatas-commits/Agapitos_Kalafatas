@@ -19,7 +19,7 @@ DEFAULTS = {
 
     # Gemini AI configuration
     "gemini": {
-        "model": "gemini-2.5-flash",
+        "model": "gemini-3-flash-preview",
         "api_key_env": "GEMINI_API_KEY",
         "max_output_tokens": 8192,
         "temperature": 0.7,
