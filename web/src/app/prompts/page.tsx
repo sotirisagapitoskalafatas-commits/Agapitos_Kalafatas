@@ -31,37 +31,28 @@ const PROMPTS = [
 
 export default function PromptsPage() {
   return (
-    <main className="min-h-screen bg-dark-950">
+    <main className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b border-dark-800 bg-dark-900/80 backdrop-blur-sm">
+      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-dark-400 hover:text-white transition-colors">
+            <Link href="/" className="text-slate-400 hover:text-slate-900 transition-colors">
               ← Home
             </Link>
-            <div className="w-px h-6 bg-dark-700" />
-            <h1 className="text-white font-semibold">Prompts</h1>
+            <div className="w-px h-6 bg-slate-200" />
+            <h1 className="text-slate-900 font-semibold">Prompts</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="https://github.com/jaredrhod/prompts"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-dark-400 hover:text-white text-sm transition-colors"
-            >
-              by Agapitos Kalafatas
-            </a>
-          </div>
+          <span className="text-sm text-slate-400">by Agapitos Kalafatas</span>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">
+          <h2 className="text-4xl font-bold text-slate-900 mb-4">
             Agent <span className="gradient-text">Prompts</span>
           </h2>
-          <p className="text-dark-300 text-lg max-w-2xl mx-auto">
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto">
             Paste these prompts into your AI agent. It builds the thing.
             Real builds from real use, written up so your agent gets it right the first time.
           </p>
@@ -72,17 +63,17 @@ export default function PromptsPage() {
           {PROMPTS.map((prompt, i) => (
             <div
               key={i}
-              className="bg-dark-800/50 border border-dark-700 rounded-2xl p-8 hover:border-brand-500/50 transition-all"
+              className="bg-white border border-slate-200 rounded-2xl p-8 hover:shadow-lg hover:shadow-slate-900/5 hover:border-brand-200 transition-all"
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex-1">
-                  <h3 className="text-xl font-bold text-white mb-2">{prompt.title}</h3>
-                  <p className="text-dark-300 leading-relaxed mb-4">{prompt.desc}</p>
+                  <h3 className="text-xl font-bold text-slate-900 mb-2">{prompt.title}</h3>
+                  <p className="text-slate-500 leading-relaxed mb-4">{prompt.desc}</p>
                   <div className="flex gap-2">
                     {prompt.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="bg-dark-700 text-dark-300 text-xs px-2 py-1 rounded"
+                        className="bg-slate-100 text-slate-500 text-xs px-2 py-1 rounded"
                       >
                         {tag}
                       </span>
@@ -90,14 +81,14 @@ export default function PromptsPage() {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 md:items-end">
-                  <code className="text-dark-400 text-xs bg-dark-950 px-3 py-2 rounded-lg">
+                  <code className="text-slate-400 text-xs bg-slate-50 px-3 py-2 rounded-lg">
                     {prompt.file}
                   </code>
                   <a
                     href={`https://github.com/jaredrhod/prompts/blob/main/${prompt.file}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-brand-400 hover:text-brand-300 text-sm transition-colors"
+                    className="text-brand-500 hover:text-brand-600 text-sm transition-colors"
                   >
                     View on GitHub →
                   </a>
@@ -108,25 +99,25 @@ export default function PromptsPage() {
         </div>
 
         {/* Usage */}
-        <div className="mt-12 bg-dark-800/50 border border-dark-700 rounded-2xl p-8">
-          <h3 className="text-xl font-bold text-white mb-6">How to Use</h3>
-          <div className="space-y-4 text-dark-300">
+        <div className="mt-12 bg-slate-50 border border-slate-200 rounded-2xl p-8">
+          <h3 className="text-xl font-bold text-slate-900 mb-6">How to Use</h3>
+          <div className="space-y-4 text-slate-500">
             <div className="flex gap-3">
-              <span className="text-brand-400 font-bold">1.</span>
+              <span className="text-brand-500 font-bold">1.</span>
               <p>Open Claude Code, Gemini, or any terminal AI on your computer</p>
             </div>
             <div className="flex gap-3">
-              <span className="text-brand-400 font-bold">2.</span>
+              <span className="text-brand-500 font-bold">2.</span>
               <p>Copy the whole prompt file and paste it in</p>
             </div>
             <div className="flex gap-3">
-              <span className="text-brand-400 font-bold">3.</span>
+              <span className="text-brand-500 font-bold">3.</span>
               <p>Let it build. Your agent installs what it needs, writes the code, and verifies it works</p>
             </div>
           </div>
-          <div className="mt-6 bg-dark-950 rounded-lg p-4 font-mono text-sm">
-            <p className="text-dark-400"># Visit jaredrhod.com/prompts for copy buttons</p>
-            <p className="text-dark-400"># Each prompt carries hard-won lessons from real builds</p>
+          <div className="mt-6 bg-slate-900 rounded-lg p-4 font-mono text-sm">
+            <p className="text-slate-400"># Visit jaredrhod.com/prompts for copy buttons</p>
+            <p className="text-slate-400"># Each prompt carries hard-won lessons from real builds</p>
           </div>
         </div>
       </div>

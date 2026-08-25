@@ -73,49 +73,40 @@ export default function MarketingPage() {
   const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
 
   return (
-    <main className="min-h-screen bg-dark-950">
+    <main className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b border-dark-800 bg-dark-900/80 backdrop-blur-sm">
+      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/" className="text-dark-400 hover:text-white transition-colors">
+            <Link href="/" className="text-slate-400 hover:text-slate-900 transition-colors">
               ← Home
             </Link>
-            <div className="w-px h-6 bg-dark-700" />
-            <h1 className="text-white font-semibold">Marketing Skills</h1>
+            <div className="w-px h-6 bg-slate-200" />
+            <h1 className="text-slate-900 font-semibold">Marketing Skills</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <a
-              href="https://github.com/jaredrhod/ai-marketing-skills"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-dark-400 hover:text-white text-sm transition-colors"
-            >
-              by Agapitos Kalafatas
-            </a>
-          </div>
+          <span className="text-sm text-slate-400">by Agapitos Kalafatas</span>
         </div>
       </header>
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Hero */}
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-white mb-4">
+          <h2 className="text-4xl font-bold text-slate-900 mb-4">
             AI <span className="gradient-text">Marketing Skills</span>
           </h2>
-          <p className="text-dark-300 text-lg max-w-2xl mx-auto">
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto">
             The marketing fundamentals that make AI actually make you money.
             Written by Agapitos Kalafatas from real business experience.
           </p>
         </div>
 
         {/* AI Priming Banner */}
-        <div className="bg-gradient-to-r from-brand-950/50 to-dark-900/50 border border-brand-500/30 rounded-2xl p-8 mb-12">
+        <div className="bg-gradient-to-r from-brand-50 to-purple-50 border border-brand-100 rounded-2xl p-8 mb-12">
           <div className="flex items-start gap-4">
             <div className="text-4xl"> </div>
             <div>
-              <h3 className="text-xl font-bold text-white mb-2">AI Priming</h3>
-              <p className="text-dark-300 leading-relaxed">
+              <h3 className="text-xl font-bold text-slate-900 mb-2">AI Priming</h3>
+              <p className="text-slate-500 leading-relaxed">
                 Before your AI writes marketing copy, it reads the relevant notes from these playbooks.
                 Context is king — when you &quot;prime&quot; your AI with the knowledge it needs before output,
                 results are always better and more accurate.
@@ -130,44 +121,44 @@ export default function MarketingPage() {
             <div
               key={skill.id}
               onClick={() => setSelectedSkill(selectedSkill === skill.id ? null : skill.id)}
-              className={`bg-dark-800/50 border rounded-2xl p-6 cursor-pointer transition-all hover:border-brand-500/50 ${
+              className={`bg-white border rounded-2xl p-6 cursor-pointer transition-all hover:shadow-lg hover:shadow-slate-900/5 ${
                 selectedSkill === skill.id
-                  ? "border-brand-500 ring-1 ring-brand-500/30"
-                  : "border-dark-700"
+                  ? "border-brand-500 ring-2 ring-brand-500/20 shadow-lg"
+                  : "border-slate-200"
               }`}
             >
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{skill.icon}</span>
-                  <h3 className="text-lg font-bold text-white">{skill.title}</h3>
+                  <h3 className="text-lg font-bold text-slate-900">{skill.title}</h3>
                 </div>
               </div>
-              <p className="text-dark-300 text-sm leading-relaxed mb-3">{skill.desc}</p>
-              <div className="bg-dark-950 rounded-lg px-3 py-2">
-                <code className="text-dark-400 text-xs">{skill.file}</code>
+              <p className="text-slate-500 text-sm leading-relaxed mb-3">{skill.desc}</p>
+              <div className="bg-slate-50 rounded-lg px-3 py-2">
+                <code className="text-slate-400 text-xs">{skill.file}</code>
               </div>
             </div>
           ))}
         </div>
 
         {/* How to Use */}
-        <div className="mt-12 bg-dark-800/50 border border-dark-700 rounded-2xl p-8">
-          <h3 className="text-xl font-bold text-white mb-6">How to Use</h3>
+        <div className="mt-12 bg-slate-50 border border-slate-200 rounded-2xl p-8">
+          <h3 className="text-xl font-bold text-slate-900 mb-6">How to Use</h3>
           <div className="grid md:grid-cols-2 gap-8">
             <div>
-              <h4 className="text-white font-semibold mb-3">Option 1: As a Claude Skill</h4>
-              <div className="bg-dark-950 rounded-lg p-4 font-mono text-sm space-y-1">
-                <p className="text-dark-400"># Upload the jaredrhod-marketing folder</p>
-                <p className="text-dark-400"># to Claude&apos;s Skills interface</p>
-                <p className="text-dark-400"># Claude reads the right playbook automatically</p>
+              <h4 className="text-slate-900 font-semibold mb-3">Option 1: As a Claude Skill</h4>
+              <div className="bg-slate-900 rounded-lg p-4 font-mono text-sm space-y-1">
+                <p className="text-slate-400"># Upload the jaredrhod-marketing folder</p>
+                <p className="text-slate-400"># to Claude&apos;s Skills interface</p>
+                <p className="text-slate-400"># Claude reads the right playbook automatically</p>
               </div>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-3">Option 2: In Your Vault</h4>
-              <div className="bg-dark-950 rounded-lg p-4 font-mono text-sm space-y-1">
-                <p className="text-dark-400"># Copy files to your vault/Marketing/</p>
-                <p className="text-dark-400"># Add a Marketing.md index note</p>
-                <p className="text-dark-400"># Your agent primes itself before any task</p>
+              <h4 className="text-slate-900 font-semibold mb-3">Option 2: In Your Vault</h4>
+              <div className="bg-slate-900 rounded-lg p-4 font-mono text-sm space-y-1">
+                <p className="text-slate-400"># Copy files to your vault/Marketing/</p>
+                <p className="text-slate-400"># Add a Marketing.md index note</p>
+                <p className="text-slate-400"># Your agent primes itself before any task</p>
               </div>
             </div>
           </div>

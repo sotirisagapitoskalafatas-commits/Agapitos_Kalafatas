@@ -1,16 +1,18 @@
 import type { Metadata } from "next";
 import "@/styles/globals.css";
+import SmoothScroll from "@/components/SmoothScroll";
 
 export const metadata: Metadata = {
-  title: "Atlas AI Agent | Agapitos Kalafatas",
+  title: "Agapitos Kalafatas | AI & Innovation Hub",
   description:
-    "Full-Stack SaaS Architect & Digital Operations Strategist. AI-powered software engineering at your fingertips.",
+    "Full-Stack SaaS Architect & Digital Operations Strategist. AI-powered software engineering, intelligent systems, and predictive analytics.",
   keywords: [
-    "AI agent",
-    "full-stack architect",
-    "SaaS",
+    "AI architect",
+    "full-stack SaaS",
     "digital operations",
     "Agapitos Kalafatas",
+    "AI innovation",
+    "RED-AI",
   ],
 };
 
@@ -21,7 +23,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <SmoothScroll>{children}</SmoothScroll>
+      </body>
     </html>
   );
 }
