@@ -31,7 +31,7 @@ Do NOT include this block if any of the three pieces are missing. Ask naturally 
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, history } = await request.json();
+    const { message, history, locale } = await request.json();
 
     if (!GEMINI_API_KEY) {
       return NextResponse.json(
@@ -39,6 +39,11 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    const langMap: Record<string, string> = { en: "English", el: "Greek", fr: "French" };
+    const langInstruction = locale && langMap[locale]
+      ? `\n\nIMPORTANT: The user's language is set to ${langMap[locale]}. You MUST respond entirely in ${langMap[locale]}. All your responses, explanations, and text must be written in ${langMap[locale]}.`
+      : "";
 
     const contents = [];
 
@@ -62,7 +67,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         contents,
         systemInstruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
+          parts: [{ text: SYSTEM_PROMPT + langInstruction }],
         },
         generationConfig: {
           temperature: 0.7,

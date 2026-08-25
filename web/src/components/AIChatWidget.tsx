@@ -11,21 +11,35 @@ interface Message {
   timestamp: Date;
 }
 
+const langNames: Record<string, string> = { en: "English", el: "Greek", fr: "French" };
+
 export default function AIChatWidget() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: t.chat.greeting,
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [prevLocale, setPrevLocale] = useState(locale);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Initialize greeting and update on language change
+  useEffect(() => {
+    if (locale !== prevLocale) {
+      setPrevLocale(locale);
+      setMessages((prev) => {
+        if (prev.length === 0) {
+          return [{ id: "1", role: "assistant", content: t.chat.greeting, timestamp: new Date() }];
+        }
+        // Update existing greeting message
+        return prev.map((msg, i) =>
+          i === 0 && msg.role === "assistant" ? { ...msg, content: t.chat.greeting } : msg
+        );
+      });
+    } else if (messages.length === 0) {
+      setMessages([{ id: "1", role: "assistant", content: t.chat.greeting, timestamp: new Date() }]);
+    }
+  }, [locale, t, prevLocale, messages.length]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -58,6 +72,7 @@ export default function AIChatWidget() {
         body: JSON.stringify({
           message: input.trim(),
           history: messages.map((m) => ({ role: m.role, content: m.content })),
+          locale,
         }),
       });
 
@@ -72,7 +87,6 @@ export default function AIChatWidget() {
 
       setMessages((prev) => [...prev, assistantMessage]);
 
-      // Check if the response contains lead info and save it
       if (data.lead) {
         await fetch("/api/leads", {
           method: "POST",
@@ -102,7 +116,6 @@ export default function AIChatWidget() {
 
   return (
     <>
-      {/* Floating Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-xl transition-all duration-300 flex items-center justify-center ${
@@ -123,10 +136,8 @@ export default function AIChatWidget() {
         )}
       </button>
 
-      {/* Chat Window */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-50 w-[380px] h-[520px] glass-strong rounded-2xl shadow-2xl border border-slate-200/50 flex flex-col overflow-hidden">
-          {/* Header */}
           <div className="bg-brand-500 px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-white/20 rounded-xl flex items-center justify-center">
@@ -143,7 +154,6 @@ export default function AIChatWidget() {
             </div>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.map((msg) => (
               <div
@@ -187,7 +197,6 @@ export default function AIChatWidget() {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
           <div className="border-t border-slate-200/50 p-3">
             <div className="flex gap-2">
               <textarea
@@ -209,6 +218,9 @@ export default function AIChatWidget() {
                 </svg>
               </button>
             </div>
+            <p className="text-[10px] text-slate-300 mt-1.5 text-center">
+              {t.chat.poweredBy}
+            </p>
           </div>
         </div>
       )}
