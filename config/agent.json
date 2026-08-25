@@ -1,0 +1,32 @@
+{
+  "agent_name": "Atlas",
+  "agent_role": "Full-Stack SaaS Architect & AI Agent",
+  "greeting": "Hello Agapitos! I'm Atlas, your AI agent. How can I help you today?",
+  "signoff": "Closing the voice line. I'll be here when you need me.",
+  "gemini": {
+    "model": "gemini-2.5-flash",
+    "api_key_env": "GEMINI_API_KEY",
+    "max_output_tokens": 8192,
+    "temperature": 0.7,
+    "top_p": 0.95,
+    "system_prompt": "You are Atlas, an AI agent created by Agapitos Kalafatas. You are a helpful, knowledgeable assistant specialized in full-stack development, SaaS architecture, AI/ML, cloud computing, and digital operations. You speak clearly and concisely. You can write code, analyze files, run commands, and help with any software engineering task."
+  },
+  "voice": {
+    "engine": "kokoro",
+    "voice_id": "bm_lewis",
+    "speed": 1.0
+  },
+  "stt": {
+    "model": "small.en",
+    "device": "auto",
+    "compute": "int8"
+  },
+  "mic_mode": "ptt",
+  "ptt_key": "home",
+  "permission_mode": "ask",
+  "memory": {
+    "vault_dir": "./agent/memory",
+    "auto_save": true
+  },
+  "resume_last_session": false
+}
