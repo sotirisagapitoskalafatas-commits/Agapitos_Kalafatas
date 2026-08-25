@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import gsap from "gsap";
+import Scene3DBackground from "@/components/Scene3DBackground";
 
 interface BuilderMessage {
   id: string;
@@ -36,6 +38,14 @@ export default function BuilderPage() {
   useEffect(() => {
     inputRef.current?.focus();
   }, [activeTab]);
+
+  // Animate empty state
+  useEffect(() => {
+    if (!htmlCode) {
+      gsap.fromTo(".builder-empty", { opacity: 0, y: 30, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.8, ease: "power3.out" });
+      gsap.fromTo(".builder-step", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.5, stagger: 0.1, ease: "power3.out", delay: 0.3 });
+    }
+  }, [htmlCode]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -368,25 +378,26 @@ export default function BuilderPage() {
 
         {/* Empty state */}
         {activeTab === "chat" && !htmlCode && (
-          <div className="flex-1 hidden lg:flex items-center justify-center bg-slate-50">
-            <div className="text-center max-w-md">
-              <div className="text-6xl mb-4"> </div>
-              <h3 className="text-xl font-semibold text-slate-900 mb-2">Build Your Website with AI</h3>
-              <p className="text-slate-400 text-sm">
+          <div className="flex-1 hidden lg:flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-brand-50/30 relative overflow-hidden">
+            <Scene3DBackground />
+            <div className="text-center max-w-md relative z-10 builder-empty">
+              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-brand-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl shadow-brand-500/30 rotate-3 hover:rotate-0 transition-transform duration-500">
+                <span className="text-4xl"> </span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Build Your Website with AI</h3>
+              <p className="text-slate-500 text-sm leading-relaxed">
                 Chat with Atlas Builder to describe your vision, upload images, and get a live preview instantly.
               </p>
-              <div className="mt-6 grid grid-cols-2 gap-3 text-left">
+              <div className="mt-8 grid grid-cols-2 gap-3 text-left">
                 {[
-                  "Describe your business",
-                  "Upload your images",
-                  "Iterate with feedback",
-                  "Download production HTML",
+                  { icon: " ", text: "Describe your business" },
+                  { icon: " ", text: "Upload your images" },
+                  { icon: "✏️", text: "Iterate with feedback" },
+                  { icon: " ", text: "Download production HTML" },
                 ].map((step, i) => (
-                  <div key={i} className="flex items-center gap-2 text-sm text-slate-500">
-                    <span className="w-6 h-6 bg-brand-100 text-brand-600 rounded-full flex items-center justify-center text-xs font-bold">
-                      {i + 1}
-                    </span>
-                    {step}
+                  <div key={i} className="builder-step flex items-center gap-3 text-sm text-slate-600 glass rounded-xl p-3 hover:bg-white/50 transition-all">
+                    <span className="w-8 h-8 bg-brand-100 text-brand-600 rounded-lg flex items-center justify-center text-sm shrink-0">{step.icon}</span>
+                    <span>{step.text}</span>
                   </div>
                 ))}
               </div>

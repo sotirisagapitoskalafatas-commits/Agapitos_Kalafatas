@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
+import gsap from "gsap";
+import Scene3DBackground from "@/components/Scene3DBackground";
 
 interface Message {
   id: string;
@@ -29,6 +31,13 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Animate chat container on mount
+  useEffect(() => {
+    gsap.fromTo(".chat-header", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" });
+    gsap.fromTo(".chat-messages", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.2 });
+    gsap.fromTo(".chat-input", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", delay: 0.4 });
+  }, []);
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -88,7 +97,7 @@ export default function ChatPage() {
   return (
     <main className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="chat-header border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
@@ -118,8 +127,9 @@ export default function ChatPage() {
       </header>
 
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <div className="flex-1 overflow-y-auto relative">
+        <Scene3DBackground className="opacity-30" />
+        <div className="chat-messages max-w-5xl mx-auto px-6 py-8 space-y-6 relative z-10">
           {messages.map((msg) => (
             <div
               key={msg.id}
@@ -182,7 +192,7 @@ export default function ChatPage() {
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-slate-100 bg-white/80 backdrop-blur-sm">
+      <div className="chat-input border-t border-slate-100 bg-white/80 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-6 py-4">
           <div className="flex gap-4">
             <textarea
