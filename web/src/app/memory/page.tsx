@@ -45,7 +45,7 @@ export default function MemoryPage() {
               rel="noopener noreferrer"
               className="text-dark-400 hover:text-white text-sm transition-colors"
             >
-              by @jaredrhod
+              by Agapitos Kalafatas
             </a>
           </div>
         </div>
@@ -238,7 +238,7 @@ export default function MemoryPage() {
                 <p>
                   AI Memory Vault is an open-source system by{" "}
                   <a href="https://github.com/jaredrhod" className="text-brand-400 hover:underline">
-                    @jaredrhod
+                    Agapitos Kalafatas
                   </a>{" "}
                   that turns plain text files into your AI&apos;s persistent memory.
                 </p>

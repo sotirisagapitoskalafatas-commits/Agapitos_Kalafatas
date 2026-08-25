@@ -57,7 +57,7 @@ export default function VisualizerPage() {
               rel="noopener noreferrer"
               className="text-dark-400 hover:text-white text-sm transition-colors"
             >
-              by @jaredrhod
+              by Agapitos Kalafatas
             </a>
           </div>
         </div>

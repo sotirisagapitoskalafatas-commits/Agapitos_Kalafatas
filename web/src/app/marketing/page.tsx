@@ -91,7 +91,7 @@ export default function MarketingPage() {
               rel="noopener noreferrer"
               className="text-dark-400 hover:text-white text-sm transition-colors"
             >
-              by @jaredrhod
+              by Agapitos Kalafatas
             </a>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function MarketingPage() {
           </h2>
           <p className="text-dark-300 text-lg max-w-2xl mx-auto">
             The marketing fundamentals that make AI actually make you money.
-            Written by @jaredrhod from real business experience.
+            Written by Agapitos Kalafatas from real business experience.
           </p>
         </div>
 

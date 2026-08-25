@@ -168,28 +168,28 @@ export default function Home() {
                 desc: "Living faces that react to your agent in real-time",
                 icon: " ",
                 link: "/visualizer",
-                credit: "@jaredrhod",
+                credit: "by Agapitos Kalafatas",
               },
               {
                 title: "Memory Vault",
                 desc: "Persistent text-file memory across all sessions",
                 icon: " ",
                 link: "/memory",
-                credit: "@jaredrhod",
+                credit: "by Agapitos Kalafatas",
               },
               {
                 title: "Marketing Skills",
                 desc: "Proven marketing playbooks for AI-powered outreach",
                 icon: " ",
                 link: "/marketing",
-                credit: "@jaredrhod",
+                credit: "by Agapitos Kalafatas",
               },
               {
                 title: "Prompts Library",
                 desc: "Battle-tested prompts for building voice & visual agents",
                 icon: " ",
                 link: "/prompts",
-                credit: "@jaredrhod",
+                credit: "by Agapitos Kalafatas",
               },
             ].map((comp, i) => (
               <Link
