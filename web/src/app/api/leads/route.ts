@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +20,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save to Supabase
-    const { error: dbError } = await supabase.from("leads").insert([
+    const { error: dbError } = await getSupabase().from("leads").insert([
       {
         client_name: clientName,
         client_contact: clientContact,
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   try {
-    const { data: leads, error } = await supabase
+    const { data: leads, error } = await getSupabase()
       .from("leads")
       .select("*")
       .order("created_at", { ascending: false });
