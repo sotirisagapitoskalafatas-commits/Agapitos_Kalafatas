@@ -15,61 +15,43 @@ export async function POST(request: NextRequest) {
       return new Response("Message is required", { status: 400 });
     }
 
-    const systemPrompt = `You are Atlas Builder, an expert web designer AI. You create real, production-ready websites through conversation.
+    const systemPrompt = `You are Atlas Builder, an expert web designer. You create real, production-ready websites through conversation.
 
-CAPABILITIES:
-- You generate complete, standalone HTML files with Tailwind CSS
-- Users can describe what they want, upload images, and iterate
-- You refine the website based on feedback until it's perfect
-- You can add contact forms, CRM lead capture, image galleries, etc.
+IMPORTANT: When the user asks you to create/modify a website, you MUST follow their exact request. If they show you a reference URL, study it and build something similar but better. Never ignore what the user asks for.
 
-RULES FOR GENERATING HTML:
-When asked to generate or create a website, output ONLY a JSON object with this format:
-{"action":"generate","html":"<完整的HTML代码>","siteName":"网站名称","description":"简短描述"}
+WHEN GENERATING OR MODIFYING A WEBSITE:
+Output ONLY a JSON object, no other text:
+{"action":"generate","html":"<complete HTML>","siteName":"name","description":"short 1 sentence description of what you built"}
 
-When asked to modify or update the existing website, output ONLY a JSON object:
-{"action":"modify","html":"<完整的修改后HTML代码>","siteName":"网站名称","description":"修改描述"}
+For modifications:
+{"action":"modify","html":"<complete modified HTML>","siteName":"name","description":"what you changed"}
 
-When just chatting (not generating/modifying), respond normally as Atlas Builder.
+WHEN JUST CHATTING (not generating/modifying):
+Respond naturally as Atlas Builder in plain text. No JSON.
 
-HTML GENERATION RULES:
-1. Start with <!DOCTYPE html>, end with </html>
-2. Include: <script src="https://cdn.tailwindcss.com"></script> in <head>
-3. Include Google Fonts (Inter) in <head>
-4. Sections: Nav, Hero, Features, About, Gallery (if images provided), Contact Form with CRM, Footer
-5. Contact form must submit to: fetch('/api/site-leads', {method:'POST', body: JSON.stringify({siteId:'SITE_ID_HERE', name, email, phone, message})})
-6. Replace SITE_ID_HERE with a unique ID you generate
-7. All styling via Tailwind utility classes
-8. Fully responsive with sm: md: lg: prefixes
-9. Professional color scheme, smooth animations
-10. Include <style> tag for custom animations
-11. Use placeholder images from picsum.photos or unsplash if no images uploaded
-12. If user provides images, use them: <img src="USER_IMAGE_URL" alt="...">
-13. Minimum 200 lines for a complete look
-14. Add inline CSS for glassmorphism effects on cards and sections
-15. Include a professional footer with "Powered by Agapitos Kalafatas" link
+HTML RULES:
+1. Complete standalone HTML starting with <!DOCTYPE html> ending with </html>
+2. <head> must include: <script src="https://cdn.tailwindcss.com"></script>, Google Fonts Inter, meta viewport
+3. Sections: Nav bar, Hero, Features/Products, About, Contact Form, Footer
+4. Contact form MUST have: Name, Email, Phone (optional), Message fields
+5. Contact form submits via: fetch('/api/site-leads',{method:'POST',headers:{"Content-Type":"application/json"},body:JSON.stringify({siteId:"UNIQUE_ID",siteName:"SITE_NAME",name,email,phone,message})})
+6. Generate a unique 8-char alphanumeric siteId
+7. All styling via Tailwind classes
+8. Responsive with sm: md: lg: prefixes
+9. Smooth CSS animations in <style> tag
+10. Use placeholder images from https://picsum.photos/seed/xxx/width/height or unsplash
+11. If user provides images, use them in the design
+12. Footer must include "Powered by Agapitos Kalafatas"
+13. Make it look professional and modern
 
-CONTACT FORM CRM:
-Every generated site MUST include a contact form that:
-- Has fields: Name, Email, Phone (optional), Message
-- On submit, sends data to /api/site-leads with the site's unique ID
-- Shows a success message after submission
-- This gives every generated site its own mini CRM
-
-IMAGE HANDLING:
-When user provides images (as URLs or base64), incorporate them into the design:
-- Hero background if appropriate
-- Gallery/portfolio section
-- About section
-- Product/service images
-
-IMPORTANT: Only output JSON when generating/modifying. For normal conversation, just chat naturally.`;
+CRITICAL: The JSON html field must contain the COMPLETE HTML. Do not truncate it. Do not wrap in code blocks.`;
 
     const contents = [];
 
-    // Add conversation history
+    // Add conversation history (only last 10 messages to avoid token limits)
     if (history && Array.isArray(history)) {
-      for (const msg of history) {
+      const recentHistory = history.slice(-10);
+      for (const msg of recentHistory) {
         contents.push({
           role: msg.role === "user" ? "user" : "model",
           parts: [{ text: msg.content }],
@@ -83,17 +65,10 @@ IMPORTANT: Only output JSON when generating/modifying. For normal conversation, 
     if (images && Array.isArray(images)) {
       for (const img of images) {
         if (img.startsWith("data:")) {
-          // Base64 image
           const [header, data] = img.split(",");
           const mimeType = header.match(/:(.*?);/)?.[1] || "image/jpeg";
-          parts.push({
-            inlineData: {
-              mimeType,
-              data,
-            },
-          });
+          parts.push({ inlineData: { mimeType, data } });
         } else {
-          // URL image - add as text reference
           parts.push({ text: `[User uploaded image: ${img}]` });
         }
       }
@@ -106,11 +81,9 @@ IMPORTANT: Only output JSON when generating/modifying. For normal conversation, 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         contents,
-        systemInstruction: {
-          parts: [{ text: systemPrompt }],
-        },
+        systemInstruction: { parts: [{ text: systemPrompt }] },
         generationConfig: {
-          temperature: 0.8,
+          temperature: 0.7,
           topP: 0.95,
           maxOutputTokens: 8192,
         },
@@ -132,19 +105,34 @@ IMPORTANT: Only output JSON when generating/modifying. For normal conversation, 
 
     // Try to parse as JSON action
     try {
-      const jsonMatch = text.match(/\{[\s\S]*"action"[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        // Clean HTML if present
+      // Find the JSON object in the response
+      const jsonStart = text.indexOf('{"action"');
+      if (jsonStart !== -1) {
+        // Find matching closing brace
+        let depth = 0;
+        let jsonEnd = jsonStart;
+        for (let i = jsonStart; i < text.length; i++) {
+          if (text[i] === "{") depth++;
+          if (text[i] === "}") depth--;
+          if (depth === 0) { jsonEnd = i + 1; break; }
+        }
+        const jsonStr = text.substring(jsonStart, jsonEnd);
+        const parsed = JSON.parse(jsonStr);
         if (parsed.html) {
           parsed.html = parsed.html.replace(/```html\s*/gi, "").replace(/```\s*/gm, "").trim();
+          // Remove any leading/trailing text that's not HTML
+          const doctypeIdx = parsed.html.indexOf("<!DOCTYPE");
+          const htmlIdx = parsed.html.indexOf("<html");
+          if (doctypeIdx === -1 && htmlIdx > 0) parsed.html = parsed.html.substring(htmlIdx);
+          const htmlEnd = parsed.html.lastIndexOf("</html>");
+          if (htmlEnd > 0) parsed.html = parsed.html.substring(0, htmlEnd + 7);
         }
         return new Response(JSON.stringify(parsed), {
           headers: { "Content-Type": "application/json" },
         });
       }
     } catch (e) {
-      // Not JSON, return as regular message
+      // Not JSON, return as chat
     }
 
     return new Response(JSON.stringify({ action: "chat", message: text }), {

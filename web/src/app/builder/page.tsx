@@ -97,10 +97,15 @@ export default function BuilderPage() {
         };
         setMessages((prev) => [...prev, assistantMsg]);
       } else {
+        // Filter out any JSON/HTML that leaked through
+        let cleanMessage = data.message || "I'm here to help. Tell me what website you'd like to create.";
+        if (cleanMessage.includes('"action"') || cleanMessage.includes('<!DOCTYPE') || cleanMessage.includes('```')) {
+          cleanMessage = "I'm ready to build your website. Tell me what you'd like — describe it, share a reference URL, or upload images.";
+        }
         const assistantMsg: BuilderMessage = {
           id: (Date.now() + 1).toString(),
           role: "assistant",
-          content: data.message || "I'm here to help. Tell me what website you'd like to create.",
+          content: cleanMessage,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, assistantMsg]);
