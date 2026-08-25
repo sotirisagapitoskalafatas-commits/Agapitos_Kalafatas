@@ -20,17 +20,23 @@ export default function Home() {
                 Agapitos Kalafatas
               </span>
             </div>
-            <div className="flex items-center gap-8">
-              <Link
-                href="#services"
-                className="text-dark-400 hover:text-white transition-colors"
-              >
+            <div className="flex items-center gap-6">
+              <Link href="#services" className="text-dark-400 hover:text-white transition-colors text-sm">
                 Services
               </Link>
-              <Link
-                href="#about"
-                className="text-dark-400 hover:text-white transition-colors"
-              >
+              <Link href="/visualizer" className="text-dark-400 hover:text-white transition-colors text-sm">
+                Visualizer
+              </Link>
+              <Link href="/memory" className="text-dark-400 hover:text-white transition-colors text-sm">
+                Memory
+              </Link>
+              <Link href="/marketing" className="text-dark-400 hover:text-white transition-colors text-sm">
+                Marketing
+              </Link>
+              <Link href="/prompts" className="text-dark-400 hover:text-white transition-colors text-sm">
+                Prompts
+              </Link>
+              <Link href="#about" className="text-dark-400 hover:text-white transition-colors text-sm">
                 About
               </Link>
               <Link
@@ -138,6 +144,68 @@ export default function Home() {
                 </h3>
                 <p className="text-dark-300 leading-relaxed">{service.desc}</p>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Integrated Components Section */}
+      <section className="py-24 bg-dark-900/30">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Powered By
+            </h2>
+            <p className="text-dark-300 text-lg max-w-2xl mx-auto">
+              Built on open-source components from the fullstack-agent ecosystem.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                title: "AI Visualizer",
+                desc: "Living faces that react to your agent in real-time",
+                icon: " ",
+                link: "/visualizer",
+                credit: "@jaredrhod",
+              },
+              {
+                title: "Memory Vault",
+                desc: "Persistent text-file memory across all sessions",
+                icon: " ",
+                link: "/memory",
+                credit: "@jaredrhod",
+              },
+              {
+                title: "Marketing Skills",
+                desc: "Proven marketing playbooks for AI-powered outreach",
+                icon: " ",
+                link: "/marketing",
+                credit: "@jaredrhod",
+              },
+              {
+                title: "Prompts Library",
+                desc: "Battle-tested prompts for building voice & visual agents",
+                icon: " ",
+                link: "/prompts",
+                credit: "@jaredrhod",
+              },
+            ].map((comp, i) => (
+              <Link
+                key={i}
+                href={comp.link}
+                className="bg-dark-800/50 border border-dark-700 rounded-2xl p-6 hover:border-brand-500/50 transition-all group"
+              >
+                <div className="text-4xl mb-4">{comp.icon}</div>
+                <h3 className="text-lg font-bold text-white mb-2 group-hover:text-brand-400 transition-colors">
+                  {comp.title}
+                </h3>
+                <p className="text-dark-300 text-sm leading-relaxed mb-3">
+                  {comp.desc}
+                </p>
+                <span className="text-dark-500 text-xs">{comp.credit}</span>
+              </Link>
             ))}
           </div>
         </div>
