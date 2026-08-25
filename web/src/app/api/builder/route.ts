@@ -5,7 +5,7 @@ const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, history, images } = await request.json();
+    const { message, history, currentHtml, siteName, images } = await request.json();
 
     if (!GEMINI_API_KEY) {
       return new Response("GEMINI_API_KEY not configured", { status: 500 });
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       return new Response("Message is required", { status: 400 });
     }
 
-    const systemPrompt = `You are Atlas Builder, an expert web designer. You create real, production-ready websites through conversation.
+    let systemPrompt = `You are Atlas Builder, an expert web designer. You create real, production-ready websites through conversation.
 
 IMPORTANT: When the user asks you to create/modify a website, you MUST follow their exact request. If they show you a reference URL, study it and build something similar but better. Never ignore what the user asks for.
 
@@ -45,6 +45,14 @@ HTML RULES:
 13. Make it look professional and modern
 
 CRITICAL: The JSON html field must contain the COMPLETE HTML. Do not truncate it. Do not wrap in code blocks.`;
+
+    // If there's an existing website, include it for modification
+    if (currentHtml) {
+      systemPrompt += `\n\nCURRENT WEBSITE HTML (you must modify this, not create from scratch):\n${currentHtml}`;
+      if (siteName) {
+        systemPrompt += `\n\nCurrent site name: ${siteName}`;
+      }
+    }
 
     const contents = [];
 

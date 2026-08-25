@@ -77,6 +77,8 @@ export default function BuilderPage() {
         body: JSON.stringify({
           message: userMessage.content,
           history: messages.map((m) => ({ role: m.role, content: m.content })),
+          currentHtml: htmlCode || undefined,
+          siteName: siteName || undefined,
           images: uploadedImages.length > 0 ? uploadedImages : undefined,
         }),
       });
