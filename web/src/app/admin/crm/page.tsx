@@ -107,7 +107,7 @@ interface DashboardData {
   recentActivity: { id: string; entity_type: string; action: string; details: any; created_at: string }[];
 }
 
-type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics";
+type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics" | "notifications";
 
 const STAGES = [
   { key: "lead", label: "Lead", color: "bg-slate-100 border-slate-300" },
@@ -141,6 +141,7 @@ export default function CRMDashboard() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [comms, setComms] = useState<CommRecord[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -174,13 +175,14 @@ export default function CRMDashboard() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const [leadsRes, dealsRes, eventsRes, commsRes, invRes, dashRes] = await Promise.all([
+    const [leadsRes, dealsRes, eventsRes, commsRes, invRes, dashRes, notifRes] = await Promise.all([
       supabase.from("leads").select("*").order("created_at", { ascending: false }),
       fetch("/api/crm/deals").then(r => r.json()).catch(() => []),
       fetch("/api/crm/events").then(r => r.json()).catch(() => []),
       fetch("/api/crm/communications").then(r => r.json()).catch(() => []),
       fetch("/api/crm/invoices").then(r => r.json()).catch(() => []),
       fetch("/api/crm/dashboard").then(r => r.json()).catch(() => null),
+      supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50),
     ]);
 
     if (!leadsRes.error && leadsRes.data) setLeads(leadsRes.data as Lead[]);
@@ -189,6 +191,7 @@ export default function CRMDashboard() {
     if (commsRes && !commsRes.error) setComms(commsRes);
     if (invRes && !invRes.error) setInvoices(invRes);
     if (dashRes) setDashboard(dashRes);
+    if (!notifRes.error && notifRes.data) setNotifications(notifRes.data);
     setLoading(false);
   }, []);
 
@@ -257,8 +260,6 @@ export default function CRMDashboard() {
     );
   }
 
-  const kpis = dashboard?.kpis;
-
   return (
     <main className="min-h-screen bg-slate-950 flex">
       {/* Sidebar */}
@@ -284,6 +285,7 @@ export default function CRMDashboard() {
             { key: "comms" as Tab, label: "Communications", icon: " " },
             { key: "invoices" as Tab, label: "Invoices", icon: " " },
             { key: "analytics" as Tab, label: "Analytics", icon: " " },
+            { key: "notifications" as Tab, label: "Notifications", icon: " " },
           ]).map((item) => (
             <button
               key={item.key}
@@ -337,6 +339,7 @@ export default function CRMDashboard() {
             {tab === "comms" && <CommsView comms={comms} onNew={() => setShowNewComm(true)} />}
             {tab === "invoices" && <InvoicesView invoices={invoices} onNew={() => setShowNewInvoice(true)} />}
             {tab === "analytics" && <AnalyticsView dashboard={dashboard} leads={leads} deals={deals} invoices={invoices} formatCurrency={formatCurrency} />}
+            {tab === "notifications" && <NotificationsView notifications={notifications} onRefresh={fetchAll} />}
           </>
         )}
       </div>
@@ -1216,6 +1219,109 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
             <button type="submit" className="flex-1 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-all">Create {form.type}</button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+/* ─── NOTIFICATIONS VIEW ─── */
+function NotificationsView({ notifications, onRefresh }: { notifications: any[]; onRefresh: () => void }) {
+  const [configOpen, setConfigOpen] = useState(false);
+
+  return (
+    <div className="space-y-6">
+      {/* Config Panel */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-white">Webhook Configuration</h3>
+            <p className="text-xs text-slate-500 mt-1">Supabase Database Webhook → Slack + Email alerts</p>
+          </div>
+          <button onClick={() => setConfigOpen(!configOpen)} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
+            {configOpen ? "Hide" : "Configure"}
+          </button>
+        </div>
+
+        {configOpen && (
+          <div className="space-y-4 pt-4 border-t border-slate-800">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-slate-800/50 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-green-400 mb-2">✅ Slack Notifications</h4>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="text-green-400 font-medium">Active</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Channel</span><span className="text-slate-300">#Agapitos</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Trigger</span><span className="text-slate-300">INSERT on public.leads</span></div>
+                </div>
+              </div>
+              <div className="bg-slate-800/50 rounded-xl p-4">
+                <h4 className="text-xs font-bold text-blue-400 mb-2">✅ Email Notifications</h4>
+                <div className="space-y-2 text-xs">
+                  <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="text-green-400 font-medium">Active</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">To</span><span className="text-slate-300">kalafatasagapitos@gmail.com</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Provider</span><span className="text-slate-300">Resend API</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-slate-800/30 rounded-xl p-4">
+              <h4 className="text-xs font-bold text-amber-400 mb-2">Setup Instructions</h4>
+              <ol className="text-xs text-slate-400 space-y-1.5 list-decimal list-inside">
+                <li>Go to <span className="text-slate-300">Supabase Dashboard → Integrations → Webhooks</span></li>
+                <li>Create webhook: Table <span className="text-slate-300">public.leads</span>, Event <span className="text-slate-300">INSERT</span></li>
+                <li>URL: <span className="text-slate-300">https://agapitoskalafatas.vercel.app/api/webhooks/lead-notification</span></li>
+                <li>Header: <span className="text-slate-300">x-webhook-secret</span> = <span className="text-slate-300">xir6PAcW7OxlD80pN8N-Ohh6D8TDYJIpti8QsbH70lo</span></li>
+              </ol>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Notification Feed */}
+      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-slate-800">
+          <h3 className="text-sm font-bold text-white">Recent Notifications</h3>
+          <button onClick={onRefresh} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
+            ↻ Refresh
+          </button>
+        </div>
+
+        {notifications.length === 0 ? (
+          <div className="p-12 text-center">
+            <div className="text-4xl mb-3"> </div>
+            <p className="text-slate-500 text-sm">No notifications yet</p>
+            <p className="text-slate-600 text-xs mt-1">They will appear here when new leads are captured</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-800/50">
+            {notifications.map((n) => (
+              <div key={n.id} className="p-4 hover:bg-slate-800/30 transition-colors">
+                <div className="flex items-start gap-3">
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
+                    n.type === "slack" ? "bg-green-500/10 text-green-400" :
+                    n.type === "email" ? "bg-blue-500/10 text-blue-400" :
+                    "bg-purple-500/10 text-purple-400"
+                  }`}>
+                    {n.type === "slack" ? " " : n.type === "email" ? " " : " "}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        n.status === "sent" ? "bg-green-500/10 text-green-400" :
+                        n.status === "failed" ? "bg-red-500/10 text-red-400" :
+                        "bg-amber-500/10 text-amber-400"
+                      }`}>
+                        {n.status}
+                      </span>
+                      <span className="text-xs text-slate-500">{n.type}</span>
+                    </div>
+                    <p className="text-sm text-white mt-1 truncate">{n.message}</p>
+                    <p className="text-[10px] text-slate-600 mt-1">{new Date(n.created_at).toLocaleString("el-GR")}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
