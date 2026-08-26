@@ -1,3 +1,12 @@
+export interface PricingTier {
+  name: string;
+  price: string;
+  period?: string;
+  description: string;
+  features: string[];
+  highlight?: boolean;
+}
+
 export interface ServiceDetail {
   slug: string;
   icon: string;
@@ -8,6 +17,7 @@ export interface ServiceDetail {
   whyText: string;
   benefits: { title: string; desc: string }[];
   offerings: { title: string; items: string[] }[];
+  pricing?: PricingTier[];
   audience: string[];
   faqs: { q: string; a: string }[];
   ctaTitle: string;
@@ -63,6 +73,21 @@ export const servicesData: Record<string, ServiceDetail> = {
           "Δωρεάν εκπαίδευση χρήσης",
           "1 μήνας δωρεάν υποστήριξη",
         ],
+      },
+    ],
+    pricing: [
+      {
+        name: "Εταιρική Ιστοσελίδα",
+        price: "900",
+        description: "Μέχρι 5 σελίδες, responsive, SEO, blog",
+        features: ["Responsive Design", "Μέχρι 5 σελίδες", "Φόρμα επικοινωνίας", "SEO βάση", "SSL", "60 ημέρες υποστήριξη", "Εκπαίδευση χρήσης"],
+      },
+      {
+        name: "Custom Ιστοσελίδα",
+        price: "1,400",
+        description: "Προσαρμοσμένη λύση με advanced λειτουργίες",
+        features: ["Custom design", "Άπειρες σελίδες", "CMS διαχείριση", "Advanced SEO", "Blog system", "Analytics", "3 μήνες υποστήριξη"],
+        highlight: true,
       },
     ],
     audience: [
@@ -144,6 +169,21 @@ export const servicesData: Record<string, ServiceDetail> = {
         ],
       },
     ],
+    pricing: [
+      {
+        name: "Βασικό E-shop",
+        price: "1,400",
+        description: "WooCommerce, 10+ προϊόντα, 1 τρόπος πληρωμής",
+        features: ["WooCommerce setup", "Μέχρι 50 προϊόντα", "1 τρόπος πληρωμής", "1 ζώνη μεταφορικών", "SEO-friendly", "SSL", "60 ημέρες υποστήριξη"],
+      },
+      {
+        name: "Custom E-shop",
+        price: "2,500",
+        description: "Πλήρης custom ανάπτυξη με ERP διασύνδεση",
+        features: ["Custom ανάπτυξη", "Άπειρα προϊόντα", "Πολλαπλοί τρόποι πληρωμής", "Skroutz/BestPrice feeds", "ERP sync", "Multi-language", "3 μήνες υποστήριξη"],
+        highlight: true,
+      },
+    ],
     audience: [
       "Επιχειρήσεις e-commerce",
       "Μάρκετ που θέλουν online πωλήσεις",
@@ -222,6 +262,27 @@ export const servicesData: Record<string, ServiceDetail> = {
         ],
       },
     ],
+    pricing: [
+      {
+        name: "Brand Identity",
+        price: "800",
+        description: "Λογότυπο, παλέτα χρωμάτων, τυπογραφία",
+        features: ["Logo design", "Color palette", "Typography", "Brand guidelines", "Business cards", "2 revisions"],
+      },
+      {
+        name: "UX/UI Design",
+        price: "1,200",
+        description: "Πλήρης σχεδίαση εμπειρίας χρήστη",
+        features: ["User research", "Wireframes", "Interactive prototypes", "UI design σε Figma", "Design system", "A/B testing strategy"],
+        highlight: true,
+      },
+      {
+        name: "Full Rebrand",
+        price: "2,000",
+        description: "Ολοκληρωμένο rebrand + UX/UI",
+        features: ["Brand strategy", "Logo + identity", "Full UX/UI", "Design system", "Brand guidelines", "3 μήνες υποστήριξη"],
+      },
+    ],
     audience: [
       "Νέες επιχειρήσεις που χρειάζονται brand",
       "Ιστοσελίδες με χαμηλό conversion rate",
@@ -296,6 +357,29 @@ export const servicesData: Record<string, ServiceDetail> = {
         ],
       },
     ],
+    pricing: [
+      {
+        name: "Startup Pack",
+        price: "300",
+        period: "/μήνα",
+        description: "Google Ads + Meta Ads setup",
+        features: ["Google Search Ads", "Meta Ads setup", "Conversion tracking", "Monthly reports", "A/B testing"],
+      },
+      {
+        name: "Growth Pack",
+        price: "600",
+        period: "/μήνα",
+        description: "Full performance marketing",
+        features: ["Google + Shopping Ads", "Meta Ads", "Remarketing", "Email automation", "Weekly reports", "Content strategy"],
+        highlight: true,
+      },
+      {
+        name: "Enterprise",
+        price: "Custom",
+        description: "Πλήρης στρατηγική & εκτέλεση",
+        features: ["Multi-channel strategy", "Dedicated account manager", "Custom analytics", "ROI dashboards", "Priority support"],
+      },
+    ],
     audience: [
       "E-shop που θέλουν περισσότερες πωλήσεις",
       "Επιχειρήσεις υπηρεσιών",
@@ -368,6 +452,27 @@ export const servicesData: Record<string, ServiceDetail> = {
           "Testing & QA",
           "Deployment & monitoring",
         ],
+      },
+    ],
+    pricing: [
+      {
+        name: "MVP Launch",
+        price: "2,500",
+        description: "Βασική SaaS πλατφόρμα MVP",
+        features: ["MVP definition", "Frontend + Backend", "Authentication", "Basic API", "Testing", "Deployment"],
+      },
+      {
+        name: "Full SaaS",
+        price: "5,000",
+        description: "Πλήρης SaaS πλατφόρμα",
+        features: ["Custom architecture", "Multi-tenant", "RBAC", "Real-time dashboards", "CI/CD", "3 μήνες υποστήριξη"],
+        highlight: true,
+      },
+      {
+        name: "Enterprise App",
+        price: "Custom",
+        description: "Μεγάλης κλίμακας εφαρμογή",
+        features: ["Enterprise architecture", "Mobile + Web", "ERP/CRM integration", "Advanced security", "Dedicated team", "SLA"],
       },
     ],
     audience: [
@@ -445,6 +550,30 @@ export const servicesData: Record<string, ServiceDetail> = {
         ],
       },
     ],
+    pricing: [
+      {
+        name: "Basic Hosting",
+        price: "50",
+        period: "/μήνα",
+        description: "Βασικό hosting + backup",
+        features: ["Managed hosting", "Daily backups", "SSL", "Monitoring", "Email support"],
+      },
+      {
+        name: "Pro Hosting",
+        price: "120",
+        period: "/μήνα",
+        description: "Πλήρης υποστήριξη + ασφάλεια",
+        features: ["Managed hosting", "Daily backups", "Security patching", "WAF", "24/7 monitoring", "Priority support"],
+        highlight: true,
+      },
+      {
+        name: "Enterprise",
+        price: "300",
+        period: "/μήνα",
+        description: "Enterprise SLA + dedicated support",
+        features: ["Dedicated infrastructure", "Disaster recovery", "Custom SLA", "Dedicated engineer", "Monthly reports"],
+      },
+    ],
     audience: [
       "Ιστοσελίδες υψηλής κίνησης",
       "E-shop",
@@ -517,6 +646,27 @@ export const servicesData: Record<string, ServiceDetail> = {
           "Testing & documentation",
           "Monitoring & logging",
         ],
+      },
+    ],
+    pricing: [
+      {
+        name: "API Integration",
+        price: "1,200",
+        description: "Απλή API ενσωμάτωση 2 πληροφοριακών συστημάτων",
+        features: ["API design", "REST/GraphQL", "Testing", "Documentation", "2 εβδομάδες"],
+      },
+      {
+        name: "CRM/ERP Sync",
+        price: "2,500",
+        description: "Πλήρης CRM/ERP διασύνδεση",
+        features: ["CRM/ERP analysis", "Bi-directional sync", "Real-time updates", "Error handling", "Monitoring", "1 μήνας"],
+        highlight: true,
+      },
+      {
+        name: "Custom AI Agent",
+        price: "3,500",
+        description: "AI-powered αυτοματοποίηση",
+        features: ["AI agent design", "Custom workflows", "API integration", "Testing", "Deployment", "3 μήνες υποστήριξη"],
       },
     ],
     audience: [

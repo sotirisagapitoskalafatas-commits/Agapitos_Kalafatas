@@ -156,6 +156,66 @@ export default function ServiceDetailPage({ params }: PageProps) {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      {service.pricing && service.pricing.length > 0 && (
+        <section className="py-16 max-w-6xl mx-auto px-4">
+          <h2 className="text-2xl font-bold mb-3 text-slate-900">
+            Τιμολόγηση
+          </h2>
+          <p className="text-slate-500 mb-10">
+            Διαλέξτε το πακέτο που ταιριάζει στις ανάγκες σας:
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {service.pricing.map((tier, i) => (
+              <div
+                key={i}
+                className={`p-6 rounded-2xl border-2 transition-all ${
+                  tier.highlight
+                    ? "border-blue-600 bg-blue-50 shadow-lg shadow-blue-600/10"
+                    : "border-slate-200 bg-white hover:border-slate-300"
+                }`}
+              >
+                {tier.highlight && (
+                  <div className="text-xs font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-full inline-block mb-4">
+                    ΔΗΜΟΦΙΛΕΣΤΕΡΟ
+                  </div>
+                )}
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  {tier.name}
+                </h3>
+                <div className="flex items-baseline gap-1 mb-4">
+                  <span className="text-3xl font-extrabold text-slate-900">
+                    €{tier.price}
+                  </span>
+                  {tier.period && (
+                    <span className="text-sm text-slate-500">{tier.period}</span>
+                  )}
+                </div>
+                <p className="text-sm text-slate-600 mb-6">{tier.description}</p>
+                <ul className="space-y-3">
+                  {tier.features.map((feature, fi) => (
+                    <li key={fi} className="flex items-start gap-2">
+                      <CheckCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <span className="text-sm text-slate-700">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/contact"
+                  className={`mt-6 block text-center py-3 px-4 rounded-xl font-bold text-sm transition-all ${
+                    tier.highlight
+                      ? "bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-600/25"
+                      : "bg-slate-100 hover:bg-slate-200 text-slate-900"
+                  }`}
+                >
+                  Ζητήστε Προσφορά
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Target Audience */}
       <section className="py-16 max-w-6xl mx-auto px-4">
         <h2 className="text-2xl font-bold mb-3 text-slate-900">
