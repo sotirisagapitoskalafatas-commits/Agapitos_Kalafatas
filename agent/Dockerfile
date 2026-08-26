@@ -9,18 +9,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
+COPY agent/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy agent package — preserve the `agent/` directory structure
 # so that `from agent.brain import ...` resolves correctly
-COPY __init__.py agent/__init__.py
-COPY brain.py agent/brain.py
-COPY config.py agent/config.py
-COPY memory.py agent/memory.py
-COPY mouth.py agent/mouth.py
-COPY vlog.py agent/vlog.py
-COPY server.py server.py
+COPY agent/__init__.py agent/__init__.py
+COPY agent/brain.py agent/brain.py
+COPY agent/config.py agent/config.py
+COPY agent/memory.py agent/memory.py
+COPY agent/mouth.py agent/mouth.py
+COPY agent/vlog.py agent/vlog.py
+COPY agent/server.py server.py
 
 EXPOSE 8000
 
