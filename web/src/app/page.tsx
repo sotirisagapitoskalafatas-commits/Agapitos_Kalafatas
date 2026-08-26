@@ -7,6 +7,9 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Scene3D from "@/components/Scene3D";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import WebServicesSection from "@/components/WebServicesSection";
+import { ServiceGrid } from "@/components/ServiceGrid";
+import { SectorGrid } from "@/components/SectorGrid";
+import { FaqSection } from "@/components/FaqSection";
 import { useLocale } from "@/contexts/LanguageContext";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -27,16 +30,12 @@ export default function Home() {
       gsap.fromTo(".about-text", { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: ".about-text", start: "top 80%", toggleActions: "play none none reverse" } });
       gsap.fromTo(".about-image", { opacity: 0, x: 60, rotateY: 8 }, { opacity: 1, x: 0, rotateY: 0, duration: 1.2, ease: "power3.out", scrollTrigger: { trigger: ".about-image", start: "top 80%", toggleActions: "play none none reverse" } });
 
-      gsap.fromTo(".service-card", { opacity: 0, y: 60, rotateX: -10 }, { opacity: 1, y: 0, rotateX: 0, duration: 0.8, stagger: 0.12, ease: "power3.out", scrollTrigger: { trigger: ".service-card", start: "top 85%", toggleActions: "play none none reverse" } });
-
       gsap.fromTo(".project-card", { opacity: 0, y: 80, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.9, stagger: 0.2, ease: "power3.out", scrollTrigger: { trigger: ".projects-grid", start: "top 80%", toggleActions: "play none none reverse" } });
 
       gsap.fromTo(".contact-section", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: ".contact-section", start: "top 80%", toggleActions: "play none none reverse" } });
     });
     return () => ctx.revert();
   }, []);
-
-  const serviceIcons = [" ", " ", " ", " ", " ", " "];
 
   return (
     <main className="min-h-screen bg-white">
@@ -136,27 +135,18 @@ export default function Home() {
       </section>
 
       {/* Services */}
-      <section id="services" className="py-32 bg-gradient-to-b from-slate-50/50 to-white">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold text-brand-600 bg-brand-50 border border-brand-100 mb-6">{t.services.badge}</span>
-            <h2 className="text-5xl md:text-6xl font-black text-slate-900 mb-6">{t.services.title.split(" ")[0]} <span className="gradient-text">{t.services.title.split(" ").slice(1).join(" ")}</span></h2>
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto">{t.services.subtitle}</p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {t.services.items.map((s, i) => (
-              <div key={i} className="service-card glass rounded-2xl p-8 hover:bg-white/40 transition-all duration-500 group cursor-default" style={{ perspective: "1000px" }}>
-                <div className="text-4xl mb-5">{serviceIcons[i]}</div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-brand-600 transition-colors">{s.title}</h3>
-                <p className="text-slate-500 leading-relaxed text-sm">{s.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <div id="services">
+        <ServiceGrid />
+      </div>
 
       {/* Web & Software Services */}
       <WebServicesSection />
+
+      {/* Industry Sectors */}
+      <SectorGrid />
+
+      {/* FAQ */}
+      <FaqSection />
 
       {/* Projects */}
       <section id="projects" className="py-32">

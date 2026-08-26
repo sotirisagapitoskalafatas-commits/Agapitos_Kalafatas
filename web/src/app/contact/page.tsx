@@ -54,9 +54,9 @@ export default function ContactPage() {
           <div className="contact-info space-y-6">
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-lg">
               <h3 className="font-bold text-slate-900 mb-4">Τηλεφωνική Επικοινωνία</h3>
-              <a href="tel:+306975954953" className="flex items-center gap-3 text-brand-600 hover:text-brand-700 font-semibold transition-colors">
+              <a href="tel:+306977691776" className="flex items-center gap-3 text-brand-600 hover:text-brand-700 font-semibold transition-colors">
                 <span className="w-10 h-10 bg-brand-50 rounded-xl flex items-center justify-center"> </span>
-                +30 697 595 4953
+                +30 697 769 1776
               </a>
             </div>
 
