@@ -9,7 +9,7 @@ import { useLocale } from "@/contexts/LanguageContext";
 
 const sectors = [
   {
-    href: "/#services",
+    href: "/services",
     label: "Ψηφιακές Λύσεις",
     desc: "E-shop, Sites, Custom Apps & SEO",
     icon: Globe,
