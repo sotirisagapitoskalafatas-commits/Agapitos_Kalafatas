@@ -6,6 +6,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Scene3D from "@/components/Scene3D";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
+import WebServicesSection from "@/components/WebServicesSection";
 import { useLocale } from "@/contexts/LanguageContext";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -154,6 +155,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Web & Software Services */}
+      <WebServicesSection />
 
       {/* Projects */}
       <section id="projects" className="py-32">

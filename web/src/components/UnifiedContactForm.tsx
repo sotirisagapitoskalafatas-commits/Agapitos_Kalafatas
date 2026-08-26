@@ -140,9 +140,12 @@ export default function UnifiedContactForm() {
           value={formData.serviceCategory}
           onChange={(e) => setFormData({ ...formData, serviceCategory: e.target.value })}
         >
-          <optgroup label="SaaS & Software Engineering">
-            <option value="SaaS / Web Development">Full-Stack SaaS & Web Development</option>
-            <option value="AI Solutions">AI Agents & Neural Systems</option>
+          <optgroup label="SaaS, Web & Software Engineering">
+            <option value="Κατασκευή Ιστοσελίδας">Κατασκευή Ιστοσελίδας</option>
+            <option value="Κατασκευή E-shop">Κατασκευή E-shop (Από 1400€)</option>
+            <option value="Website Management">Διαχείριση Ιστοσελίδων & Ασφάλεια</option>
+            <option value="Software Development">Custom Software / SaaS Development</option>
+            <option value="AI Agents & Neural Systems">AI Agents & Neural Systems</option>
           </optgroup>
           <optgroup label="Ενέργεια">
             <option value="Ρεύμα">Ρεύμα (Φθηνά Προγράμματα)</option>
@@ -154,6 +157,8 @@ export default function UnifiedContactForm() {
           </optgroup>
           <optgroup label="Ασφαλιστικές Υπηρεσίες">
             <option value="Ασφάλεια Ζωής">Ασφάλεια Ζωής</option>
+            <option value="Ασφάλεια Υγείας">Ασφάλεια Υγείας</option>
+            <option value="Ασφάλεια Αυτοκινήτου">Ασφάλεια Αυτοκινήτου</option>
           </optgroup>
         </select>
       </div>
