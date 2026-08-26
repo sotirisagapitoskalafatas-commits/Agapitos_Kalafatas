@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "@/styles/globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import { LanguageProvider } from "@/contexts/LanguageContext";
-import AIChatWidget from "@/components/AIChatWidget";
+import AtlasAgenticWidget from "@/components/AtlasAgenticWidget";
 
 export const metadata: Metadata = {
   title: "Agapitos Kalafatas | AI & Innovation Hub",
@@ -30,7 +30,7 @@ export default function RootLayout({
           <SmoothScroll>
             {children}
           </SmoothScroll>
-          <AIChatWidget />
+          <AtlasAgenticWidget />
         </LanguageProvider>
       </body>
     </html>

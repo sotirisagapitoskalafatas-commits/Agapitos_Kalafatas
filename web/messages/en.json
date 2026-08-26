@@ -30,15 +30,15 @@
   },
   "services": {
     "badge": "Capabilities",
-    "title": "Innovation Services",
-    "subtitle": "Comprehensive AI and full-stack solutions engineered for scale, performance, and intelligent automation.",
+    "title": "AI Innovation Services",
+    "subtitle": "Comprehensive, scalable AI solutions and full-stack architecture designed for maximum performance and intelligent automation.",
     "items": [
-      { "title": "AI Architecture", "desc": "End-to-end AI system design, from neural network topology to production deployment pipelines." },
-      { "title": "Full-Stack SaaS", "desc": "Complete platform engineering — frontend, backend, infrastructure, and everything in between." },
+      { "title": "AI Architecture & Deep Learning", "desc": "End-to-end AI system design, from neural network topology to production deployment pipelines." },
+      { "title": "Full-Stack SaaS & Web Apps", "desc": "Complete platform engineering — CRM, portals, and custom web applications built with Next.js, TypeScript, Supabase, Python." },
       { "title": "Data Intelligence", "desc": "Transform raw data into actionable insights with predictive analytics and real-time dashboards." },
-      { "title": "Cloud & DevOps", "desc": "Scalable infrastructure on AWS, Azure, and GCP with CI/CD and container orchestration." },
-      { "title": "Product Strategy", "desc": "From concept to market-fit. Product roadmaps, MVP design, and growth engineering." },
-      { "title": "Digital Transformation", "desc": "Modernize legacy systems with cloud-native architectures and AI-first approaches." }
+      { "title": "Cloud & DevOps", "desc": "Scalable infrastructure on AWS, Azure, GCP with CI/CD and container orchestration (Kubernetes)." },
+      { "title": "High-Spec Digital Solutions", "desc": "We don't just build eshops & sites. We build profitable businesses focusing on strategy, modern UX/UI design and user experience." },
+      { "title": "Product Strategy", "desc": "From concept to market-fit. Product roadmaps, MVP design, and growth engineering." }
     ]
   },
   "projects": {

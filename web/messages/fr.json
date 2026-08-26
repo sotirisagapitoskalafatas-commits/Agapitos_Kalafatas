@@ -30,15 +30,15 @@
   },
   "services": {
     "badge": "Capacités",
-    "title": "Services d'Innovation",
-    "subtitle": "Solutions IA et full-stack complètes conçues pour la scalabilité, la performance et l'automatisation intelligente.",
+    "title": "Services d'Innovation IA",
+    "subtitle": "Solutions IA et architecture full-stack complètes conçues pour la performance maximale et l'automatisation intelligente.",
     "items": [
-      { "title": "Architecture AI", "desc": "Conception de systèmes IA de bout en bout, de la topologie des réseaux neuronaux aux pipelines de déploiement." },
-      { "title": "Full-Stack SaaS", "desc": "Ingénierie complète de plateformes — frontend, backend, infrastructure et tout ce qui se trouve entre les deux." },
+      { "title": "Architecture IA & Deep Learning", "desc": "Conception de systèmes IA de bout en bout, de la topologie des réseaux neuronaux aux pipelines de déploiement." },
+      { "title": "Full-Stack SaaS & Web Apps", "desc": "Ingénierie complète de plateformes — CRM, portails et applications web sur mesure avec Next.js, TypeScript, Supabase, Python." },
       { "title": "Intelligence des Données", "desc": "Transformer les données brutes en informations exploitables avec l'analyse prédictive et les tableaux de bord en temps réel." },
-      { "title": "Cloud & DevOps", "desc": "Infrastructure évolutive sur AWS, Azure et GCP avec CI/CD et orchestration de conteneurs." },
-      { "title": "Stratégie Produit", "desc": "Du concept au product-market fit. Feuilles de route, design MVP et ingénierie de la croissance." },
-      { "title": "Transformation Numérique", "desc": "Moderniser les systèmes legacy avec des architectures cloud-native et des approches AI-first." }
+      { "title": "Cloud & DevOps", "desc": "Infrastructure évolutive sur AWS, Azure, GCP avec CI/CD et orchestration de conteneurs (Kubernetes)." },
+      { "title": "Solutions Numériques Haute Spéc", "desc": "Nous ne construisons pas seulement des eshops et sites. Nous créons des entreprises rentables en misant sur la stratégie, le design UX/UI moderne et l'expérience utilisateur." },
+      { "title": "Stratégie Produit", "desc": "Du concept au product-market fit. Feuilles de route, design MVP et ingénierie de la croissance." }
     ]
   },
   "projects": {

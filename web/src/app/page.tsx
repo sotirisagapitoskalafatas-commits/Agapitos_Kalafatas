@@ -7,7 +7,6 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Scene3D from "@/components/Scene3D";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import WebServicesSection from "@/components/WebServicesSection";
-import AtlasAgenticWidget from "@/components/AtlasAgenticWidget";
 import { useLocale } from "@/contexts/LanguageContext";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -291,9 +290,6 @@ export default function Home() {
           <p className="text-xs text-slate-400">{t.footer.rights}</p>
         </div>
       </footer>
-
-      {/* Floating Agentic RAG Widget */}
-      <AtlasAgenticWidget />
     </main>
   );
 }
