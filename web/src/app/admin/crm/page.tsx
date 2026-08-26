@@ -232,24 +232,24 @@ export default function CRMDashboard() {
 
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-6">
+      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-100 to-slate-100 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
               <span className="text-white font-bold text-xl">A</span>
             </div>
-            <h1 className="text-2xl font-bold text-white">CRM Pro</h1>
-            <p className="text-sm text-slate-400 mt-1">Agapitos Kalafatas</p>
+            <h1 className="text-2xl font-bold text-slate-900">CRM Pro</h1>
+            <p className="text-sm text-slate-500 mt-1">Agapitos Kalafatas</p>
           </div>
-          <form onSubmit={handleLogin} className="bg-slate-800/80 backdrop-blur p-8 rounded-3xl border border-slate-700/50 shadow-2xl space-y-4">
-            {loginError && <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-xl">{loginError}</div>}
+          <form onSubmit={handleLogin} className="bg-white/70 backdrop-blur-md p-8 rounded-3xl border border-slate-200/80 shadow-2xl space-y-4">
+            {loginError && <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl">{loginError}</div>}
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-400 mb-2">Username</label>
-              <input type="text" required className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-white" value={loginUser} onChange={(e) => setLoginUser(e.target.value)} />
+              <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Username</label>
+              <input type="text" required className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900" value={loginUser} onChange={(e) => setLoginUser(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase text-slate-400 mb-2">Password</label>
-              <input type="password" required className="w-full p-3.5 bg-slate-700/50 border border-slate-600 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-white" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} />
+              <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Password</label>
+              <input type="password" required className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} />
             </div>
             <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25">
               Login
@@ -261,16 +261,16 @@ export default function CRMDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 flex">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-100 to-slate-100 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col fixed h-full z-30">
-        <div className="p-6 border-b border-slate-800">
+      <aside className="w-64 bg-white/60 backdrop-blur-xl border-r border-white/50 shadow-xl shadow-slate-200/40 flex flex-col fixed h-full z-30">
+        <div className="p-6 border-b border-slate-200/60">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
               <span className="text-white font-bold text-sm">A</span>
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white">CRM Pro</h1>
+              <h1 className="text-sm font-bold text-slate-900">CRM Pro</h1>
               <p className="text-[10px] text-slate-500">Agapitos Kalafatas</p>
             </div>
           </div>
@@ -293,8 +293,8 @@ export default function CRMDashboard() {
               onClick={() => setTab(item.key)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 tab === item.key
-                  ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-                  : "text-slate-400 hover:text-white hover:bg-slate-800/50"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                  : "text-slate-700 hover:text-slate-900 hover:bg-slate-200/40"
               }`}
             >
               <span className="text-base">{item.icon}</span>
@@ -303,10 +303,10 @@ export default function CRMDashboard() {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-slate-800">
+        <div className="p-3 border-t border-slate-200/60">
           <button
             onClick={() => { setIsLoggedIn(false); localStorage.removeItem("crm_token"); }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/5 transition-all"
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all"
           >
             <span>🚪</span> Logout
           </button>
@@ -317,12 +317,12 @@ export default function CRMDashboard() {
       <div className="flex-1 ml-64 p-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-2xl font-bold text-white capitalize">{tab}</h2>
+            <h2 className="text-2xl font-bold text-slate-900 capitalize">{tab}</h2>
             <p className="text-sm text-slate-500 mt-1">
               {new Date().toLocaleDateString("el-GR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
-          <button onClick={fetchAll} className="text-sm text-indigo-400 hover:text-indigo-300 font-medium transition-colors px-4 py-2 rounded-xl hover:bg-indigo-500/10">
+          <button onClick={fetchAll} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50">
             ↻ Refresh
           </button>
         </div>
@@ -382,11 +382,11 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {cards.map((c) => (
-          <div key={c.label} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 hover:border-slate-700 transition-all">
+          <div key={c.label} className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-5 hover:border-slate-200 transition-all">
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center text-lg mb-3 shadow-lg`}>
               {c.icon}
             </div>
-            <p className="text-2xl font-bold text-white">{c.value}</p>
+            <p className="text-2xl font-bold text-slate-900">{c.value}</p>
             <p className="text-xs text-slate-500 mt-1">{c.label}</p>
           </div>
         ))}
@@ -394,8 +394,8 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Service Breakdown */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4">Leads by Service</h3>
+        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+          <h3 className="text-sm font-bold text-slate-900 mb-4">Leads by Service</h3>
           {Object.entries(data.serviceBreakdown).length === 0 ? (
             <p className="text-slate-600 text-sm">No data yet</p>
           ) : (
@@ -408,10 +408,10 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
                   return (
                     <div key={service}>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-slate-300">{service}</span>
+                        <span className="text-slate-600">{service}</span>
                         <span className="text-slate-500">{count}</span>
                       </div>
-                      <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                      <div className="w-full h-2 bg-white/80 rounded-full overflow-hidden">
                         <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
                       </div>
                     </div>
@@ -422,8 +422,8 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
         </div>
 
         {/* Pipeline Stages */}
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4">Pipeline Stages</h3>
+        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+          <h3 className="text-sm font-bold text-slate-900 mb-4">Pipeline Stages</h3>
           {Object.entries(data.stageBreakdown).length === 0 ? (
             <p className="text-slate-600 text-sm">No deals yet</p>
           ) : (
@@ -435,10 +435,10 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
                 return (
                   <div key={s.key}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-300">{s.label}</span>
+                      <span className="text-slate-600">{s.label}</span>
                       <span className="text-slate-500">{count}</span>
                     </div>
-                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-white/80 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${s.key === "closed_won" ? "bg-green-500" : s.key === "closed_lost" ? "bg-red-500" : "bg-gradient-to-r from-amber-500 to-orange-500"}`}
                         style={{ width: `${pct}%` }}
@@ -453,14 +453,14 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-        <h3 className="text-sm font-bold text-white mb-4">Recent Activity</h3>
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+        <h3 className="text-sm font-bold text-slate-900 mb-4">Recent Activity</h3>
         {data.recentActivity.length === 0 ? (
           <p className="text-slate-600 text-sm">No recent activity</p>
         ) : (
           <div className="space-y-3">
             {data.recentActivity.slice(0, 10).map((a) => (
-              <div key={a.id} className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-xl">
+              <div key={a.id} className="flex items-center gap-3 p-3 bg-slate-100/80 rounded-xl">
                 <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center text-xs">
                   {a.entity_type === "deal" ? " " : a.entity_type === "invoice" ? " " : " "}
                 </div>
@@ -495,7 +495,7 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
         <input
           type="text"
           placeholder="Search leads..."
-          className="flex-1 min-w-[200px] p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          className="flex-1 min-w-[200px] p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -504,7 +504,7 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
             key={s}
             onClick={() => setFilter(s)}
             className={`text-xs px-4 py-2 rounded-xl font-medium transition-all ${
-              filter === s ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"
+              filter === s ? "bg-indigo-500 text-white" : "bg-white/80 text-slate-500 hover:bg-slate-200"
             }`}
           >
             {s === "all" ? "All" : s === "new_lead" ? "New" : s === "contacted" ? "Contacted" : s === "customer" ? "Customers" : "Archived"} ({s === "all" ? leads.length : leads.filter(l => l.status === s).length})
@@ -512,13 +512,13 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
         ))}
       </div>
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-500">No leads found.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-800/50 border-b border-slate-700 text-slate-400 uppercase text-[10px] font-bold">
+              <thead className="bg-slate-100/80 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold">
                 <tr>
                   <th className="p-4">Date</th>
                   <th className="p-4">Name</th>
@@ -531,12 +531,12 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
               </thead>
               <tbody className="divide-y divide-slate-800/50">
                 {filtered.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-800/30 cursor-pointer transition-all" onClick={() => onSelect(lead)}>
+                  <tr key={lead.id} className="hover:bg-slate-100/50 cursor-pointer transition-all" onClick={() => onSelect(lead)}>
                     <td className="p-4 text-slate-500 text-xs">{new Date(lead.created_at).toLocaleDateString("el-GR")}</td>
                     <td className="p-4 font-semibold text-white">{lead.first_name} {lead.last_name}</td>
                     <td className="p-4 font-mono text-indigo-400 text-xs">{lead.phone}</td>
-                    <td className="p-4 text-slate-400 text-xs">{lead.email || "—"}</td>
-                    <td className="p-4"><span className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300">{lead.service_category}</span></td>
+                    <td className="p-4 text-slate-500 text-xs">{lead.email || "—"}</td>
+                    <td className="p-4"><span className="text-xs px-2.5 py-1 rounded-lg bg-white/80 text-slate-600">{lead.service_category}</span></td>
                     <td className="p-4">
                       <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${STATUS_COLORS[lead.status] || ""}`}>
                         {lead.status.replace("_", " ")}
@@ -598,7 +598,7 @@ function PipelineView({ deals, onMove, onNewDeal }: { deals: Deal[]; onMove: (id
                     </div>
                   </div>
                 ))}
-                {stageDeals.length === 0 && <p className="text-xs text-slate-400 text-center py-4">No deals</p>}
+                {stageDeals.length === 0 && <p className="text-xs text-slate-500 text-center py-4">No deals</p>}
               </div>
             </div>
           );
@@ -637,20 +637,20 @@ function CalendarView({ events, onToggle, onNew }: { events: CalendarEvent[]; on
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <button onClick={() => setWeekOffset(0)} className="text-xs bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-xl font-medium">Today</button>
-          <button onClick={() => setWeekOffset(w => w - 1)} className="text-xs bg-slate-800 text-slate-400 px-3 py-2 rounded-xl hover:bg-slate-700">←</button>
-          <span className="text-sm font-bold text-white">
+          <button onClick={() => setWeekOffset(w => w - 1)} className="text-xs bg-white/80 text-slate-500 px-3 py-2 rounded-xl hover:bg-slate-200">←</button>
+          <span className="text-sm font-bold text-slate-900">
             {days[0].toLocaleDateString("el-GR", { month: "short", day: "numeric" })} — {days[6].toLocaleDateString("el-GR", { month: "short", day: "numeric", year: "numeric" })}
           </span>
-          <button onClick={() => setWeekOffset(w => w + 1)} className="text-xs bg-slate-800 text-slate-400 px-3 py-2 rounded-xl hover:bg-slate-700">→</button>
+          <button onClick={() => setWeekOffset(w => w + 1)} className="text-xs bg-white/80 text-slate-500 px-3 py-2 rounded-xl hover:bg-slate-200">→</button>
         </div>
         <button onClick={onNew} className="text-sm bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl">+ New Event</button>
       </div>
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-8 border-b border-slate-800">
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-8 border-b border-slate-200/60">
           <div className="p-3 text-[10px] text-slate-600 uppercase font-bold">Time</div>
           {days.map((d, i) => (
-            <div key={i} className={`p-3 text-center border-l border-slate-800 ${d.toDateString() === today.toDateString() ? "bg-indigo-500/10" : ""}`}>
+            <div key={i} className={`p-3 text-center border-l border-slate-200/60 ${d.toDateString() === today.toDateString() ? "bg-indigo-500/10" : ""}`}>
               <p className="text-[10px] text-slate-500 uppercase font-bold">{d.toLocaleDateString("el-GR", { weekday: "short" })}</p>
               <p className={`text-lg font-bold ${d.toDateString() === today.toDateString() ? "text-indigo-400" : "text-white"}`}>{d.getDate()}</p>
             </div>
@@ -658,7 +658,7 @@ function CalendarView({ events, onToggle, onNew }: { events: CalendarEvent[]; on
         </div>
         <div className="max-h-[500px] overflow-y-auto">
           {hours.map(h => (
-            <div key={h} className="grid grid-cols-8 border-b border-slate-800/50">
+            <div key={h} className="grid grid-cols-8 border-b border-slate-200/60">
               <div className="p-2 text-[10px] text-slate-600 font-mono">{`${String(h).padStart(2, "0")}:00`}</div>
               {days.map((d, di) => {
                 const dayEvents = getEventsForDay(d).filter(e => {
@@ -666,7 +666,7 @@ function CalendarView({ events, onToggle, onNew }: { events: CalendarEvent[]; on
                   return eH === h;
                 });
                 return (
-                  <div key={di} className="border-l border-slate-800/50 p-1 min-h-[40px]">
+                  <div key={di} className="border-l border-slate-200/60 p-1 min-h-[40px]">
                     {dayEvents.map(e => (
                       <button
                         key={e.id}
@@ -695,25 +695,25 @@ function CommsView({ comms, onNew }: { comms: CommRecord[]; onNew: () => void })
       <div className="flex justify-end">
         <button onClick={onNew} className="text-sm bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl">+ Log Communication</button>
       </div>
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
         {comms.length === 0 ? (
           <div className="p-12 text-center text-slate-500">No communications logged yet.</div>
         ) : (
           <div className="divide-y divide-slate-800/50">
             {comms.map(c => (
-              <div key={c.id} className="p-4 hover:bg-slate-800/30 transition-all">
+              <div key={c.id} className="p-4 hover:bg-slate-100/50 transition-all">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-slate-800 rounded-xl flex items-center justify-center text-sm">{COMM_ICONS[c.comm_type] || " "}</div>
+                  <div className="w-9 h-9 bg-white/80 rounded-xl flex items-center justify-center text-sm">{COMM_ICONS[c.comm_type] || " "}</div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold text-white">{c.subject || c.comm_type}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.direction === "inbound" ? "bg-green-500/10 text-green-400" : "bg-blue-500/10 text-blue-400"}`}>
                         {c.direction}
                       </span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-400">{c.comm_type}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-500">{c.comm_type}</span>
                     </div>
                     {c.leads && <p className="text-xs text-slate-500 mt-1">{c.leads.first_name} {c.leads.last_name}</p>}
-                    {c.body && <p className="text-xs text-slate-400 mt-1 line-clamp-2">{c.body}</p>}
+                    {c.body && <p className="text-xs text-slate-500 mt-1 line-clamp-2">{c.body}</p>}
                   </div>
                   <span className="text-[10px] text-slate-600">{new Date(c.created_at).toLocaleString("el-GR")}</span>
                 </div>
@@ -734,7 +734,7 @@ function InvoicesView({ invoices, onNew }: { invoices: Invoice[]; onNew: () => v
 
   const statusColors: Record<string, string> = {
     draft: "bg-slate-100 text-slate-600", sent: "bg-blue-100 text-blue-600", accepted: "bg-green-100 text-green-600",
-    rejected: "bg-red-100 text-red-600", paid: "bg-emerald-100 text-emerald-600", expired: "bg-slate-100 text-slate-400",
+    rejected: "bg-red-100 text-red-600", paid: "bg-emerald-100 text-emerald-600", expired: "bg-slate-100 text-slate-500",
   };
 
   const updateInvoiceStatus = async (id: string, status: string) => {
@@ -751,7 +751,7 @@ function InvoicesView({ invoices, onNew }: { invoices: Invoice[]; onNew: () => v
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           {["all", "quote", "invoice", "proforma"].map(t => (
-            <button key={t} onClick={() => setTypeFilter(t)} className={`text-xs px-4 py-2 rounded-xl font-medium transition-all ${typeFilter === t ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-400 hover:bg-slate-700"}`}>
+            <button key={t} onClick={() => setTypeFilter(t)} className={`text-xs px-4 py-2 rounded-xl font-medium transition-all ${typeFilter === t ? "bg-indigo-500 text-white" : "bg-white/80 text-slate-500 hover:bg-slate-200"}`}>
               {t === "all" ? "All" : t.charAt(0).toUpperCase() + t.slice(1)} ({t === "all" ? invoices.length : invoices.filter(i => i.type === t).length})
             </button>
           ))}
@@ -759,13 +759,13 @@ function InvoicesView({ invoices, onNew }: { invoices: Invoice[]; onNew: () => v
         <button onClick={onNew} className="text-sm bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl">+ New Quote/Invoice</button>
       </div>
 
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-500">No invoices or quotes yet.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-800/50 border-b border-slate-700 text-slate-400 uppercase text-[10px] font-bold">
+              <thead className="bg-slate-100/80 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold">
                 <tr>
                   <th className="p-4">Number</th>
                   <th className="p-4">Type</th>
@@ -777,9 +777,9 @@ function InvoicesView({ invoices, onNew }: { invoices: Invoice[]; onNew: () => v
               </thead>
               <tbody className="divide-y divide-slate-800/50">
                 {filtered.map(inv => (
-                  <tr key={inv.id} className="hover:bg-slate-800/30">
+                  <tr key={inv.id} className="hover:bg-slate-100/50">
                     <td className="p-4 font-mono text-indigo-400 text-xs font-bold">{inv.invoice_number}</td>
-                    <td className="p-4"><span className="text-xs px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 capitalize">{inv.type}</span></td>
+                    <td className="p-4"><span className="text-xs px-2.5 py-1 rounded-lg bg-white/80 text-slate-600 capitalize">{inv.type}</span></td>
                     <td className="p-4 text-white text-sm">{inv.leads ? `${inv.leads.first_name} ${inv.leads.last_name}` : "—"}</td>
                     <td className="p-4 text-white font-bold">€{(inv.total || 0).toLocaleString("el-GR")}</td>
                     <td className="p-4">
@@ -787,7 +787,7 @@ function InvoicesView({ invoices, onNew }: { invoices: Invoice[]; onNew: () => v
                     </td>
                     <td className="p-4">
                       <select
-                        className="text-[10px] bg-slate-800 text-slate-300 rounded-lg px-2 py-1.5 border-0 outline-none cursor-pointer"
+                        className="text-[10px] bg-white/80 text-slate-600 rounded-lg px-2 py-1.5 border-0 outline-none cursor-pointer"
                         value={inv.status}
                         onChange={(e) => updateInvoiceStatus(inv.id, e.target.value)}
                       >
@@ -831,28 +831,28 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
         </a>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4">Lead Sources by Service</h3>
+        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+          <h3 className="text-sm font-bold text-slate-900 mb-4">Lead Sources by Service</h3>
           <div className="space-y-3">
             {Object.entries(dashboard.serviceBreakdown).map(([s, c]) => (
               <div key={s} className="flex justify-between items-center">
-                <span className="text-xs text-slate-300">{s}</span>
-                <span className="text-xs font-bold text-white">{c}</span>
+                <span className="text-xs text-slate-600">{s}</span>
+                <span className="text-xs font-bold text-slate-900">{c}</span>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4">Deal Win Rate</h3>
+        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+          <h3 className="text-sm font-bold text-slate-900 mb-4">Deal Win Rate</h3>
           <div className="text-center py-4">
             <p className="text-5xl font-bold text-indigo-400">{winRate}%</p>
             <p className="text-xs text-slate-500 mt-2">{wonDeals.length} won / {lostDeals.length} lost / {deals.length} total</p>
           </div>
         </div>
 
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white mb-4">Revenue Summary</h3>
+        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+          <h3 className="text-sm font-bold text-slate-900 mb-4">Revenue Summary</h3>
           <div className="space-y-4">
             <div>
               <p className="text-[10px] text-slate-500 uppercase font-bold">Pipeline</p>
@@ -875,12 +875,12 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
       </div>
 
       {/* Monthly Leads Chart */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
-        <h3 className="text-sm font-bold text-white mb-4">Monthly Leads</h3>
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+        <h3 className="text-sm font-bold text-slate-900 mb-4">Monthly Leads</h3>
         <div className="flex items-end gap-3 h-48">
           {Object.entries(monthlyLeads).slice(-12).map(([month, count]) => (
             <div key={month} className="flex-1 flex flex-col items-center gap-1">
-              <span className="text-[10px] text-slate-400 font-bold">{count}</span>
+              <span className="text-[10px] text-slate-500 font-bold">{count}</span>
               <div
                 className="w-full bg-gradient-to-t from-indigo-500 to-purple-500 rounded-t-lg transition-all min-h-[4px]"
                 style={{ height: `${(count / maxMonthly) * 140}px` }}
@@ -898,25 +898,25 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
 function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; onClose: () => void; updateStatus: (id: string, s: string) => void; updateNotes: (id: string, n: string) => void }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-end z-50" onClick={onClose}>
-      <div className="bg-slate-900 w-full max-w-xl h-full shadow-2xl overflow-y-auto border-l border-slate-800" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white/60 backdrop-blur-xl w-full max-w-xl h-full shadow-2xl overflow-y-auto border-l border-slate-200/60" onClick={(e) => e.stopPropagation()}>
         <div className="p-8 space-y-6">
-          <div className="flex justify-between items-start border-b border-slate-800 pb-4">
+          <div className="flex justify-between items-start border-b border-slate-200/60 pb-4">
             <div>
               <span className="text-[10px] font-semibold uppercase text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg">Lead #{lead.id.substring(0, 8)}</span>
               <h2 className="text-2xl font-bold mt-2 text-white">{lead.first_name} {lead.last_name}</h2>
               <p className="text-xs text-slate-500 mt-1">{new Date(lead.created_at).toLocaleString("el-GR")}</p>
             </div>
-            <button onClick={onClose} className="text-slate-500 hover:text-white text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-800 transition-colors">✕</button>
+            <button onClick={onClose} className="text-slate-500 hover:text-white text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/80 transition-colors">✕</button>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+          <div className="flex items-center gap-2 bg-slate-100/80 p-3 rounded-xl border border-slate-200/80">
             <span className="text-xs font-bold text-slate-500">Status:</span>
             {["new_lead", "contacted", "customer", "archived"].map(s => (
               <button
                 key={s}
                 onClick={() => updateStatus(lead.id, s)}
                 className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  lead.status === s ? "bg-indigo-500 text-white" : "bg-slate-700 text-slate-400 hover:bg-slate-600"
+                  lead.status === s ? "bg-indigo-500 text-white" : "bg-slate-700 text-slate-500 hover:bg-slate-600"
                 }`}
               >
                 {s.replace("_", " ")}
@@ -925,19 +925,19 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/30">
+            <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
               <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Phone</span>
               <span className="font-semibold text-sm text-white">{lead.phone}</span>
             </div>
-            <div className="bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/30">
+            <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
               <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Email</span>
               <span className="font-semibold text-sm text-white">{lead.email || "Not provided"}</span>
             </div>
           </div>
 
-          <div className="bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/30">
+          <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
             <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Service</span>
-            <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-700 text-slate-300">{lead.service_category}</span>
+            <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-700 text-slate-600">{lead.service_category}</span>
           </div>
 
           {lead.attached_files?.length > 0 && (
@@ -958,7 +958,7 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
             <h3 className="font-bold mb-2 text-xs uppercase text-slate-500">Notes</h3>
             <textarea
               rows={4}
-              className="w-full p-3.5 bg-slate-800/50 border border-slate-700 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-white resize-none"
+              className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-white resize-none"
               placeholder="Add notes about this lead..."
               defaultValue={lead.notes || ""}
               onBlur={(e) => updateNotes(lead.id, e.target.value)}
@@ -985,32 +985,32 @@ function NewDealModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold text-white mb-6">New Deal</h2>
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-900 mb-6">New Deal</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Deal Title *</label>
-            <input required className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Deal Title *</label>
+            <input required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Value (€)</label>
-              <input type="number" className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Value (€)</label>
+              <input type="number" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Expected Close</label>
-              <input type="date" className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.expected_close_date} onChange={e => setForm({ ...form, expected_close_date: e.target.value })} />
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Expected Close</label>
+              <input type="date" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.expected_close_date} onChange={e => setForm({ ...form, expected_close_date: e.target.value })} />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Linked Lead</label>
-            <select className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Linked Lead</label>
+            <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
               <option value="">None</option>
               {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>)}
             </select>
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-800 text-slate-400 rounded-xl font-medium hover:bg-slate-700 transition-all">Cancel</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-white/80 text-slate-500 rounded-xl font-medium hover:bg-slate-200 transition-all">Cancel</button>
             <button type="submit" className="flex-1 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-all">Create Deal</button>
           </div>
         </form>
@@ -1033,23 +1033,23 @@ function NewEventModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: ()
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold text-white mb-6">New Event</h2>
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-900 mb-6">New Event</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Title *</label>
-            <input required className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Title *</label>
+            <input required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Type</label>
-              <select className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={form.event_type} onChange={e => setForm({ ...form, event_type: e.target.value })}>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Type</label>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.event_type} onChange={e => setForm({ ...form, event_type: e.target.value })}>
                 {["meeting", "call", "task", "reminder", "deadline"].map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Linked Lead</label>
-              <select className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Linked Lead</label>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
                 <option value="">None</option>
                 {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>)}
               </select>
@@ -1057,20 +1057,20 @@ function NewEventModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: ()
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Start *</label>
-              <input type="datetime-local" required className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} />
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Start *</label>
+              <input type="datetime-local" required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">End *</label>
-              <input type="datetime-local" required className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} />
+              <label className="block text-xs font-semibold text-slate-500 mb-1">End *</label>
+              <input type="datetime-local" required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} />
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Location</label>
-            <input className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Location</label>
+            <input className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-800 text-slate-400 rounded-xl font-medium hover:bg-slate-700">Cancel</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-white/80 text-slate-500 rounded-xl font-medium hover:bg-slate-200">Cancel</button>
             <button type="submit" className="flex-1 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-all">Create Event</button>
           </div>
         </form>
@@ -1093,41 +1093,41 @@ function NewCommModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold text-white mb-6">Log Communication</h2>
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-900 mb-6">Log Communication</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Type</label>
-              <select className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={form.comm_type} onChange={e => setForm({ ...form, comm_type: e.target.value })}>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Type</label>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.comm_type} onChange={e => setForm({ ...form, comm_type: e.target.value })}>
                 {["email", "phone", "sms", "whatsapp", "meeting", "note"].map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Direction</label>
-              <select className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={form.direction} onChange={e => setForm({ ...form, direction: e.target.value })}>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Direction</label>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.direction} onChange={e => setForm({ ...form, direction: e.target.value })}>
                 <option value="outbound">Outbound</option>
                 <option value="inbound">Inbound</option>
               </select>
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Lead</label>
-            <select className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Lead</label>
+            <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
               <option value="">Select lead...</option>
               {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Subject</label>
-            <input className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Subject</label>
+            <input className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Notes / Body</label>
-            <textarea rows={4} className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500 resize-none" value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Notes / Body</label>
+            <textarea rows={4} className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500 resize-none" value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} />
           </div>
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-800 text-slate-400 rounded-xl font-medium hover:bg-slate-700">Cancel</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-white/80 text-slate-500 rounded-xl font-medium hover:bg-slate-200">Cancel</button>
             <button type="submit" className="flex-1 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-all">Log Communication</button>
           </div>
         </form>
@@ -1164,21 +1164,21 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-slate-900 border border-slate-700 rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-        <h2 className="text-xl font-bold text-white mb-6">New Quote / Invoice</h2>
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-900 mb-6">New Quote / Invoice</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Type</label>
-              <select className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Type</label>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
                 <option value="quote">Quote</option>
                 <option value="invoice">Invoice</option>
                 <option value="proforma">Proforma</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Client</label>
-              <select className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Client</label>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
                 <option value="">Select client...</option>
                 {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>)}
               </select>
@@ -1187,15 +1187,15 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
 
           <div>
             <div className="flex justify-between items-center mb-2">
-              <label className="text-xs font-semibold text-slate-400">Line Items</label>
+              <label className="text-xs font-semibold text-slate-500">Line Items</label>
               <button type="button" onClick={addItem} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">+ Add Item</button>
             </div>
             <div className="space-y-2">
               {items.map((item, i) => (
                 <div key={i} className="flex gap-2 items-start">
-                  <input placeholder="Description" className="flex-1 p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
-                  <input type="number" placeholder="Qty" className="w-20 p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={item.quantity} onChange={e => updateItem(i, "quantity", e.target.value)} />
-                  <input type="number" placeholder="Price €" className="w-28 p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={item.unit_price} onChange={e => updateItem(i, "unit_price", e.target.value)} />
+                  <input placeholder="Description" className="flex-1 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
+                  <input type="number" placeholder="Qty" className="w-20 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={item.quantity} onChange={e => updateItem(i, "quantity", e.target.value)} />
+                  <input type="number" placeholder="Price €" className="w-28 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={item.unit_price} onChange={e => updateItem(i, "unit_price", e.target.value)} />
                   {items.length > 1 && <button type="button" onClick={() => removeItem(i)} className="p-3 text-red-400 hover:text-red-300">✕</button>}
                 </div>
               ))}
@@ -1204,25 +1204,25 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-400 mb-1">Tax Rate (%)</label>
-              <input type="number" className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none" value={form.tax_rate} onChange={e => setForm({ ...form, tax_rate: e.target.value })} />
+              <label className="block text-xs font-semibold text-slate-500 mb-1">Tax Rate (%)</label>
+              <input type="number" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.tax_rate} onChange={e => setForm({ ...form, tax_rate: e.target.value })} />
             </div>
             <div className="flex flex-col justify-end">
-              <div className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 space-y-1">
-                <div className="flex justify-between text-xs text-slate-400"><span>Subtotal</span><span>€{subtotal.toLocaleString("el-GR")}</span></div>
-                <div className="flex justify-between text-xs text-slate-400"><span>Tax ({form.tax_rate}%)</span><span>€{tax.toLocaleString("el-GR")}</span></div>
-                <div className="flex justify-between text-sm font-bold text-white border-t border-slate-700 pt-1"><span>Total</span><span>€{total.toLocaleString("el-GR")}</span></div>
+              <div className="bg-slate-100/80 p-4 rounded-xl border border-slate-200 space-y-1">
+                <div className="flex justify-between text-xs text-slate-500"><span>Subtotal</span><span>€{subtotal.toLocaleString("el-GR")}</span></div>
+                <div className="flex justify-between text-xs text-slate-500"><span>Tax ({form.tax_rate}%)</span><span>€{tax.toLocaleString("el-GR")}</span></div>
+                <div className="flex justify-between text-sm font-bold text-slate-900 border-t border-slate-200 pt-1"><span>Total</span><span>€{total.toLocaleString("el-GR")}</span></div>
               </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-400 mb-1">Notes</label>
-            <textarea rows={2} className="w-full p-3 bg-slate-800/50 border border-slate-700 rounded-xl text-sm text-white outline-none resize-none" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Notes</label>
+            <textarea rows={2} className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none resize-none" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-3 bg-slate-800 text-slate-400 rounded-xl font-medium hover:bg-slate-700">Cancel</button>
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-white/80 text-slate-500 rounded-xl font-medium hover:bg-slate-200">Cancel</button>
             <button type="submit" className="flex-1 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-all">Create {form.type}</button>
           </div>
         </form>
@@ -1238,10 +1238,10 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
   return (
     <div className="space-y-6">
       {/* Config Panel */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-sm font-bold text-white">Webhook Configuration</h3>
+            <h3 className="text-sm font-bold text-slate-900">Webhook Configuration</h3>
             <p className="text-xs text-slate-500 mt-1">Supabase Database Webhook → Slack + Email alerts</p>
           </div>
           <button onClick={() => setConfigOpen(!configOpen)} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
@@ -1250,33 +1250,33 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
         </div>
 
         {configOpen && (
-          <div className="space-y-4 pt-4 border-t border-slate-800">
+          <div className="space-y-4 pt-4 border-t border-slate-200/60">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-slate-800/50 rounded-xl p-4">
+              <div className="bg-slate-100/80 rounded-xl p-4">
                 <h4 className="text-xs font-bold text-green-400 mb-2">✅ Slack Notifications</h4>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="text-green-400 font-medium">Active</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Channel</span><span className="text-slate-300">#Agapitos</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Trigger</span><span className="text-slate-300">INSERT on public.leads</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Channel</span><span className="text-slate-600">#Agapitos</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Trigger</span><span className="text-slate-600">INSERT on public.leads</span></div>
                 </div>
               </div>
-              <div className="bg-slate-800/50 rounded-xl p-4">
+              <div className="bg-slate-100/80 rounded-xl p-4">
                 <h4 className="text-xs font-bold text-blue-400 mb-2">✅ Email Notifications</h4>
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="text-green-400 font-medium">Active</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">To</span><span className="text-slate-300">kalafatasagapitos@gmail.com</span></div>
-                  <div className="flex justify-between"><span className="text-slate-500">Provider</span><span className="text-slate-300">Resend API</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">To</span><span className="text-slate-600">kalafatasagapitos@gmail.com</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Provider</span><span className="text-slate-600">Resend API</span></div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-800/30 rounded-xl p-4">
+            <div className="bg-slate-100/50 rounded-xl p-4">
               <h4 className="text-xs font-bold text-amber-400 mb-2">Setup Instructions</h4>
-              <ol className="text-xs text-slate-400 space-y-1.5 list-decimal list-inside">
-                <li>Go to <span className="text-slate-300">Supabase Dashboard → Integrations → Webhooks</span></li>
-                <li>Create webhook: Table <span className="text-slate-300">public.leads</span>, Event <span className="text-slate-300">INSERT</span></li>
-                <li>URL: <span className="text-slate-300">https://agapitoskalafatas.vercel.app/api/webhooks/lead-notification</span></li>
-                <li>Header: <span className="text-slate-300">x-webhook-secret</span> = <span className="text-slate-300">xir6PAcW7OxlD80pN8N-Ohh6D8TDYJIpti8QsbH70lo</span></li>
+              <ol className="text-xs text-slate-500 space-y-1.5 list-decimal list-inside">
+                <li>Go to <span className="text-slate-600">Supabase Dashboard → Integrations → Webhooks</span></li>
+                <li>Create webhook: Table <span className="text-slate-600">public.leads</span>, Event <span className="text-slate-600">INSERT</span></li>
+                <li>URL: <span className="text-slate-600">https://agapitoskalafatas.vercel.app/api/webhooks/lead-notification</span></li>
+                <li>Header: <span className="text-slate-600">x-webhook-secret</span> = <span className="text-slate-600">xir6PAcW7OxlD80pN8N-Ohh6D8TDYJIpti8QsbH70lo</span></li>
               </ol>
             </div>
           </div>
@@ -1284,9 +1284,9 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
       </div>
 
       {/* Notification Feed */}
-      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-slate-800">
-          <h3 className="text-sm font-bold text-white">Recent Notifications</h3>
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200/60">
+          <h3 className="text-sm font-bold text-slate-900">Recent Notifications</h3>
           <button onClick={onRefresh} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
             ↻ Refresh
           </button>
@@ -1301,7 +1301,7 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
         ) : (
           <div className="divide-y divide-slate-800/50">
             {notifications.map((n) => (
-              <div key={n.id} className="p-4 hover:bg-slate-800/30 transition-colors">
+              <div key={n.id} className="p-4 hover:bg-slate-100/50 transition-colors">
                 <div className="flex items-start gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
                     n.type === "slack" ? "bg-green-500/10 text-green-400" :
@@ -1335,14 +1335,128 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
 }
 
 function SettingsView() {
+  const [settingsTab, setSettingsTab] = useState<"profile" | "company" | "integrations" | "crm_ai">("profile");
+  const [saving, setSaving] = useState(false);
+  const [saveMsg, setSaveMsg] = useState("");
+  const [settings, setSettings] = useState({
+    company_name: "Agapitos Kalafatas",
+    vat_number: "",
+    tax_office: "",
+    address: "",
+    bank_iban: "",
+    slack_webhook_url: "",
+    notify_email: "kalafatasagapitos@gmail.com",
+    ga_measurement_id: "G-V73CT9GT6W",
+    ai_system_prompt: "You are Atlas, an AI agent created by Agapitos Kalafatas. You are a helpful, knowledgeable assistant specialized in full-stack development, SaaS architecture, AI/ML, cloud computing, and digital operations.",
+    pipeline_stages: ["New", "Qualified", "Proposal", "Negotiation", "Won", "Lost"],
+  });
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveMsg("");
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+      if (res.ok) setSaveMsg("Settings saved successfully!");
+      else setSaveMsg("Error saving settings");
+    } catch {
+      setSaveMsg("Error saving settings");
+    }
+    setSaving(false);
+  };
+
+  const tabs = [
+    { key: "profile" as const, label: "Προφίλ", icon: " " },
+    { key: "company" as const, label: "Εταιρεία & Τιμολόγηση", icon: " " },
+    { key: "integrations" as const, label: "Διασυνδέσεις", icon: " " },
+    { key: "crm_ai" as const, label: "CRM & AI", icon: " " },
+  ];
+
+  const inputCls = "w-full p-3 bg-white/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900";
+  const labelCls = "block text-xs font-semibold uppercase text-slate-500 mb-2";
+
   return (
-    <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6">
-      <p className="text-slate-600 text-sm">
-        Settings are managed on the dedicated{" "}
-        <a href="/admin/settings" className="text-indigo-600 hover:underline font-medium">
-          Settings page
-        </a>.
-      </p>
+    <div className="space-y-6">
+      <div className="flex gap-2 flex-wrap">
+        {tabs.map((t) => (
+          <button key={t.key} onClick={() => setSettingsTab(t.key)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${settingsTab === t.key ? "bg-indigo-600 text-white shadow-md" : "bg-white/70 text-slate-600 hover:bg-white border border-slate-200/80"}`}>
+            {t.icon} {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 space-y-4">
+        {settingsTab === "profile" && (
+          <>
+            <h3 className="text-lg font-bold text-slate-900">Προφίλ & Ασφάλεια</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><label className={labelCls}>Όνομα</label><input className={inputCls} value="Αγαπητός Καλαφάτας" readOnly /></div>
+              <div><label className={labelCls}>Email</label><input className={inputCls} value="kalafatasagapitos@gmail.com" readOnly /></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><label className={labelCls}>Τρέχων Κωδικός</label><input type="password" className={inputCls} placeholder="••••••••" /></div>
+              <div><label className={labelCls}>Νέος Κωδικός</label><input type="password" className={inputCls} placeholder="Νέος κωδικός" /></div>
+            </div>
+          </>
+        )}
+
+        {settingsTab === "company" && (
+          <>
+            <h3 className="text-lg font-bold text-slate-900">Εταιρεία & Τιμολόγηση</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><label className={labelCls}>Επωνυμία Εταιρείας</label><input className={inputCls} value={settings.company_name} onChange={(e) => setSettings({...settings, company_name: e.target.value})} /></div>
+              <div><label className={labelCls}>ΑΦΜ</label><input className={inputCls} value={settings.vat_number} onChange={(e) => setSettings({...settings, vat_number: e.target.value})} placeholder="Εισάγετε ΑΦΜ" /></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div><label className={labelCls}>ΔΟΥ</label><input className={inputCls} value={settings.tax_office} onChange={(e) => setSettings({...settings, tax_office: e.target.value})} placeholder="Εισάγετε ΔΟΥ" /></div>
+              <div><label className={labelCls}>Διεύθυνση</label><input className={inputCls} value={settings.address} onChange={(e) => setSettings({...settings, address: e.target.value})} placeholder="Εισάγετε διεύθυνση" /></div>
+            </div>
+            <div><label className={labelCls}>IBAN Τράπεζας</label><input className={inputCls} value={settings.bank_iban} onChange={(e) => setSettings({...settings, bank_iban: e.target.value})} placeholder="GR00 0000 0000 0000 0000 0000 000" /></div>
+          </>
+        )}
+
+        {settingsTab === "integrations" && (
+          <>
+            <h3 className="text-lg font-bold text-slate-900">Διασυνδέσεις & Ειδοποιήσεις</h3>
+            <div><label className={labelCls}>Slack Webhook URL</label><input className={inputCls} value={settings.slack_webhook_url} onChange={(e) => setSettings({...settings, slack_webhook_url: e.target.value})} placeholder="https://hooks.slack.com/services/..." /></div>
+            <div><label className={labelCls}>Email Ειδοποιήσεων (Resend)</label><input className={inputCls} type="email" value={settings.notify_email} onChange={(e) => setSettings({...settings, notify_email: e.target.value})} /></div>
+            <div><label className={labelCls}>Google Analytics ID</label><input className={inputCls} value={settings.ga_measurement_id} onChange={(e) => setSettings({...settings, ga_measurement_id: e.target.value})} placeholder="G-XXXXXXXXXX" /></div>
+          </>
+        )}
+
+        {settingsTab === "crm_ai" && (
+          <>
+            <h3 className="text-lg font-bold text-slate-900">CRM & AI Προτιμήσεις</h3>
+            <div>
+              <label className={labelCls}>AI System Prompt</label>
+              <textarea rows={6} className={inputCls + " resize-none"} value={settings.ai_system_prompt} onChange={(e) => setSettings({...settings, ai_system_prompt: e.target.value})} />
+            </div>
+            <div>
+              <label className={labelCls}>Pipeline Stages</label>
+              <div className="flex flex-wrap gap-2">
+                {settings.pipeline_stages.map((stage, i) => (
+                  <div key={i} className="flex items-center gap-1 bg-slate-100 rounded-lg px-3 py-1.5">
+                    <input className="bg-transparent text-sm text-slate-700 outline-none w-28" value={stage} onChange={(e) => { const s = [...settings.pipeline_stages]; s[i] = e.target.value; setSettings({...settings, pipeline_stages: s}); }} />
+                    <button onClick={() => setSettings({...settings, pipeline_stages: settings.pipeline_stages.filter((_, j) => j !== i)})} className="text-red-400 hover:text-red-600 text-xs">×</button>
+                  </div>
+                ))}
+                <button onClick={() => setSettings({...settings, pipeline_stages: [...settings.pipeline_stages, "New Stage"]})} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">+ Add Stage</button>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="flex items-center gap-4 pt-4 border-t border-slate-200/60">
+          <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50">
+            {saving ? "Saving..." : "Save Settings"}
+          </button>
+          {saveMsg && <span className="text-sm text-green-600 font-medium">{saveMsg}</span>}
+        </div>
+      </div>
     </div>
   );
 }
