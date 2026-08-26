@@ -53,6 +53,7 @@ export default function Home() {
             <Link href="#services" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.services}</Link>
             <Link href="#projects" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.projects}</Link>
             <Link href="#contact" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.contact}</Link>
+            <Link href="/contact" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.contact}</Link>
             <Link href="/builder" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">Builder</Link>
             <LanguageSwitcher />
             <Link href="/chat" className="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-brand-500/25 text-sm">{t.nav.launchAtlas}</Link>
