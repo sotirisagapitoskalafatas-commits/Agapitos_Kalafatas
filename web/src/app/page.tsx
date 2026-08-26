@@ -6,7 +6,6 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Scene3D from "@/components/Scene3D";
 import Navbar from "@/components/Navbar";
-import WebServicesSection from "@/components/WebServicesSection";
 import { ServiceGrid } from "@/components/ServiceGrid";
 import { SectorGrid } from "@/components/SectorGrid";
 import { FaqSection } from "@/components/FaqSection";
@@ -97,7 +96,6 @@ export default function Home() {
               <div className="space-y-5 text-slate-500 leading-relaxed">
                 <p><strong className="text-slate-900">Founder & Chief SaaS Architect</strong> — {t.about.p1}</p>
                 <p>{t.about.p2}</p>
-                <p>{t.about.p3.split("RED-AI")[0]}<strong className="text-brand-500">RED-AI</strong>{t.about.p3.split("RED-AI")[1]}</p>
               </div>
               <div className="mt-10 flex gap-4">
                 <a href="https://linkedin.com/in/agapitos-kalafatas-red-ai" target="_blank" rel="noopener noreferrer" className="glass hover:bg-white/40 border border-slate-200 text-slate-700 px-6 py-3 rounded-xl font-medium transition-all">{t.about.linkedin}</a>
@@ -120,9 +118,6 @@ export default function Home() {
       <div id="services">
         <ServiceGrid />
       </div>
-
-      {/* Web & Software Services */}
-      <WebServicesSection />
 
       {/* Industry Sectors */}
       <SectorGrid />

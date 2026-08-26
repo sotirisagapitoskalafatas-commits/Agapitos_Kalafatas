@@ -10,10 +10,10 @@
     "insurance": "Insurance"
   },
   "hero": {
-    "badge": "AI & Futuristic Innovation Hub",
+    "badge": "Real-Time Artificial Intelligence",
     "title1": "AGAPITOS",
     "title2": "KALAFATAS",
-    "subtitle": "Full-Stack SaaS Architect & Digital Operations Strategist. Building the future with AI-powered platforms and intelligent systems.",
+    "subtitle": "Full-Stack SaaS Architect & Digital Transformation Consultant. We design the future through AI-driven platforms and intelligent systems.",
     "cta1": "Start a Conversation",
     "cta2": "Connect on LinkedIn",
     "aiPowered": "AI-Powered",
@@ -23,10 +23,10 @@
   },
   "about": {
     "badge": "Vision & Mission",
-    "title": "Architecting the Future of AI",
-    "p1": "Founder & Chief SaaS Architect at Agapitos Kalafatas — 12+ years of building and scaling digital products that transform industries.",
-    "p2": "With 16+ years of total professional experience, I architect and develop comprehensive B2B SaaS platforms from concept to production.",
-    "p3": "Currently building RED-AI, an intelligence layer that aggregates and analyzes real estate data from 50+ international portals across 30+ countries to provide predictive market insights.",
+    "title": "Visionary & Architect of AI's Future",
+    "p1": "Founder & Chief SaaS Architect at Agapitos Kalafatas Innovation Hub.",
+    "p2": "With over 16 years of professional experience, I specialize in designing and developing scalable B2B SaaS platforms — from initial concept to final production. My goal is to create digital products that transform entire industries.",
+    "p3": "",
     "linkedin": "LinkedIn Profile",
     "countries": "Countries covered by RED-AI intelligence"
   },
@@ -39,31 +39,30 @@
       { "title": "Full-Stack SaaS & Web Apps", "desc": "Complete platform engineering — CRM, portals, and custom web applications built with Next.js, TypeScript, Supabase, Python." },
       { "title": "Data Intelligence", "desc": "Transform raw data into actionable insights with predictive analytics and real-time dashboards." },
       { "title": "Cloud & DevOps", "desc": "Scalable infrastructure on AWS, Azure, GCP with CI/CD and container orchestration (Kubernetes)." },
-      { "title": "High-Spec Digital Solutions", "desc": "We don't just build eshops & sites. We build profitable businesses focusing on strategy, modern UX/UI design and user experience." },
-      { "title": "Product Strategy", "desc": "From concept to market-fit. Product roadmaps, MVP design, and growth engineering." }
+      { "title": "High-Spec Digital Solutions", "desc": "We don't just build eshops & sites. We build profitable businesses focusing on strategy, modern UX/UI design and user experience." }
     ]
   },
   "projects": {
     "badge": "Portfolio",
-    "title": "AI Projects",
-    "subtitle": "Showcasing intelligent systems that push the boundaries of what's possible with AI and full-stack engineering.",
+    "title": "AI & Tech Projects",
+    "subtitle": "Showcasing intelligent systems that push the boundaries of technology, combining Artificial Intelligence algorithms and Full-Stack architecture design.",
     "items": [
-      { "title": "Smart City Integration", "desc": "AI-powered urban infrastructure seamlessly blended with nature. Real-time data analytics optimize energy, traffic, and sustainability across connected city networks.", "tag": "AI Infrastructure" },
-      { "title": "Global Intelligence Network", "desc": "Holographic data visualization connecting intelligence hubs across Europe. Neural pathways of information flowing through secure, quantum-encrypted channels.", "tag": "Neural Networks" },
-      { "title": "Research & Innovation Lab", "desc": "Next-generation R&D facility overlooking the Mediterranean. Where breakthrough algorithms meet quantum computing to solve tomorrow's challenges.", "tag": "R&D" },
-      { "title": "Analytics Dashboard", "desc": "Ultra-modern digital interface displaying real-time AI analytics with depth-of-field parallax. Predictive insights rendered in beautiful 3D visualizations.", "tag": "Data Visualization" }
+      { "title": "Smart City AI Infrastructure", "desc": "AI-enhanced urban infrastructure in full harmony with the environment. We leverage real-time data to optimize energy consumption, traffic, and sustainability.", "tag": "Smart City AI" },
+      { "title": "Global Data Network (Neural Network)", "desc": "Connecting information nodes across Europe. We create neural \"data highways\" ensuring lightning-fast knowledge transfer.", "tag": "Neural Networks" },
+      { "title": "Research & Innovation Lab (R&D)", "desc": "A next-generation research center on the Athens Riviera, where advanced algorithms meet the principles of quantum computing.", "tag": "R&D" },
+      { "title": "Real-Time Data Analytics Dashboard", "desc": "State-of-the-art digital dashboards delivering large-scale data analytics in real-time, combined with stunning 3D visualizations.", "tag": "Data Visualization" }
     ]
   },
   "hub": {
     "badge": "Collaboration",
     "title": "The Innovation Hub",
-    "p1": "Where brilliant minds converge to architect the next generation of AI-powered solutions. Our collaboration hub brings together expertise in machine learning, full-stack engineering, and strategic product design.",
-    "p2": "From concept brainstorming to production deployment, every project benefits from cross-disciplinary thinking and relentless iteration."
+    "p1": "Where top professionals collaborate to design the next generation of AI solutions.",
+    "p2": "From initial concept to final deployment, every project is characterized by cross-disciplinary approach and continuous evolution."
   },
   "aiSolutions": {
     "badge": "AI Solutions",
-    "title": "Neural Innovations",
-    "desc": "Leveraging cutting-edge neural networks, global connectivity models, and quantum-inspired algorithms to solve complex business challenges at unprecedented scale.",
+    "title": "Deep Learning & Artificial Intelligence",
+    "desc": "Using advanced machine learning models and neural networks to solve extremely complex business challenges.",
     "stats": [
       { "value": "Deep Learning", "label": "Neural Networks" },
       { "value": "30+ Countries", "label": "Global Scale" },
@@ -78,8 +77,8 @@
   },
   "contact": {
     "badge": "Get In Touch",
-    "title": "Let's Build Together",
-    "desc": "Ready to transform your business with AI? Let's discuss how intelligent systems can drive your next breakthrough.",
+    "title": "Let's Build the Future Together",
+    "desc": "Ready to digitally transform your business? Contact us to discuss how our intelligent AI systems can become the core of your next upgrade.",
     "linkedin": "LinkedIn",
     "linkedinDesc": "Connect professionally",
     "atlas": "Atlas AI Agent",

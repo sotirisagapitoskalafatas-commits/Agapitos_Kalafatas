@@ -10,10 +10,10 @@
     "insurance": "Assurance"
   },
   "hero": {
-    "badge": "AI & Hub d'Innovation Futuriste",
+    "badge": "Intelligence Artificielle en Temps Réel",
     "title1": "AGAPITOS",
     "title2": "KALAFATAS",
-    "subtitle": "Architecte SaaS Full-Stack & Stratégie des Opérations Numériques. Construire l'avenir avec des plateformes IA et des systèmes intelligents.",
+    "subtitle": "Architecte SaaS Full-Stack & Consultant en Transformation Numérique. Nous concevons l'avenir grâce à des plateformes IA et des systèmes intelligents.",
     "cta1": "Démarrer une Conversation",
     "cta2": "Se connecter sur LinkedIn",
     "aiPowered": "Alimenté par IA",
@@ -23,10 +23,10 @@
   },
   "about": {
     "badge": "Vision & Mission",
-    "title": "Architecturer l'avenir de l'IA",
-    "p1": "Fondateur & Architecte SaaS en chef chez Agapitos Kalafatas — plus de 12 ans à créer et développer des produits numériques transformatifs.",
-    "p2": "Avec plus de 16 ans d'expérience professionnelle, je conçois et développe des plateformes B2B SaaS complètes du concept à la production.",
-    "p3": "En train de construire RED-AI, une couche d'intelligence qui agrège et analyse les données immobilières de plus de 50 portails internationaux dans 30+ pays.",
+    "title": "Visionnaire & Architecte de l'Avenir de l'IA",
+    "p1": "Fondateur & Architecte SaaS en chef chez Agapitos Kalafatas Innovation Hub.",
+    "p2": "Avec plus de 16 ans d'expérience professionnelle, je me spécialise dans la conception et le développement de plateformes B2B SaaS évolutives — du concept initial à la production finale. Mon objectif est de créer des produits numériques qui transforment des secteurs entiers.",
+    "p3": "",
     "linkedin": "Profil LinkedIn",
     "countries": "Pays couverts par l'intelligence RED-AI"
   },
@@ -39,31 +39,30 @@
       { "title": "Full-Stack SaaS & Web Apps", "desc": "Ingénierie complète de plateformes — CRM, portails et applications web sur mesure avec Next.js, TypeScript, Supabase, Python." },
       { "title": "Intelligence des Données", "desc": "Transformer les données brutes en informations exploitables avec l'analyse prédictive et les tableaux de bord en temps réel." },
       { "title": "Cloud & DevOps", "desc": "Infrastructure évolutive sur AWS, Azure, GCP avec CI/CD et orchestration de conteneurs (Kubernetes)." },
-      { "title": "Solutions Numériques Haute Spéc", "desc": "Nous ne construisons pas seulement des eshops et sites. Nous créons des entreprises rentables en misant sur la stratégie, le design UX/UI moderne et l'expérience utilisateur." },
-      { "title": "Stratégie Produit", "desc": "Du concept au product-market fit. Feuilles de route, design MVP et ingénierie de la croissance." }
+      { "title": "Solutions Numériques Haute Spéc", "desc": "Nous ne construisons pas seulement des eshops et sites. Nous créons des entreprises rentables en misant sur la stratégie, le design UX/UI moderne et l'expérience utilisateur." }
     ]
   },
   "projects": {
     "badge": "Portfolio",
-    "title": "Projets AI",
-    "subtitle": "Systèmes intelligents qui repoussent les limites du possible avec l'IA et l'ingénierie full-stack.",
+    "title": "Projets AI & Tech",
+    "subtitle": "Systèmes intelligents qui repoussent les limites de la technologie, combinant algorithmes d'Intelligence Artificielle et conception architecturale Full-Stack.",
     "items": [
-      { "title": "Intégration Ville Intelligente", "desc": "Infrastructure urbaine alimentée par l'IA en parfaite harmonie avec la nature. Données en temps réel pour l'énergie et la durabilité.", "tag": "Infrastructure AI" },
-      { "title": "Réseau d'Intelligence Mondial", "desc": "Visualisation holographique connectant les centres d'intelligence à travers l'Europe. Voies neurales de l'information.", "tag": "Réseaux Neuronaux" },
-      { "title": "Labo R&D & Innovation", "desc": "Installation R&D de nouvelle génération surplombant la Méditerranée. Algorithmes rencontre quantique.", "tag": "R&D" },
-      { "title": "Tableau de Bord Analytique", "desc": "Interface numérique ultra-moderne avec analyses IA en temps réel et visualisations 3D.", "tag": "Visualisation de Données" }
+      { "title": "Infrastructure Ville Intelligente (Smart City)", "desc": "Infrastructure urbaine enrichie par l'IA en pleine harmonie avec l'environnement. Nous exploitons les données en temps réel pour optimiser la consommation d'énergie, la circulation et la durabilité.", "tag": "Smart City AI" },
+      { "title": "Réseau Mondial de Données (Neural Network)", "desc": "Connexion des nœuds d'information à travers l'Europe. Nous créons des \"autoroutes de données\" neurales garantissant un transfert de connaissances fulgurant.", "tag": "Réseaux Neuronaux" },
+      { "title": "Laboratoire R&D & Innovation", "desc": "Un centre de recherche de nouvelle génération sur la Riviera d'Athènes, où les algorithmes avancés rencontrent les principes de l'informatique quantique.", "tag": "R&D" },
+      { "title": "Tableau de Bord d'Analyse en Temps Réel", "desc": "Tableaux de bord numériques de pointe offrant une analyse de données à grande échelle en temps réel, combinées à de superbes visualisations 3D.", "tag": "Visualisation de Données" }
     ]
   },
   "hub": {
     "badge": "Collaboration",
     "title": "Le Hub d'Innovation",
-    "p1": "Là où les esprits brillants convergent pour architecturer la prochaine génération de solutions IA.",
-    "p2": "Du brainstorming au déploiement, chaque projet bénéficie d'une pensée interdisciplinaire et d'une itération incessante."
+    "p1": "Là où les meilleurs professionnels collaborent pour concevoir la prochaine génération de solutions IA.",
+    "p2": "Du concept initial au déploiement final, chaque projet se caractérise par une approche interdisciplinaire et une évolution continue."
   },
   "aiSolutions": {
     "badge": "Solutions AI",
-    "title": "Innovations Neurales",
-    "desc": "Réseaux neuronaux de pointe et algorithmes quantiques pour résoudre les défis commerciaux complexes à une échelle sans précédent.",
+    "title": "Deep Learning & Intelligence Artificielle",
+    "desc": "Utilisation de modèles avancés d'apprentissage automatique et de réseaux neuronaux pour résoudre des défis commerciaux extrêmement complexes.",
     "stats": [
       { "value": "Deep Learning", "label": "Réseaux Neuronaux" },
       { "value": "30+ Pays", "label": "Échelle Mondiale" },
@@ -78,8 +77,8 @@
   },
   "contact": {
     "badge": "Contactez-nous",
-    "title": "Construisons Ensemble",
-    "desc": "Prêt à transformer votre entreprise avec l'IA ? Discutons de comment les systèmes intelligents peuvent piloter votre prochaine percée.",
+    "title": "Construisons l'Avenir Ensemble",
+    "desc": "Prêt à transformer numériquement votre entreprise ? Contactez-nous pour discuter de la façon dont nos systèmes intelligents d'IA peuvent devenir le cœur de votre prochaine mise à niveau.",
     "linkedin": "LinkedIn",
     "linkedinDesc": "Connexion professionnelle",
     "atlas": "Agent Atlas AI",
