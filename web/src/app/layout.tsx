@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import AtlasAgenticWidget from "@/components/AtlasAgenticWidget";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "Agapitos Kalafatas | AI & Innovation Hub",
@@ -32,6 +33,7 @@ export default function RootLayout({
           </SmoothScroll>
           <AtlasAgenticWidget />
         </LanguageProvider>
+        <Analytics />
       </body>
     </html>
   );
