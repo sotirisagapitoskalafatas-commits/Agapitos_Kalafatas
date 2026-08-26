@@ -5,7 +5,7 @@ import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Scene3D from "@/components/Scene3D";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
+import Navbar from "@/components/Navbar";
 import WebServicesSection from "@/components/WebServicesSection";
 import { ServiceGrid } from "@/components/ServiceGrid";
 import { SectorGrid } from "@/components/SectorGrid";
@@ -40,25 +40,7 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-40 glass-strong">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-brand-500 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">A</span>
-            </div>
-            <span className="text-xl font-bold text-slate-900">Agapitos Kalafatas</span>
-          </div>
-          <div className="hidden md:flex items-center gap-6">
-            <Link href="#about" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.about}</Link>
-            <Link href="#services" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.services}</Link>
-            <Link href="#projects" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.projects}</Link>
-            <Link href="/contact" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.contact}</Link>
-            <Link href="/builder" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">Builder</Link>
-            <LanguageSwitcher />
-            <Link href="/chat" className="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-brand-500/25 text-sm">{t.nav.launchAtlas}</Link>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero */}
       <section ref={heroRef} className="relative min-h-screen flex items-center overflow-hidden">

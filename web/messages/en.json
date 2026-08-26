@@ -5,7 +5,9 @@
     "projects": "Projects",
     "contact": "Contact",
     "launchAtlas": "Launch Atlas AI",
-    "home": "Home"
+    "home": "Home",
+    "energy": "Energy",
+    "insurance": "Insurance"
   },
   "hero": {
     "badge": "AI & Futuristic Innovation Hub",
