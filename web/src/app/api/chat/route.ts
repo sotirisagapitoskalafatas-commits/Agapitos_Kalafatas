@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { retrieveKnowledge } from "@/lib/rag";
+import { getMarketingSystemPrompt } from "@/lib/marketingInjector";
 import { Resend } from "resend";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -197,7 +198,7 @@ RULES:
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, history, locale } = await request.json();
+    const { message, history, locale, page } = await request.json();
 
     if (!GEMINI_API_KEY) {
       return NextResponse.json(
@@ -215,6 +216,11 @@ export async function POST(request: NextRequest) {
       locale && langMap[locale]
         ? `\n\nIMPORTANT: The user's language is set to ${langMap[locale]}. Respond entirely in ${langMap[locale]}.`
         : "";
+
+    // Inject marketing context when on /marketing page
+    const marketingContext = page === "marketing"
+      ? `\n\n${getMarketingSystemPrompt()}\n\nYou are currently in Marketing mode. Apply the marketing frameworks above to all responses.`
+      : "";
 
     // Build conversation history
     const contents: any[] = [];
@@ -241,7 +247,7 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             contents,
             systemInstruction: {
-              parts: [{ text: SYSTEM_PROMPT + langInstruction }],
+              parts: [{ text: SYSTEM_PROMPT + langInstruction + marketingContext }],
             },
             tools: GEMINI_TOOLS,
             generationConfig: {
