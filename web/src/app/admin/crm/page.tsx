@@ -107,7 +107,7 @@ interface DashboardData {
   recentActivity: { id: string; entity_type: string; action: string; details: any; created_at: string }[];
 }
 
-type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics" | "notifications";
+type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics" | "notifications" | "settings";
 
 const STAGES = [
   { key: "lead", label: "Lead", color: "bg-slate-100 border-slate-300" },
@@ -286,6 +286,7 @@ export default function CRMDashboard() {
             { key: "invoices" as Tab, label: "Invoices", icon: " " },
             { key: "analytics" as Tab, label: "Analytics", icon: " " },
             { key: "notifications" as Tab, label: "Notifications", icon: " " },
+            { key: "settings" as Tab, label: "Settings", icon: "⚙️" },
           ]).map((item) => (
             <button
               key={item.key}
@@ -340,6 +341,7 @@ export default function CRMDashboard() {
             {tab === "invoices" && <InvoicesView invoices={invoices} onNew={() => setShowNewInvoice(true)} />}
             {tab === "analytics" && <AnalyticsView dashboard={dashboard} leads={leads} deals={deals} invoices={invoices} formatCurrency={formatCurrency} />}
             {tab === "notifications" && <NotificationsView notifications={notifications} onRefresh={fetchAll} />}
+            {tab === "settings" && <SettingsView />}
           </>
         )}
       </div>
@@ -823,6 +825,11 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <a href="/admin/analytics" className="text-sm bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 font-semibold px-5 py-2.5 rounded-xl transition-all border border-indigo-500/20">
+           Full Analytics →
+        </a>
+      </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-6">
           <h3 className="text-sm font-bold text-white mb-4">Lead Sources by Service</h3>
@@ -1323,6 +1330,19 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function SettingsView() {
+  return (
+    <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6">
+      <p className="text-slate-600 text-sm">
+        Settings are managed on the dedicated{" "}
+        <a href="/admin/settings" className="text-indigo-600 hover:underline font-medium">
+          Settings page
+        </a>.
+      </p>
     </div>
   );
 }
