@@ -1,6 +1,5 @@
 "use client";
 
-import { use } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
@@ -19,11 +18,11 @@ import {
 import { servicesData, servicesList } from "@/lib/servicesData";
 
 interface PageProps {
-  params: Promise<{ slug: string }>;
+  params: { slug: string };
 }
 
 export default function ServiceDetailPage({ params }: PageProps) {
-  const { slug } = use(params);
+  const { slug } = params;
   const service = servicesData[slug];
 
   if (!service) {

@@ -300,12 +300,12 @@ export default function InsurancePage() {
               <span className="text-white font-bold text-2xl">AK</span>
             </div>
             <div className="text-center md:text-left flex-1">
-              <h3 className="text-xl font-bold text-slate-900">Agapitos Kalafatas</h3>
+              <h3 className="text-xl font-bold text-slate-900">Αγαπητός Καλαφάτας</h3>
               <p className="text-rose-600 font-medium text-sm mb-3">
                 Ασφαλιστική Σύμβουλος | Digital & Advisory Services
               </p>
               <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                Από το 2007 βρίσκομαι δίπλα στους ανθρώπους που με εμπιστεύονται, προσφέροντας προσωπική και ουσιαστική ασφαλιστική καθοδήγηση. Στόχος μου είναι να κάνω την ασφάλιση απλή, κατανοητή και ανθρώπινη.
+                Από το 2019 βρίσκομαι δίπλα στους ανθρώπους που με εμπιστεύονται, προσφέροντας προσωπική και ουσιαστική ασφαλιστική καθοδήγηση. Στόχος μου είναι να κάνω την ασφάλιση απλή, κατανοητή και ανθρώπινη.
               </p>
               <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                 <a
@@ -341,7 +341,7 @@ export default function InsurancePage() {
             <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">A</span>
             </div>
-            <span className="font-semibold text-white">Agapitos Kalafatas</span>
+            <span className="font-semibold text-white">Αγαπητός Καλαφάτας</span>
           </div>
           <div className="flex items-center gap-6 text-xs text-slate-400">
             <Link href="/" className="hover:text-white transition-colors">Αρχική</Link>
