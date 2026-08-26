@@ -150,6 +150,7 @@ export default function CRMDashboard() {
   const [showNewEvent, setShowNewEvent] = useState(false);
   const [showNewComm, setShowNewComm] = useState(false);
   const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -263,7 +264,7 @@ export default function CRMDashboard() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-100 to-slate-100 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white/60 backdrop-blur-xl border-r border-white/50 shadow-xl shadow-slate-200/40 flex flex-col fixed h-full z-30">
+      <aside className={`w-64 bg-white/60 backdrop-blur-xl border-r border-white/50 shadow-xl shadow-slate-200/40 flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:sticky md:top-0`}>
         <div className="p-6 border-b border-slate-200/60">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
@@ -290,7 +291,7 @@ export default function CRMDashboard() {
           ]).map((item) => (
             <button
               key={item.key}
-              onClick={() => setTab(item.key)}
+              onClick={() => { setTab(item.key); setSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 tab === item.key
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
@@ -313,9 +314,17 @@ export default function CRMDashboard() {
         </div>
       </aside>
 
+      {/* Mobile Sidebar Overlay */}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
+
       {/* Main Content */}
-      <div className="flex-1 ml-64 p-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="flex-1 md:ml-64 ml-0 p-8">
+        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white/80 backdrop-blur-md rounded-xl shadow-lg border border-slate-200/80">
+          <svg className="w-6 h-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {sidebarOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
+          </svg>
+        </button>
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-2 md:gap-0">
           <div>
             <h2 className="text-2xl font-bold text-slate-900 capitalize">{tab}</h2>
             <p className="text-sm text-slate-500 mt-1">
@@ -896,6 +905,33 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
 
 /* ─── LEAD DRAWER ─── */
 function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; onClose: () => void; updateStatus: (id: string, s: string) => void; updateNotes: (id: string, n: string) => void }) {
+  const [leadDocuments, setLeadDocuments] = useState<{name: string; url: string; path: string}[]>([]);
+
+  useEffect(() => {
+    if (lead?.id) {
+      fetch(`/api/documents?lead_id=${lead.id}`)
+        .then(r => r.json())
+        .then(data => setLeadDocuments(data.documents || []))
+        .catch(() => {});
+    }
+  }, [lead?.id]);
+
+  const uploadDocument = async (leadId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("lead_id", leadId);
+    const res = await fetch("/api/documents", { method: "POST", body: formData });
+    if (res.ok) {
+      const data = await res.json();
+      setLeadDocuments(prev => [...prev, data.document]);
+    }
+  };
+
+  const deleteDocument = async (doc: {path: string}) => {
+    await fetch("/api/documents", { method: "DELETE", headers: {"Content-Type": "application/json"}, body: JSON.stringify({path: doc.path}) });
+    setLeadDocuments(prev => prev.filter(d => d.path !== doc.path));
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-end z-50" onClick={onClose}>
       <div className="bg-white/60 backdrop-blur-xl w-full max-w-xl h-full shadow-2xl overflow-y-auto border-l border-slate-200/60" onClick={(e) => e.stopPropagation()}>
@@ -964,6 +1000,55 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
               onBlur={(e) => updateNotes(lead.id, e.target.value)}
             />
           </div>
+
+          {/* Document Vault */}
+          <div className="border-t border-slate-200/60 pt-4">
+            <h4 className="text-sm font-bold text-slate-900 mb-3">  Documents</h4>
+            <div 
+              className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-300 transition-colors cursor-pointer"
+              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+              onDrop={async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const files = Array.from(e.dataTransfer.files);
+                for (const file of files) {
+                  await uploadDocument(lead.id, file);
+                }
+              }}
+              onClick={() => document.getElementById(`doc-upload-${lead.id}`)?.click()}
+            >
+              <input 
+                type="file" 
+                id={`doc-upload-${lead.id}`}
+                multiple 
+                className="hidden"
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files || []);
+                  for (const file of files) {
+                    await uploadDocument(lead.id, file);
+                  }
+                }}
+              />
+              <div className="text-2xl mb-1"> </div>
+              <p className="text-xs text-slate-500">Drag & drop or click to upload</p>
+              <p className="text-[10px] text-slate-400">PDF, JPG, PNG, DOC up to 25MB</p>
+            </div>
+            
+            {/* Uploaded files list */}
+            {leadDocuments.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {leadDocuments.map((doc, i) => (
+                  <div key={i} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                    <span className="text-xs text-slate-600 truncate">{doc.name}</span>
+                    <div className="flex gap-2">
+                      <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline">View</a>
+                      <button onClick={() => deleteDocument(doc)} className="text-xs text-red-400 hover:text-red-600">×</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -985,7 +1070,7 @@ function NewDealModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-6">New Deal</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -1033,7 +1118,7 @@ function NewEventModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: ()
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-6">New Event</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -1093,7 +1178,7 @@ function NewCommModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-6">Log Communication</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -1164,7 +1249,7 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,42rem)] max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-6">New Quote / Invoice</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">

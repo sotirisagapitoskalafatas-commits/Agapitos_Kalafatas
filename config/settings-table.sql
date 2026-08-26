@@ -17,3 +17,10 @@ CREATE TABLE IF NOT EXISTS system_settings (
 
 INSERT INTO system_settings (id) VALUES ('default')
 ON CONFLICT (id) DO NOTHING;
+
+-- RLS policies
+ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anon full access on system_settings"
+  ON system_settings FOR ALL
+  USING (true) WITH CHECK (true);
