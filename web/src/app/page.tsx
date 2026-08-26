@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Scene3D from "@/components/Scene3D";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import WebServicesSection from "@/components/WebServicesSection";
+import AtlasAgenticWidget from "@/components/AtlasAgenticWidget";
 import { useLocale } from "@/contexts/LanguageContext";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -53,7 +54,6 @@ export default function Home() {
             <Link href="#about" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.about}</Link>
             <Link href="#services" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.services}</Link>
             <Link href="#projects" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.projects}</Link>
-            <Link href="#contact" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.contact}</Link>
             <Link href="/contact" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">{t.nav.contact}</Link>
             <Link href="/builder" className="text-slate-500 hover:text-slate-900 transition-colors text-sm font-medium">Builder</Link>
             <LanguageSwitcher />
@@ -286,11 +286,14 @@ export default function Home() {
             <Link href="/visualizer" className="hover:text-slate-900 transition-colors">Visualizer</Link>
             <Link href="/memory" className="hover:text-slate-900 transition-colors">Memory</Link>
             <Link href="/marketing" className="hover:text-slate-900 transition-colors">Marketing</Link>
-            <Link href="/admin/leads" className="hover:text-slate-900 transition-colors">CRM</Link>
+            <Link href="/admin/crm" className="hover:text-slate-900 transition-colors">CRM</Link>
           </div>
           <p className="text-xs text-slate-400">{t.footer.rights}</p>
         </div>
       </footer>
+
+      {/* Floating Agentic RAG Widget */}
+      <AtlasAgenticWidget />
     </main>
   );
 }
