@@ -302,6 +302,13 @@ export default function CRMDashboard() {
               {item.label}
             </button>
           ))}
+          <a
+            href="/admin/agent"
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-indigo-500/10 transition-all"
+          >
+            <span className="text-base">🤖</span>
+            AI Agent
+          </a>
         </nav>
 
         <div className="p-3 border-t border-slate-200/60">
