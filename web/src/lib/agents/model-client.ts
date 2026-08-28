@@ -189,21 +189,35 @@ async function callOpenAICompatible(
   return { content: msg.content, toolCalls };
 }
 
-export function getModelClient(): ModelClient {
+export function getModelClient(tier: "small" | "medium" | "large" = "medium"): ModelClient {
   const provider = (process.env.LLM_PROVIDER || "gemini").toLowerCase();
 
   if (provider === "opencodeai" || provider === "openai" || provider === "ollama" || provider === "vllm") {
+    // Model cascade: pick the tier-appropriate self-hosted model
+    // Defaults can be overridden per tier via env:
+    //   LLM_MODEL_SMALL / LLM_MODEL_MEDIUM / LLM_MODEL_LARGE
+    const tierModel =
+      process.env[`LLM_MODEL_${tier.toUpperCase()}`] ||
+      process.env.LLM_MODEL ||
+      "Qwen/Qwen2.5-1.5B-Instruct";
     return {
       provider,
-      model: process.env.LLM_MODEL || "Qwen/Qwen2.5-1.5B-Instruct",
-      chat: (messages, tools) =>
-        callOpenAICompatible(messages, tools, process.env.LLM_MODEL || "Qwen/Qwen2.5-1.5B-Instruct"),
+      model: tierModel,
+      chat: (messages, tools) => callOpenAICompatible(messages, tools, tierModel),
     };
   }
 
+  // Gemini default. Optionally map tiers to a cheaper/faster model.
+  const tierModel =
+    tier === "large"
+      ? process.env.GEMINI_MODEL_LARGE || GEMINI_MODEL
+      : tier === "small"
+      ? process.env.GEMINI_MODEL_SMALL || GEMINI_MODEL
+      : GEMINI_MODEL;
+
   return {
     provider: "gemini",
-    model: GEMINI_MODEL,
-    chat: (messages, tools) => callGemini(messages, tools, GEMINI_MODEL),
+    model: tierModel,
+    chat: (messages, tools) => callGemini(messages, tools, tierModel),
   };
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 interface StepCall {
   agent: string;
@@ -34,7 +34,16 @@ export default function AgentPage() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [loading, setLoading] = useState(false);
   const [showActivity, setShowActivity] = useState(true);
+  const [approvals, setApprovals] = useState<any[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const fetchApprovals = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agent/approvals");
+      const data = await res.json();
+      if (data.approvals) setApprovals(data.approvals);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (typeof window !== "undefined" && localStorage.getItem("crm_token")) {
@@ -55,6 +64,21 @@ export default function AgentPage() {
     } else {
       setLoginError("Invalid credentials");
     }
+  };
+
+  useEffect(() => {
+    if (isLoggedIn) fetchApprovals();
+  }, [isLoggedIn, fetchApprovals]);
+
+  const decide = async (approvalId: string, decision: "approved" | "rejected") => {
+    try {
+      await fetch("/api/agent/approvals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ approvalId, decision, decidedBy: "admin" }),
+      });
+      fetchApprovals();
+    } catch {}
   };
 
   const send = async () => {
@@ -265,6 +289,48 @@ export default function AgentPage() {
         {showActivity && (
           <aside className="w-full md:w-72 bg-white/50 backdrop-blur-md border-t md:border-t-0 md:border-l border-slate-200/70 overflow-y-auto hidden md:block">
             <div className="p-4">
+              {/* Pending Approvals */}
+              <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">
+                Pending Approvals{" "}
+                {approvals.length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-full">
+                    {approvals.length}
+                  </span>
+                )}
+              </h2>
+
+              {approvals.length === 0 ? (
+                <p className="text-xs text-slate-400 mb-4">No actions awaiting approval.</p>
+              ) : (
+                <ul className="space-y-2 mb-4">
+                  {approvals.map((a) => (
+                    <li key={a.id} className="bg-white/80 border border-amber-200 rounded-xl p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">
+                          {a.action_type}
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">{a.idempotency_key.slice(0, 8)}</span>
+                      </div>
+                      <p className="text-xs font-semibold text-slate-800 mt-1">{a.summary}</p>
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={() => decide(a.id, "approved")}
+                          className="flex-1 px-2 py-1 text-[11px] font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => decide(a.id, "rejected")}
+                          className="flex-1 px-2 py-1 text-[11px] font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Agent Registry</h2>
               <ul className="space-y-2">
                 {[
@@ -273,6 +339,10 @@ export default function AgentPage() {
                   ["insurance", "Insurance", "Life, health, car, property"],
                   ["leadcrm", "Lead & CRM", "Leads, deals, pipeline, invoices"],
                   ["analytics", "Business Intel", "Pipeline metrics, forecasts"],
+                  ["comms", "Communications", "Email & comm log"],
+                  ["tasks", "Tasks", "To-dos & reminders"],
+                  ["documents", "Documents", "Client document vault"],
+                  ["operations", "Operations", "Adds leads/deals/events"],
                   ["general", "General Knowledge", "Company knowledge base"],
                 ].map(([id, name, desc]) => (
                   <li key={id} className="bg-white/80 border border-slate-200 rounded-xl p-3">
@@ -290,6 +360,7 @@ export default function AgentPage() {
                 <p>1. <b>Router</b> — routes to agent (small)</p>
                 <p>2. <b>Specialist</b> — agent runs tools</p>
                 <p>3. <b>Tier</b> — complexity &amp; risk gating</p>
+                <p className="text-amber-600"><b>Writes</b> — proposed → approved → executed</p>
               </div>
             </div>
           </aside>

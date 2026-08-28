@@ -122,3 +122,53 @@ export async function getInvoices(
   if (error) return { error: error.message };
   return { results: data || [] };
 }
+
+// ── Tasks / Communications / Documents read tools (non-vector) ──
+export async function getTasks(
+  context: AgentContext,
+  args: { status?: string; assignee?: string; limit?: number }
+): Promise<any> {
+  const limit = Math.min(Number(args.limit) || 10, 30);
+  let q = supabase
+    .from("tasks")
+    .select("id, title, description, status, priority, assignee, due_date, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (args.status) q = q.ilike("status", `%${args.status}%`);
+  if (args.assignee) q = q.ilike("assignee", `%${args.assignee}%`);
+
+  const { data, error } = await q;
+  if (error) return { error: error.message };
+  return { results: data || [] };
+}
+
+export async function getCommunications(
+  context: AgentContext,
+  args: { channel?: string; limit?: number }
+): Promise<any> {
+  const limit = Math.min(Number(args.limit) || 10, 30);
+  let q = supabase
+    .from("communications")
+    .select("id, lead_id, direction, channel, subject, body, sent_at")
+    .order("sent_at", { ascending: false })
+    .limit(limit);
+
+  if (args.channel) q = q.eq("channel", String(args.channel).toLowerCase());
+
+  const { data, error } = await q;
+  if (error) return { error: error.message };
+  return { results: data || [] };
+}
+
+export async function listDocuments(
+  context: AgentContext,
+  args: { limit?: number }
+): Promise<any> {
+  const limit = Math.min(Number(args.limit) || 20, 50);
+  const { data, error } = await supabase.storage
+    .from("client_documents")
+    .list("", { limit });
+  if (error) return { error: error.message };
+  return { results: data || [] };
+}

@@ -36,8 +36,8 @@ export async function orchestrate(
     // 2. Decide tier for quality/cost cascade
     const { tier } = decideTier(userInput);
 
-    // 3. Run the specialist agent
-    const agentCall = await runAgent(context, agent, userInput);
+    // 3. Run the specialist agent at the chosen tier
+    const agentCall = await runAgent(context, agent, userInput, { tier });
     steps.push(agentCall);
 
     const durationMs = Date.now() - start;

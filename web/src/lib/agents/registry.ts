@@ -42,14 +42,14 @@ export async function runAgent(
   context: AgentContext,
   def: AgentDef,
   input: string,
-  history: ChatMessage[] = []
+  opts: { history?: ChatMessage[]; tier?: "small" | "medium" | "large" } = {}
 ): Promise<AgentCall> {
-  const llm = getModelClient();
+  const llm = getModelClient(opts.tier || "medium");
   const start = Date.now();
 
   const messages: ChatMessage[] = [
     { role: "system", content: systemPrompt(def) },
-    ...history,
+    ...(opts.history || []),
     { role: "user", content: input },
   ];
 
