@@ -22,7 +22,11 @@ alter table public.agent_audit enable row level security;
 create policy "admin read own org audit"
   on public.agent_audit
   for select
-  using (organization_id = auth.jwt() ->> 'org_id'::text);
+  using (
+    organization_id = (
+      nullif(auth.jwt() ->> 'org_id', '')::uuid
+    )
+  );
 
 -- Allow inserts (service role inserts on behalf of tenant)
 create policy "insert audit"
