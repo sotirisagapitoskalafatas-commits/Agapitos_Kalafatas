@@ -35,11 +35,26 @@
     "title": "AI Innovation Services",
     "subtitle": "Comprehensive, scalable AI solutions and full-stack architecture designed for maximum performance and intelligent automation.",
     "items": [
-      { "title": "AI Architecture & Deep Learning", "desc": "End-to-end AI system design, from neural network topology to production deployment pipelines." },
-      { "title": "Full-Stack SaaS & Web Apps", "desc": "Complete platform engineering — CRM, portals, and custom web applications built with Next.js, TypeScript, Supabase, Python." },
-      { "title": "Data Intelligence", "desc": "Transform raw data into actionable insights with predictive analytics and real-time dashboards." },
-      { "title": "Cloud & DevOps", "desc": "Scalable infrastructure on AWS, Azure, GCP with CI/CD and container orchestration (Kubernetes)." },
-      { "title": "High-Spec Digital Solutions", "desc": "We don't just build eshops & sites. We build profitable businesses focusing on strategy, modern UX/UI design and user experience." }
+      {
+        "title": "AI Architecture & Deep Learning",
+        "desc": "End-to-end AI system design, from neural network topology to production deployment pipelines."
+      },
+      {
+        "title": "Full-Stack SaaS & Web Apps",
+        "desc": "Complete platform engineering — CRM, portals, and custom web applications built with Next.js, TypeScript, Supabase, Python."
+      },
+      {
+        "title": "Data Intelligence",
+        "desc": "Transform raw data into actionable insights with predictive analytics and real-time dashboards."
+      },
+      {
+        "title": "Cloud & DevOps",
+        "desc": "Scalable infrastructure on AWS, Azure, GCP with CI/CD and container orchestration (Kubernetes)."
+      },
+      {
+        "title": "High-Spec Digital Solutions",
+        "desc": "We don't just build eshops & sites. We build profitable businesses focusing on strategy, modern UX/UI design and user experience."
+      }
     ]
   },
   "projects": {
@@ -47,10 +62,26 @@
     "title": "AI & Tech Projects",
     "subtitle": "Showcasing intelligent systems that push the boundaries of technology, combining Artificial Intelligence algorithms and Full-Stack architecture design.",
     "items": [
-      { "title": "Smart City AI Infrastructure", "desc": "AI-enhanced urban infrastructure in full harmony with the environment. We leverage real-time data to optimize energy consumption, traffic, and sustainability.", "tag": "Smart City AI" },
-      { "title": "Global Data Network (Neural Network)", "desc": "Connecting information nodes across Europe. We create neural \"data highways\" ensuring lightning-fast knowledge transfer.", "tag": "Neural Networks" },
-      { "title": "Research & Innovation Lab (R&D)", "desc": "A next-generation research center on the Athens Riviera, where advanced algorithms meet the principles of quantum computing.", "tag": "R&D" },
-      { "title": "Real-Time Data Analytics Dashboard", "desc": "State-of-the-art digital dashboards delivering large-scale data analytics in real-time, combined with stunning 3D visualizations.", "tag": "Data Visualization" }
+      {
+        "title": "Smart City AI Infrastructure",
+        "desc": "AI-enhanced urban infrastructure in full harmony with the environment. We leverage real-time data to optimize energy consumption, traffic, and sustainability.",
+        "tag": "Smart City AI"
+      },
+      {
+        "title": "Global Data Network (Neural Network)",
+        "desc": "Connecting information nodes across Europe. We create neural \"data highways\" ensuring lightning-fast knowledge transfer.",
+        "tag": "Neural Networks"
+      },
+      {
+        "title": "Research & Innovation Lab (R&D)",
+        "desc": "A next-generation research center on the Athens Riviera, where advanced algorithms meet the principles of quantum computing.",
+        "tag": "R&D"
+      },
+      {
+        "title": "Real-Time Data Analytics Dashboard",
+        "desc": "State-of-the-art digital dashboards delivering large-scale data analytics in real-time, combined with stunning 3D visualizations.",
+        "tag": "Data Visualization"
+      }
     ]
   },
   "hub": {
@@ -64,10 +95,22 @@
     "title": "Deep Learning & Artificial Intelligence",
     "desc": "Using advanced machine learning models and neural networks to solve extremely complex business challenges.",
     "stats": [
-      { "value": "Deep Learning", "label": "Neural Networks" },
-      { "value": "30+ Countries", "label": "Global Scale" },
-      { "value": "50M+ Daily", "label": "Data Points" },
-      { "value": "<100ms", "label": "Response Time" }
+      {
+        "value": "Deep Learning",
+        "label": "Neural Networks"
+      },
+      {
+        "value": "30+ Countries",
+        "label": "Global Scale"
+      },
+      {
+        "value": "50M+ Daily",
+        "label": "Data Points"
+      },
+      {
+        "value": "<100ms",
+        "label": "Response Time"
+      }
     ]
   },
   "rnd": {
@@ -149,27 +192,96 @@
     "faqTitle": "Everything you need to know",
     "faqDesc": "Everything you need to know about switching energy provider.",
     "faqs": [
-      { "q": "Is the service free?", "a": "Yes, our service is completely free, with no hidden charges. We are compensated by the providers, not by you." },
-      { "q": "How does switching provider work?", "a": "The process is simple and handled entirely by us. No change to your meter or wiring is required." },
-      { "q": "Do I have to pay to switch?", "a": "No, switching your electricity or gas provider is completely free." },
-      { "q": "How long does it take?", "a": "It usually takes about 7 working days to complete the transition to the new provider." },
-      { "q": "Can the power be cut off?", "a": "Not at all. Your electricity remains uninterrupted throughout the entire process." }
+      {
+        "q": "Is the service free?",
+        "a": "Yes, our service is completely free, with no hidden charges. We are compensated by the providers, not by you."
+      },
+      {
+        "q": "How does switching provider work?",
+        "a": "The process is simple and handled entirely by us. No change to your meter or wiring is required."
+      },
+      {
+        "q": "Do I have to pay to switch?",
+        "a": "No, switching your electricity or gas provider is completely free."
+      },
+      {
+        "q": "How long does it take?",
+        "a": "It usually takes about 7 working days to complete the transition to the new provider."
+      },
+      {
+        "q": "Can the power be cut off?",
+        "a": "Not at all. Your electricity remains uninterrupted throughout the entire process."
+      }
     ],
     "services": [
-      { "title": "Electricity", "desc": "Cheap energy plans made for you. We compare providers and find the most cost-effective solution.", "icon": "zap", "iconColor": "text-amber-500" },
-      { "title": "Gas", "desc": "Tailored natural gas solutions for home and business with the best pricing plans.", "icon": "flame", "iconColor": "text-orange-500" },
-      { "title": "Solar (Photovoltaic)", "desc": "Innovation and sustainable development for your space. Invest in green energy safely.", "icon": "sun", "iconColor": "text-yellow-500" },
-      { "title": "E-Mobility", "desc": "We drive ecologically, we move electrically. Charging and EV solutions for every need.", "icon": "car", "iconColor": "text-blue-500" },
-      { "title": "Energy Storage", "desc": "Battery storage solutions for autonomy and savings.", "icon": "battery", "iconColor": "text-emerald-500" },
-      { "title": "Energy Savings", "desc": "Consumption analysis and strategies to reduce your electricity bill.", "icon": "trending", "iconColor": "text-indigo-500" }
+      {
+        "title": "Electricity",
+        "desc": "Cheap energy plans made for you. We compare providers and find the most cost-effective solution.",
+        "icon": "zap",
+        "iconColor": "text-amber-500"
+      },
+      {
+        "title": "Gas",
+        "desc": "Tailored natural gas solutions for home and business with the best pricing plans.",
+        "icon": "flame",
+        "iconColor": "text-orange-500"
+      },
+      {
+        "title": "Solar (Photovoltaic)",
+        "desc": "Innovation and sustainable development for your space. Invest in green energy safely.",
+        "icon": "sun",
+        "iconColor": "text-yellow-500"
+      },
+      {
+        "title": "E-Mobility",
+        "desc": "We drive ecologically, we move electrically. Charging and EV solutions for every need.",
+        "icon": "car",
+        "iconColor": "text-blue-500"
+      },
+      {
+        "title": "Energy Storage",
+        "desc": "Battery storage solutions for autonomy and savings.",
+        "icon": "battery",
+        "iconColor": "text-emerald-500"
+      },
+      {
+        "title": "Energy Savings",
+        "desc": "Consumption analysis and strategies to reduce your electricity bill.",
+        "icon": "trending",
+        "iconColor": "text-indigo-500"
+      }
     ],
     "regions": [
-      { "title": "Attica", "desc": "The starting point of savings. We quickly compare plans for home or business.", "location": "Athens" },
-      { "title": "Central Greece", "desc": "Solutions for every consumption, from small homes to agricultural facilities.", "location": "Thessaly" },
-      { "title": "Northern Greece", "desc": "Support for businesses and families in Macedonia & Thrace.", "location": "Thessaloniki" },
-      { "title": "Ionian Islands", "desc": "Service on every island with proposals that take seasonality into account.", "location": "Corfu · Zakynthos" },
-      { "title": "Aegean Islands", "desc": "Electricity plans, solar and e-mobility solutions.", "location": "Cyclades · Dodecanese" },
-      { "title": "Crete", "desc": "We design the next step with energy autonomy and tourism units.", "location": "Heraklion · Chania" }
+      {
+        "title": "Attica",
+        "desc": "The starting point of savings. We quickly compare plans for home or business.",
+        "location": "Athens"
+      },
+      {
+        "title": "Central Greece",
+        "desc": "Solutions for every consumption, from small homes to agricultural facilities.",
+        "location": "Thessaly"
+      },
+      {
+        "title": "Northern Greece",
+        "desc": "Support for businesses and families in Macedonia & Thrace.",
+        "location": "Thessaloniki"
+      },
+      {
+        "title": "Ionian Islands",
+        "desc": "Service on every island with proposals that take seasonality into account.",
+        "location": "Corfu · Zakynthos"
+      },
+      {
+        "title": "Aegean Islands",
+        "desc": "Electricity plans, solar and e-mobility solutions.",
+        "location": "Cyclades · Dodecanese"
+      },
+      {
+        "title": "Crete",
+        "desc": "We design the next step with energy autonomy and tourism units.",
+        "location": "Heraklion · Chania"
+      }
     ],
     "contactBadge": "Request a call back!",
     "contactTitle": "Ready to save money?",
@@ -224,13 +336,89 @@
     "footerEnergy": "Energy",
     "footerContact": "Contact",
     "categories": [
-      { "title": "Health Insurance", "subtitle": "BEWELL", "description": "Health is one of the most important priorities for every person and family. The right insurance solution can offer better organization, access to care services and financial support when a need arises.", "includes": ["Hospital care", "Diagnostic tests", "Medical care", "Personal guidance"] },
-      { "title": "Home Insurance", "subtitle": "", "description": "The home is one of the most important places in our lives. Insuring it helps protect both the property itself and the possessions inside it.", "includes": ["Fire and natural phenomena", "Earthquake and flood", "Theft and damage", "Building and contents", "Owner-occupied or rented property"] },
-      { "title": "Business Insurance", "subtitle": "", "description": "Every business has different needs, risks and priorities. The right insurance approach helps protect business activity and its smooth operation.", "includes": ["Professional premises", "Equipment and goods", "Unexpected damage", "Business interruption", "Liability towards clients or partners"] },
-      { "title": "Auto Insurance", "subtitle": "", "description": "Auto insurance is not only a necessary obligation, but also an important means of protection for the driver, the vehicle and third parties.", "includes": ["Mandatory civil liability", "Vehicle protection", "Roadside assistance", "Glass breakage", "Theft, fire or natural phenomena"] },
-      { "title": "Liability Insurance", "subtitle": "", "description": "Liability can protect an individual or professional from third-party financial claims when bodily harm or property damage occurs.", "includes": ["Professional liability", "Personal liability", "Compensation to third parties", "Legal expenses", "Solutions depending on profession or activity"] },
-      { "title": "Savings", "subtitle": "", "description": "Systematic saving can help achieve personal and family goals, creating greater financial security for the future.", "includes": ["Building a reserve", "Long-term goals", "Children's studies", "Future supplementary income", "Personal financial planning"] },
-      { "title": "Travel Insurance", "subtitle": "", "description": "A trip can be accompanied by unexpected situations. Travel insurance offers support options for travel in Greece and abroad.", "includes": ["Emergency medical assistance", "Unexpected travel incidents", "Luggage and personal items", "Cancellation or trip change", "Support abroad"] }
+      {
+        "title": "Health Insurance",
+        "subtitle": "BEWELL",
+        "description": "Health is one of the most important priorities for every person and family. The right insurance solution can offer better organization, access to care services and financial support when a need arises.",
+        "includes": [
+          "Hospital care",
+          "Diagnostic tests",
+          "Medical care",
+          "Personal guidance"
+        ]
+      },
+      {
+        "title": "Home Insurance",
+        "subtitle": "",
+        "description": "The home is one of the most important places in our lives. Insuring it helps protect both the property itself and the possessions inside it.",
+        "includes": [
+          "Fire and natural phenomena",
+          "Earthquake and flood",
+          "Theft and damage",
+          "Building and contents",
+          "Owner-occupied or rented property"
+        ]
+      },
+      {
+        "title": "Business Insurance",
+        "subtitle": "",
+        "description": "Every business has different needs, risks and priorities. The right insurance approach helps protect business activity and its smooth operation.",
+        "includes": [
+          "Professional premises",
+          "Equipment and goods",
+          "Unexpected damage",
+          "Business interruption",
+          "Liability towards clients or partners"
+        ]
+      },
+      {
+        "title": "Auto Insurance",
+        "subtitle": "",
+        "description": "Auto insurance is not only a necessary obligation, but also an important means of protection for the driver, the vehicle and third parties.",
+        "includes": [
+          "Mandatory civil liability",
+          "Vehicle protection",
+          "Roadside assistance",
+          "Glass breakage",
+          "Theft, fire or natural phenomena"
+        ]
+      },
+      {
+        "title": "Liability Insurance",
+        "subtitle": "",
+        "description": "Liability can protect an individual or professional from third-party financial claims when bodily harm or property damage occurs.",
+        "includes": [
+          "Professional liability",
+          "Personal liability",
+          "Compensation to third parties",
+          "Legal expenses",
+          "Solutions depending on profession or activity"
+        ]
+      },
+      {
+        "title": "Savings",
+        "subtitle": "",
+        "description": "Systematic saving can help achieve personal and family goals, creating greater financial security for the future.",
+        "includes": [
+          "Building a reserve",
+          "Long-term goals",
+          "Children's studies",
+          "Future supplementary income",
+          "Personal financial planning"
+        ]
+      },
+      {
+        "title": "Travel Insurance",
+        "subtitle": "",
+        "description": "A trip can be accompanied by unexpected situations. Travel insurance offers support options for travel in Greece and abroad.",
+        "includes": [
+          "Emergency medical assistance",
+          "Unexpected travel incidents",
+          "Luggage and personal items",
+          "Cancellation or trip change",
+          "Support abroad"
+        ]
+      }
     ]
   },
   "contactPage": {
@@ -281,26 +469,99 @@
       "whyTitle": "Why a good website makes the difference",
       "whyText": "A successful site is not just beautiful — it converts. We focus on speed, mobile experience and the strategy that brings customers.",
       "benefits": [
-        { "title": "Mobile-First & Responsive Architecture", "desc": "Full adaptation to all screens with mobile usability as a priority." },
-        { "title": "Core Web Vitals Optimization", "desc": "Clean code without unnecessary plugins for lightning-fast loading and top user experience." },
-        { "title": "Autonomous Content Management (CMS)", "desc": "Friendly management environment so you can update texts, images and articles without technical knowledge." },
-        { "title": "On-Page SEO Base", "desc": "Full technical preparation for search engines (Meta tags, OpenGraph, XML Sitemaps, Schema.org)." },
-        { "title": "Security & SSL", "desc": "HTTPS encryption, firewall protection and regular backups for absolute security." },
-        { "title": "Analytics & Tracking", "desc": "Google Analytics 4 integration and conversion tracking for measurable results." }
+        {
+          "title": "Mobile-First & Responsive Architecture",
+          "desc": "Full adaptation to all screens with mobile usability as a priority."
+        },
+        {
+          "title": "Core Web Vitals Optimization",
+          "desc": "Clean code without unnecessary plugins for lightning-fast loading and top user experience."
+        },
+        {
+          "title": "Autonomous Content Management (CMS)",
+          "desc": "Friendly management environment so you can update texts, images and articles without technical knowledge."
+        },
+        {
+          "title": "On-Page SEO Base",
+          "desc": "Full technical preparation for search engines (Meta tags, OpenGraph, XML Sitemaps, Schema.org)."
+        },
+        {
+          "title": "Security & SSL",
+          "desc": "HTTPS encryption, firewall protection and regular backups for absolute security."
+        },
+        {
+          "title": "Analytics & Tracking",
+          "desc": "Google Analytics 4 integration and conversion tracking for measurable results."
+        }
       ],
       "offerings": [
-        { "title": "What's included", "items": ["UI/UX design before development", "Development with Next.js/React", "Responsive on all devices", "CMS for autonomous management", "SEO optimization", "Free usage training", "1 month free support"] }
+        {
+          "title": "What's included",
+          "items": [
+            "UI/UX design before development",
+            "Development with Next.js/React",
+            "Responsive on all devices",
+            "CMS for autonomous management",
+            "SEO optimization",
+            "Free usage training",
+            "1 month free support"
+          ]
+        }
       ],
       "pricing": [
-        { "name": "Corporate Website", "price": "900", "description": "Up to 5 pages, responsive, SEO, blog", "features": ["Responsive Design", "Up to 5 pages", "Contact form", "SEO base", "SSL", "60 days support", "Usage training"] },
-        { "name": "Custom Website", "price": "1,400", "description": "Custom solution with advanced features", "features": ["Custom design", "Unlimited pages", "CMS management", "Advanced SEO", "Blog system", "Analytics", "3 months support"], "highlight": true }
+        {
+          "name": "Corporate Website",
+          "price": "900",
+          "description": "Up to 5 pages, responsive, SEO, blog",
+          "features": [
+            "Responsive Design",
+            "Up to 5 pages",
+            "Contact form",
+            "SEO base",
+            "SSL",
+            "60 days support",
+            "Usage training"
+          ]
+        },
+        {
+          "name": "Custom Website",
+          "price": "1,400",
+          "description": "Custom solution with advanced features",
+          "features": [
+            "Custom design",
+            "Unlimited pages",
+            "CMS management",
+            "Advanced SEO",
+            "Blog system",
+            "Analytics",
+            "3 months support"
+          ],
+          "highlight": true
+        }
       ],
-      "audience": ["Businesses that want a professional presence", "Freelancers & consultants", "Educational organizations", "Small & medium businesses"],
+      "audience": [
+        "Businesses that want a professional presence",
+        "Freelancers & consultants",
+        "Educational organizations",
+        "Small & medium businesses"
+      ],
       "faqs": [
-        { "q": "How long does it take?", "a": "2-4 weeks for a corporate website, depending on complexity." },
-        { "q": "Can I manage it myself?", "a": "Yes, we deliver a friendly CMS and free training." },
-        { "q": "Is SEO included?", "a": "Yes, a full On-Page SEO base on every project." },
-        { "q": "How much does a website cost?", "a": "From €1,200 for a basic website. Request a free estimate." }
+        {
+          "q": "How long does it take?",
+          "a": "2-4 weeks for a corporate website, depending on complexity."
+        },
+        {
+          "q": "Can I manage it myself?",
+          "a": "Yes, we deliver a friendly CMS and free training."
+        },
+        {
+          "q": "Is SEO included?",
+          "a": "Yes, a full On-Page SEO base on every project."
+        },
+        {
+          "q": "How much does a website cost?",
+          "a": "From €1,200 for a basic website. Request a free estimate."
+        }
       ],
       "ctaTitle": "Ready to build your digital presence?",
       "ctaDesc": "Request a free project estimate and let's discuss how we can help."
@@ -314,26 +575,100 @@
       "whyTitle": "Why an e-shop wins customers 24/7",
       "whyText": "A successful e-shop is not just an online catalog. It is a 24/7 sales machine. We focus on speed (under 1.5s), seamless shopping experience and full automation.",
       "benefits": [
-        { "title": "Blazing Speed & Core Web Vitals", "desc": "Optimized code for instant response that keeps buyers on the site." },
-        { "title": "Bank & IRIS Integration", "desc": "Immediate payment processing with cards, IRIS Payment, Klarna, PayPal and cash on delivery." },
-        { "title": "Automatic ERP Integration", "desc": "Simultaneous sync of stock, prices, orders and documents." },
-        { "title": "Feeds for Skroutz, BestPrice & Google Shopping", "desc": "Ready XML/JSON feeds for direct connection with price comparison engines." },
-        { "title": "Mobile-First Checkout", "desc": "Simplified purchase process in 1-2 steps (One-Page Checkout)." },
-        { "title": "Multi-language & Multi-currency", "desc": "Support for multiple languages and currencies for the international market." }
+        {
+          "title": "Blazing Speed & Core Web Vitals",
+          "desc": "Optimized code for instant response that keeps buyers on the site."
+        },
+        {
+          "title": "Bank & IRIS Integration",
+          "desc": "Immediate payment processing with cards, IRIS Payment, Klarna, PayPal and cash on delivery."
+        },
+        {
+          "title": "Automatic ERP Integration",
+          "desc": "Simultaneous sync of stock, prices, orders and documents."
+        },
+        {
+          "title": "Feeds for Skroutz, BestPrice & Google Shopping",
+          "desc": "Ready XML/JSON feeds for direct connection with price comparison engines."
+        },
+        {
+          "title": "Mobile-First Checkout",
+          "desc": "Simplified purchase process in 1-2 steps (One-Page Checkout)."
+        },
+        {
+          "title": "Multi-language & Multi-currency",
+          "desc": "Support for multiple languages and currencies for the international market."
+        }
       ],
       "offerings": [
-        { "title": "What's included", "items": ["Custom e-commerce development", "Full product management", "Bank & payment connection", "Skroutz/BestPrice feeds", "SEO & Google Shopping", "Mobile-First checkout", "Automatic documents", "1 month free support"] }
+        {
+          "title": "What's included",
+          "items": [
+            "Custom e-commerce development",
+            "Full product management",
+            "Bank & payment connection",
+            "Skroutz/BestPrice feeds",
+            "SEO & Google Shopping",
+            "Mobile-First checkout",
+            "Automatic documents",
+            "1 month free support"
+          ]
+        }
       ],
       "pricing": [
-        { "name": "Basic E-shop", "price": "1,400", "description": "WooCommerce, 10+ products, 1 payment method", "features": ["WooCommerce setup", "Up to 50 products", "1 payment method", "1 shipping zone", "SEO-friendly", "SSL", "60 days support"] },
-        { "name": "Custom E-shop", "price": "2,500", "description": "Full custom development with ERP integration", "features": ["Custom development", "Unlimited products", "Multiple payment methods", "Skroutz/BestPrice feeds", "ERP sync", "Multi-language", "3 months support"], "highlight": true }
+        {
+          "name": "Basic E-shop",
+          "price": "1,400",
+          "description": "WooCommerce, 10+ products, 1 payment method",
+          "features": [
+            "WooCommerce setup",
+            "Up to 50 products",
+            "1 payment method",
+            "1 shipping zone",
+            "SEO-friendly",
+            "SSL",
+            "60 days support"
+          ]
+        },
+        {
+          "name": "Custom E-shop",
+          "price": "2,500",
+          "description": "Full custom development with ERP integration",
+          "features": [
+            "Custom development",
+            "Unlimited products",
+            "Multiple payment methods",
+            "Skroutz/BestPrice feeds",
+            "ERP sync",
+            "Multi-language",
+            "3 months support"
+          ],
+          "highlight": true
+        }
       ],
-      "audience": ["E-commerce businesses", "Brands that want online sales", "Retail", "B2B manufacturers"],
+      "audience": [
+        "E-commerce businesses",
+        "Brands that want online sales",
+        "Retail",
+        "B2B manufacturers"
+      ],
       "faqs": [
-        { "q": "How long does completion take?", "a": "3-6 weeks, depending on product volume and integrations." },
-        { "q": "Can I manage products and orders?", "a": "Absolutely. We deliver a friendly control panel and training." },
-        { "q": "Is courier connection included?", "a": "Yes, we integrate shipping calculation and automatic voucher issuance." },
-        { "q": "Can I manage offers and coupons?", "a": "Yes, we support coupons, flash sales, bundles and loyalty programs." }
+        {
+          "q": "How long does completion take?",
+          "a": "3-6 weeks, depending on product volume and integrations."
+        },
+        {
+          "q": "Can I manage products and orders?",
+          "a": "Absolutely. We deliver a friendly control panel and training."
+        },
+        {
+          "q": "Is courier connection included?",
+          "a": "Yes, we integrate shipping calculation and automatic voucher issuance."
+        },
+        {
+          "q": "Can I manage offers and coupons?",
+          "a": "Yes, we support coupons, flash sales, bundles and loyalty programs."
+        }
       ],
       "ctaTitle": "Ready to boost your online sales?",
       "ctaDesc": "Request a free project estimate for your e-shop."
@@ -347,26 +682,106 @@
       "whyTitle": "Why design creates value",
       "whyText": "User experience is not a luxury — it is a necessity. We build brands that inspire trust and make users come back.",
       "benefits": [
-        { "title": "User Research & Wireframing", "desc": "Competition analysis and user journey mapping for maximum conversion rate." },
-        { "title": "Interactive Figma Prototypes", "desc": "Fully functional interactive prototypes before development." },
-        { "title": "Design Systems & Component Libraries", "desc": "Reusable UI components for absolute visual consistency." },
-        { "title": "Rebranding & Brand Identity", "desc": "Logo, color palette, typography and brand guidelines design." },
-        { "title": "Accessibility (WCAG 2.1)", "desc": "Design that meets accessibility standards for all users." },
-        { "title": "A/B Testing Strategy", "desc": "Design tests to optimize conversion rates." }
+        {
+          "title": "User Research & Wireframing",
+          "desc": "Competition analysis and user journey mapping for maximum conversion rate."
+        },
+        {
+          "title": "Interactive Figma Prototypes",
+          "desc": "Fully functional interactive prototypes before development."
+        },
+        {
+          "title": "Design Systems & Component Libraries",
+          "desc": "Reusable UI components for absolute visual consistency."
+        },
+        {
+          "title": "Rebranding & Brand Identity",
+          "desc": "Logo, color palette, typography and brand guidelines design."
+        },
+        {
+          "title": "Accessibility (WCAG 2.1)",
+          "desc": "Design that meets accessibility standards for all users."
+        },
+        {
+          "title": "A/B Testing Strategy",
+          "desc": "Design tests to optimize conversion rates."
+        }
       ],
       "offerings": [
-        { "title": "What's included", "items": ["User research & competition analysis", "Wireframes & interactive prototypes", "UI design in Figma", "Design system & component library", "Brand identity (logo, colors, typography)", "Brand guidelines", "A/B testing strategy"] }
+        {
+          "title": "What's included",
+          "items": [
+            "User research & competition analysis",
+            "Wireframes & interactive prototypes",
+            "UI design in Figma",
+            "Design system & component library",
+            "Brand identity (logo, colors, typography)",
+            "Brand guidelines",
+            "A/B testing strategy"
+          ]
+        }
       ],
       "pricing": [
-        { "name": "Brand Identity", "price": "800", "description": "Logo, color palette, typography", "features": ["Logo design", "Color palette", "Typography", "Brand guidelines", "Business cards", "2 revisions"] },
-        { "name": "UX/UI Design", "price": "1,200", "description": "Complete user experience design", "features": ["User research", "Wireframes", "Interactive prototypes", "UI design in Figma", "Design system", "A/B testing strategy"], "highlight": true },
-        { "name": "Full Rebrand", "price": "2,000", "description": "Complete rebrand + UX/UI", "features": ["Brand strategy", "Logo + identity", "Full UX/UI", "Design system", "Brand guidelines", "3 months support"] }
+        {
+          "name": "Brand Identity",
+          "price": "800",
+          "description": "Logo, color palette, typography",
+          "features": [
+            "Logo design",
+            "Color palette",
+            "Typography",
+            "Brand guidelines",
+            "Business cards",
+            "2 revisions"
+          ]
+        },
+        {
+          "name": "UX/UI Design",
+          "price": "1,200",
+          "description": "Complete user experience design",
+          "features": [
+            "User research",
+            "Wireframes",
+            "Interactive prototypes",
+            "UI design in Figma",
+            "Design system",
+            "A/B testing strategy"
+          ],
+          "highlight": true
+        },
+        {
+          "name": "Full Rebrand",
+          "price": "2,000",
+          "description": "Complete rebrand + UX/UI",
+          "features": [
+            "Brand strategy",
+            "Logo + identity",
+            "Full UX/UI",
+            "Design system",
+            "Brand guidelines",
+            "3 months support"
+          ]
+        }
       ],
-      "audience": ["New businesses that need a brand", "Websites with low conversion rate", "Companies that want a rebrand", "SaaS platforms"],
+      "audience": [
+        "New businesses that need a brand",
+        "Websites with low conversion rate",
+        "Companies that want a rebrand",
+        "SaaS platforms"
+      ],
       "faqs": [
-        { "q": "Do I need a logo refresh?", "a": "If your logo no longer represents your business, a rebrand can make the difference." },
-        { "q": "How much does UX/UI design cost?", "a": "Depending on complexity. Request a quote for an accurate estimate." },
-        { "q": "How long does the process take?", "a": "2-6 weeks depending on scope. Prototypes are ready in 1-2 weeks." }
+        {
+          "q": "Do I need a logo refresh?",
+          "a": "If your logo no longer represents your business, a rebrand can make the difference."
+        },
+        {
+          "q": "How much does UX/UI design cost?",
+          "a": "Depending on complexity. Request a quote for an accurate estimate."
+        },
+        {
+          "q": "How long does the process take?",
+          "a": "2-6 weeks depending on scope. Prototypes are ready in 1-2 weeks."
+        }
       ],
       "ctaTitle": "Want a brand that stands out?",
       "ctaDesc": "Request a free estimate for UX/UI design and branding."
@@ -380,26 +795,106 @@
       "whyTitle": "Why advertising must be measured",
       "whyText": "Every euro you spend on advertising should return. We focus on measurable results, not likes.",
       "benefits": [
-        { "title": "Google Search & Shopping Ads", "desc": "Targeted search ads for users actively looking for your services." },
-        { "title": "Meta Ads (Facebook & Instagram)", "desc": "Creative content and advanced audience targeting." },
-        { "title": "Conversion Tracking & Analytics", "desc": "Full conversion tracking with GA4 and Google Tag Manager." },
-        { "title": "Dynamic Remarketing Campaigns", "desc": "Retarget visitors who didn't complete a purchase." },
-        { "title": "Content Marketing & Blog Strategy", "desc": "Content that attracts organic traffic and builds credibility." },
-        { "title": "Email Marketing Automation", "desc": "Automated email flows for lead nurturing and retention." }
+        {
+          "title": "Google Search & Shopping Ads",
+          "desc": "Targeted search ads for users actively looking for your services."
+        },
+        {
+          "title": "Meta Ads (Facebook & Instagram)",
+          "desc": "Creative content and advanced audience targeting."
+        },
+        {
+          "title": "Conversion Tracking & Analytics",
+          "desc": "Full conversion tracking with GA4 and Google Tag Manager."
+        },
+        {
+          "title": "Dynamic Remarketing Campaigns",
+          "desc": "Retarget visitors who didn't complete a purchase."
+        },
+        {
+          "title": "Content Marketing & Blog Strategy",
+          "desc": "Content that attracts organic traffic and builds credibility."
+        },
+        {
+          "title": "Email Marketing Automation",
+          "desc": "Automated email flows for lead nurturing and retention."
+        }
       ],
       "offerings": [
-        { "title": "What's included", "items": ["Competition & market analysis", "Advertising strategy", "Creative production", "Campaign management", "Weekly reports & analytics", "A/B testing of ads", "ROI tracking & reporting"] }
+        {
+          "title": "What's included",
+          "items": [
+            "Competition & market analysis",
+            "Advertising strategy",
+            "Creative production",
+            "Campaign management",
+            "Weekly reports & analytics",
+            "A/B testing of ads",
+            "ROI tracking & reporting"
+          ]
+        }
       ],
       "pricing": [
-        { "name": "Startup Pack", "price": "300", "period": "/month", "description": "Google Ads + Meta Ads setup", "features": ["Google Search Ads", "Meta Ads setup", "Conversion tracking", "Monthly reports", "A/B testing"] },
-        { "name": "Growth Pack", "price": "600", "period": "/month", "description": "Full performance marketing", "features": ["Google + Shopping Ads", "Meta Ads", "Remarketing", "Email automation", "Weekly reports", "Content strategy"], "highlight": true },
-        { "name": "Enterprise", "price": "Custom", "description": "Complete strategy & execution", "features": ["Multi-channel strategy", "Dedicated account manager", "Custom analytics", "ROI dashboards", "Priority support"] }
+        {
+          "name": "Startup Pack",
+          "price": "300",
+          "period": "/month",
+          "description": "Google Ads + Meta Ads setup",
+          "features": [
+            "Google Search Ads",
+            "Meta Ads setup",
+            "Conversion tracking",
+            "Monthly reports",
+            "A/B testing"
+          ]
+        },
+        {
+          "name": "Growth Pack",
+          "price": "600",
+          "period": "/month",
+          "description": "Full performance marketing",
+          "features": [
+            "Google + Shopping Ads",
+            "Meta Ads",
+            "Remarketing",
+            "Email automation",
+            "Weekly reports",
+            "Content strategy"
+          ],
+          "highlight": true
+        },
+        {
+          "name": "Enterprise",
+          "price": "Custom",
+          "description": "Complete strategy & execution",
+          "features": [
+            "Multi-channel strategy",
+            "Dedicated account manager",
+            "Custom analytics",
+            "ROI dashboards",
+            "Priority support"
+          ]
+        }
       ],
-      "audience": ["E-shops that want more sales", "Service businesses", "New businesses", "Brands that want brand awareness"],
+      "audience": [
+        "E-shops that want more sales",
+        "Service businesses",
+        "New businesses",
+        "Brands that want brand awareness"
+      ],
       "faqs": [
-        { "q": "How much budget do I need for advertising?", "a": "It depends on the industry. We start from €300/month for effective campaigns." },
-        { "q": "How do you measure ROI?", "a": "With conversion tracking, GA4 and reports that show exactly what each euro delivered." },
-        { "q": "How fast do I see results?", "a": "Google Ads: immediate. Meta Ads: 3-7 days. SEO: 3-6 months." }
+        {
+          "q": "How much budget do I need for advertising?",
+          "a": "It depends on the industry. We start from €300/month for effective campaigns."
+        },
+        {
+          "q": "How do you measure ROI?",
+          "a": "With conversion tracking, GA4 and reports that show exactly what each euro delivered."
+        },
+        {
+          "q": "How fast do I see results?",
+          "a": "Google Ads: immediate. Meta Ads: 3-7 days. SEO: 3-6 months."
+        }
       ],
       "ctaTitle": "Want measurable results from advertising?",
       "ctaDesc": "Request a free campaign analysis and strategy."
@@ -413,26 +908,106 @@
       "whyTitle": "Why custom software meets your needs",
       "whyText": "Your idea needs software that scales. We build SaaS, portals and mobile apps that withstand thousands of users.",
       "benefits": [
-        { "title": "Multi-tenant SaaS Architecture", "desc": "Secure and scalable architectures with data separation." },
-        { "title": "Cross-Platform Mobile Apps", "desc": "iOS & Android from a single codebase with native performance." },
-        { "title": "Real-time Dashboards", "desc": "Interactive control panels with real-time data updates." },
-        { "title": "Role-Based Access Control (RBAC)", "desc": "Strict access permission control per user role." },
-        { "title": "API-first Design", "desc": "API architecture that enables easy third-party integration." },
-        { "title": "CI/CD & DevOps", "desc": "Automated deployment pipeline for fast upgrades." }
+        {
+          "title": "Multi-tenant SaaS Architecture",
+          "desc": "Secure and scalable architectures with data separation."
+        },
+        {
+          "title": "Cross-Platform Mobile Apps",
+          "desc": "iOS & Android from a single codebase with native performance."
+        },
+        {
+          "title": "Real-time Dashboards",
+          "desc": "Interactive control panels with real-time data updates."
+        },
+        {
+          "title": "Role-Based Access Control (RBAC)",
+          "desc": "Strict access permission control per user role."
+        },
+        {
+          "title": "API-first Design",
+          "desc": "API architecture that enables easy third-party integration."
+        },
+        {
+          "title": "CI/CD & DevOps",
+          "desc": "Automated deployment pipeline for fast upgrades."
+        }
       ],
       "offerings": [
-        { "title": "What's included", "items": ["Requirements analysis & MVP definition", "System architecture design", "Frontend development (React/Next.js)", "Backend development (Node.js/Python)", "Mobile app (React Native)", "Testing & QA", "Deployment & monitoring"] }
+        {
+          "title": "What's included",
+          "items": [
+            "Requirements analysis & MVP definition",
+            "System architecture design",
+            "Frontend development (React/Next.js)",
+            "Backend development (Node.js/Python)",
+            "Mobile app (React Native)",
+            "Testing & QA",
+            "Deployment & monitoring"
+          ]
+        }
       ],
       "pricing": [
-        { "name": "MVP Launch", "price": "2,500", "description": "Basic SaaS MVP platform", "features": ["MVP definition", "Frontend + Backend", "Authentication", "Basic API", "Testing", "Deployment"] },
-        { "name": "Full SaaS", "price": "5,000", "description": "Complete SaaS platform", "features": ["Custom architecture", "Multi-tenant", "RBAC", "Real-time dashboards", "CI/CD", "3 months support"], "highlight": true },
-        { "name": "Enterprise App", "price": "Custom", "description": "Large-scale application", "features": ["Enterprise architecture", "Mobile + Web", "ERP/CRM integration", "Advanced security", "Dedicated team", "SLA"] }
+        {
+          "name": "MVP Launch",
+          "price": "2,500",
+          "description": "Basic SaaS MVP platform",
+          "features": [
+            "MVP definition",
+            "Frontend + Backend",
+            "Authentication",
+            "Basic API",
+            "Testing",
+            "Deployment"
+          ]
+        },
+        {
+          "name": "Full SaaS",
+          "price": "5,000",
+          "description": "Complete SaaS platform",
+          "features": [
+            "Custom architecture",
+            "Multi-tenant",
+            "RBAC",
+            "Real-time dashboards",
+            "CI/CD",
+            "3 months support"
+          ],
+          "highlight": true
+        },
+        {
+          "name": "Enterprise App",
+          "price": "Custom",
+          "description": "Large-scale application",
+          "features": [
+            "Enterprise architecture",
+            "Mobile + Web",
+            "ERP/CRM integration",
+            "Advanced security",
+            "Dedicated team",
+            "SLA"
+          ]
+        }
       ],
-      "audience": ["Startups", "Businesses with custom needs", "Organizations that want SaaS", "Need for internal tools"],
+      "audience": [
+        "Startups",
+        "Businesses with custom needs",
+        "Organizations that want SaaS",
+        "Need for internal tools"
+      ],
       "faqs": [
-        { "q": "Web or mobile app?", "a": "It depends on usage. Web apps are faster to build, mobile apps provide a better experience." },
-        { "q": "How much does a SaaS platform cost?", "a": "Depending on features. Request a detailed quote." },
-        { "q": "How long does it take?", "a": "MVP: 6-10 weeks. Full app: 3-6 months depending on complexity." }
+        {
+          "q": "Web or mobile app?",
+          "a": "It depends on usage. Web apps are faster to build, mobile apps provide a better experience."
+        },
+        {
+          "q": "How much does a SaaS platform cost?",
+          "a": "Depending on features. Request a detailed quote."
+        },
+        {
+          "q": "How long does it take?",
+          "a": "MVP: 6-10 weeks. Full app: 3-6 months depending on complexity."
+        }
       ],
       "ctaTitle": "Have an idea for an app?",
       "ctaDesc": "Request a free estimate for the development of your application."
@@ -446,26 +1021,108 @@
       "whyTitle": "Why support is not a luxury",
       "whyText": "Your site must always be online and secure. We handle maintenance while you focus on your work.",
       "benefits": [
-        { "title": "Managed Cloud Hosting", "desc": "High-speed infrastructure on AWS/Vercel with automatic resource scaling." },
-        { "title": "Daily Backups & Disaster Recovery", "desc": "Secure backup storage for instant recovery." },
-        { "title": "Security Patching & Malware Protection", "desc": "Continuous security updates, WAF and malware removal." },
-        { "title": "24/7 Monitoring & SLA Support", "desc": "Operation monitoring and immediate technical response to failures." },
-        { "title": "SSL Certificates & Domain Management", "desc": "Management of domains, SSL and DNS records." },
-        { "title": "Performance Optimization", "desc": "Regular speed optimization and caching strategy." }
+        {
+          "title": "Managed Cloud Hosting",
+          "desc": "High-speed infrastructure on AWS/Vercel with automatic resource scaling."
+        },
+        {
+          "title": "Daily Backups & Disaster Recovery",
+          "desc": "Secure backup storage for instant recovery."
+        },
+        {
+          "title": "Security Patching & Malware Protection",
+          "desc": "Continuous security updates, WAF and malware removal."
+        },
+        {
+          "title": "24/7 Monitoring & SLA Support",
+          "desc": "Operation monitoring and immediate technical response to failures."
+        },
+        {
+          "title": "SSL Certificates & Domain Management",
+          "desc": "Management of domains, SSL and DNS records."
+        },
+        {
+          "title": "Performance Optimization",
+          "desc": "Regular speed optimization and caching strategy."
+        }
       ],
       "offerings": [
-        { "title": "What's included", "items": ["Managed cloud hosting", "Daily backups", "Security patching & WAF", "24/7 monitoring", "SSL & domain management", "Performance optimization", "Emergency support", "Monthly reports"] }
+        {
+          "title": "What's included",
+          "items": [
+            "Managed cloud hosting",
+            "Daily backups",
+            "Security patching & WAF",
+            "24/7 monitoring",
+            "SSL & domain management",
+            "Performance optimization",
+            "Emergency support",
+            "Monthly reports"
+          ]
+        }
       ],
       "pricing": [
-        { "name": "Basic Hosting", "price": "50", "period": "/month", "description": "Basic hosting + backup", "features": ["Managed hosting", "Daily backups", "SSL", "Monitoring", "Email support"] },
-        { "name": "Pro Hosting", "price": "120", "period": "/month", "description": "Full support + security", "features": ["Managed hosting", "Daily backups", "Security patching", "WAF", "24/7 monitoring", "Priority support"], "highlight": true },
-        { "name": "Enterprise", "price": "300", "period": "/month", "description": "Enterprise SLA + dedicated support", "features": ["Dedicated infrastructure", "Disaster recovery", "Custom SLA", "Dedicated engineer", "Monthly reports"] }
+        {
+          "name": "Basic Hosting",
+          "price": "50",
+          "period": "/month",
+          "description": "Basic hosting + backup",
+          "features": [
+            "Managed hosting",
+            "Daily backups",
+            "SSL",
+            "Monitoring",
+            "Email support"
+          ]
+        },
+        {
+          "name": "Pro Hosting",
+          "price": "120",
+          "period": "/month",
+          "description": "Full support + security",
+          "features": [
+            "Managed hosting",
+            "Daily backups",
+            "Security patching",
+            "WAF",
+            "24/7 monitoring",
+            "Priority support"
+          ],
+          "highlight": true
+        },
+        {
+          "name": "Enterprise",
+          "price": "300",
+          "period": "/month",
+          "description": "Enterprise SLA + dedicated support",
+          "features": [
+            "Dedicated infrastructure",
+            "Disaster recovery",
+            "Custom SLA",
+            "Dedicated engineer",
+            "Monthly reports"
+          ]
+        }
       ],
-      "audience": ["High-traffic websites", "E-shops", "Corporate websites", "Apps with 24/7 operation"],
+      "audience": [
+        "High-traffic websites",
+        "E-shops",
+        "Corporate websites",
+        "Apps with 24/7 operation"
+      ],
       "faqs": [
-        { "q": "What does support include?", "a": "Upgrades, backups, monitoring, security and immediate technical help." },
-        { "q": "How much does hosting cost?", "a": "From €50/month depending on needs. Request a quote." },
-        { "q": "How fast do you respond to failures?", "a": "Critical failures: within 1 hour. Non-critical: within 4 hours." }
+        {
+          "q": "What does support include?",
+          "a": "Upgrades, backups, monitoring, security and immediate technical help."
+        },
+        {
+          "q": "How much does hosting cost?",
+          "a": "From €50/month depending on needs. Request a quote."
+        },
+        {
+          "q": "How fast do you respond to failures?",
+          "a": "Critical failures: within 1 hour. Non-critical: within 4 hours."
+        }
       ],
       "ctaTitle": "Want secure and fast hosting?",
       "ctaDesc": "Request information about managed hosting and support."
@@ -479,26 +1136,105 @@
       "whyTitle": "Why integrations increase efficiency",
       "whyText": "Your tools don't talk to each other. We connect them — API integrations, CRM/ERP sync and AI automations.",
       "benefits": [
-        { "title": "API Development & Integration", "desc": "Create and consume REST/GraphQL APIs for secure data exchange." },
-        { "title": "CRM & ERP Synchronization", "desc": "Automatic sync of orders, customers and invoices." },
-        { "title": "Custom AI Agents & Workflows", "desc": "AI model integration for automated support or document processing." },
-        { "title": "Database Migrations & ETL Pipelines", "desc": "Secure transfer of large data volumes from legacy systems." },
-        { "title": "Webhook & Event-driven Architecture", "desc": "Real-time updates between systems via events." },
-        { "title": "Security & Compliance", "desc": "OAuth 2.0, API keys, rate limiting and logging for secure integrations." }
+        {
+          "title": "API Development & Integration",
+          "desc": "Create and consume REST/GraphQL APIs for secure data exchange."
+        },
+        {
+          "title": "CRM & ERP Synchronization",
+          "desc": "Automatic sync of orders, customers and invoices."
+        },
+        {
+          "title": "Custom AI Agents & Workflows",
+          "desc": "AI model integration for automated support or document processing."
+        },
+        {
+          "title": "Database Migrations & ETL Pipelines",
+          "desc": "Secure transfer of large data volumes from legacy systems."
+        },
+        {
+          "title": "Webhook & Event-driven Architecture",
+          "desc": "Real-time updates between systems via events."
+        },
+        {
+          "title": "Security & Compliance",
+          "desc": "OAuth 2.0, API keys, rate limiting and logging for secure integrations."
+        }
       ],
       "offerings": [
-        { "title": "What's included", "items": ["Existing systems analysis", "API design & development", "CRM/ERP integration", "AI agent development", "ETL pipelines", "Testing & documentation", "Monitoring & logging"] }
+        {
+          "title": "What's included",
+          "items": [
+            "Existing systems analysis",
+            "API design & development",
+            "CRM/ERP integration",
+            "AI agent development",
+            "ETL pipelines",
+            "Testing & documentation",
+            "Monitoring & logging"
+          ]
+        }
       ],
       "pricing": [
-        { "name": "API Integration", "price": "1,200", "description": "Simple API integration of 2 information systems", "features": ["API design", "REST/GraphQL", "Testing", "Documentation", "2 weeks"] },
-        { "name": "CRM/ERP Sync", "price": "2,500", "description": "Complete CRM/ERP integration", "features": ["CRM/ERP analysis", "Bi-directional sync", "Real-time updates", "Error handling", "Monitoring", "1 month"], "highlight": true },
-        { "name": "Custom AI Agent", "price": "3,500", "description": "AI-powered automation", "features": ["AI agent design", "Custom workflows", "API integration", "Testing", "Deployment", "3 months support"] }
+        {
+          "name": "API Integration",
+          "price": "1,200",
+          "description": "Simple API integration of 2 information systems",
+          "features": [
+            "API design",
+            "REST/GraphQL",
+            "Testing",
+            "Documentation",
+            "2 weeks"
+          ]
+        },
+        {
+          "name": "CRM/ERP Sync",
+          "price": "2,500",
+          "description": "Complete CRM/ERP integration",
+          "features": [
+            "CRM/ERP analysis",
+            "Bi-directional sync",
+            "Real-time updates",
+            "Error handling",
+            "Monitoring",
+            "1 month"
+          ],
+          "highlight": true
+        },
+        {
+          "name": "Custom AI Agent",
+          "price": "3,500",
+          "description": "AI-powered automation",
+          "features": [
+            "AI agent design",
+            "Custom workflows",
+            "API integration",
+            "Testing",
+            "Deployment",
+            "3 months support"
+          ]
+        }
       ],
-      "audience": ["Businesses with multiple systems", "Organizations that need automation", "Companies with legacy systems", "Startups that need AI integrations"],
+      "audience": [
+        "Businesses with multiple systems",
+        "Organizations that need automation",
+        "Companies with legacy systems",
+        "Startups that need AI integrations"
+      ],
       "faqs": [
-        { "q": "Can you connect my ERP?", "a": "Yes, we have experience with many ERP systems. Request information." },
-        { "q": "How much does an API integration cost?", "a": "Depending on complexity. Request a detailed quote." },
-        { "q": "How long does it take?", "a": "From 2 weeks for a simple integration to 3 months for a complex system." }
+        {
+          "q": "Can you connect my ERP?",
+          "a": "Yes, we have experience with many ERP systems. Request information."
+        },
+        {
+          "q": "How much does an API integration cost?",
+          "a": "Depending on complexity. Request a detailed quote."
+        },
+        {
+          "q": "How long does it take?",
+          "a": "From 2 weeks for a simple integration to 3 months for a complex system."
+        }
       ],
       "ctaTitle": "Need system integration?",
       "ctaDesc": "Request a free analysis and proposal for your integrations."
@@ -508,5 +1244,128 @@
     "en": "English",
     "el": "Ελληνικά",
     "fr": "Français"
+  },
+  "serviceGrid": [
+    {
+      "slug": "web-development",
+      "title": "Website Development",
+      "description": "Reliable, fast and mobile-friendly digital presence designed for maximum conversions."
+    },
+    {
+      "slug": "eshop-development",
+      "title": "E-shop Development",
+      "description": "High-performance e-commerce platforms with SEO, speed, bank and ERP integration."
+    },
+    {
+      "slug": "ux-ui-branding",
+      "title": "UX/UI Design & Branding",
+      "description": "Modern aesthetic design and user experience that make your business stand out."
+    },
+    {
+      "slug": "seo-performance",
+      "title": "SEO & Web Performance",
+      "description": "Search engine ranking optimization and lightning-fast loading speeds."
+    },
+    {
+      "slug": "digital-marketing",
+      "title": "Digital Marketing & Advertising",
+      "description": "Targeted campaigns with measurable ROI that boost your sales."
+    },
+    {
+      "slug": "web-mobile-apps",
+      "title": "Web & Mobile App Development",
+      "description": "Custom apps, SaaS platforms and portals tailored to your needs."
+    },
+    {
+      "slug": "hosting-support",
+      "title": "Support & Hosting",
+      "description": "Technical support, continuous upgrades, high-speed hosting and maximum security."
+    },
+    {
+      "slug": "custom-integrations",
+      "title": "Custom Development & Integrations",
+      "description": "System integration, API integrations, CRM and smart AI automations."
+    }
+  ],
+  "sectorGrid": {
+    "badge": "Our Sectors",
+    "title": "Websites for your own sector",
+    "desc": "We build modern digital solutions for professionals and businesses that want to stand out.",
+    "items": [
+      {
+        "id": "real-estate",
+        "title": "Real Estate",
+        "desc": "Listings, filters, map, iList/MLS integration, strong local SEO."
+      },
+      {
+        "id": "b2b-industry",
+        "title": "B2B & Industry",
+        "desc": "Product catalog, RFQ forms, technical PDFs, multilingual."
+      },
+      {
+        "id": "eshop",
+        "title": "Eshop",
+        "desc": "Sizes/colors, Skroutz/BestPrice & GMC feeds, category/brand SEO."
+      },
+      {
+        "id": "hotels",
+        "title": "Hotels",
+        "desc": "Booking/Channel manager, multilingual, Hotel schema & SEO for bookings."
+      },
+      {
+        "id": "lawyers",
+        "title": "Lawyers",
+        "desc": "Practice areas, online appointments, lead forms & local SEO."
+      },
+      {
+        "id": "doctors",
+        "title": "Doctors",
+        "desc": "Online appointments, doctor profiles, GDPR for sensitive data."
+      },
+      {
+        "id": "restaurants",
+        "title": "Restaurants",
+        "desc": "Menu, reservations, QR menu, rich results & reviews."
+      },
+      {
+        "id": "gyms",
+        "title": "Gyms",
+        "desc": "Schedule, bookings, memberships, online payments."
+      },
+      {
+        "id": "education",
+        "title": "Tutoring Centers",
+        "desc": "Courses/classes, schedule, online presentation, GDPR and local SEO."
+      }
+    ],
+    "notFoundTitle": "Don't see your own industry?",
+    "notFoundDesc": "Ask us how we can help your business.",
+    "contactUs": "Contact Us"
+  },
+  "faqSection": {
+    "title": "Frequently Asked Questions (FAQ)",
+    "subtitle": "Answers to the most common questions about our services.",
+    "items": [
+      {
+        "q": "How long does it take to complete a website?",
+        "a": "Typical delivery for a corporate website is 2-4 weeks, while a full e-shop or custom application requires 4-7 weeks, depending on complexity and integrations."
+      },
+      {
+        "q": "Can I manage my website on my own after it is built?",
+        "a": "Yes, absolutely. We deliver an extremely user-friendly management system and provide free training material/session so you can add texts, products and images autonomously."
+      },
+      {
+        "q": "Can you handle upgrading or redesigning an existing website?",
+        "a": "Of course. We handle the redesign of old websites, safely migrating your data and drastically improving speed, appearance and conversion rates."
+      },
+      {
+        "q": "Will my website be fast and responsive?",
+        "a": "All our projects are designed with a mobile-first approach and optimized for Core Web Vitals, ensuring lightning-fast loading on mobile, tablets and desktops."
+      },
+      {
+        "q": "Is SEO included in the construction?",
+        "a": "Yes. Every website ships with basic On-Page SEO (heading structure, meta titles/descriptions, XML sitemap, schema markup and image optimization) for immediate indexing by Google."
+      }
+    ]
   }
 }
