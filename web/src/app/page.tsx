@@ -9,11 +9,10 @@ import Navbar from "@/components/Navbar";
 import { ServiceGrid } from "@/components/ServiceGrid";
 import { SectorGrid } from "@/components/SectorGrid";
 import { FaqSection } from "@/components/FaqSection";
+import { StackedProjects } from "@/components/StackedProjects";
 import { useLocale } from "@/contexts/LanguageContext";
 
 gsap.registerPlugin(ScrollTrigger);
-
-const projectImages = ["/images/image5.jpg", "/images/image6.jpg", "/images/image7.jpg", "/images/image8.jpg"];
 
 export default function Home() {
   const { t } = useLocale();
@@ -28,8 +27,6 @@ export default function Home() {
 
       gsap.fromTo(".about-text", { opacity: 0, x: -60 }, { opacity: 1, x: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: ".about-text", start: "top 80%", toggleActions: "play none none reverse" } });
       gsap.fromTo(".about-image", { opacity: 0, x: 60, rotateY: 8 }, { opacity: 1, x: 0, rotateY: 0, duration: 1.2, ease: "power3.out", scrollTrigger: { trigger: ".about-image", start: "top 80%", toggleActions: "play none none reverse" } });
-
-      gsap.fromTo(".project-card", { opacity: 0, y: 80, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.9, stagger: 0.2, ease: "power3.out", scrollTrigger: { trigger: ".projects-grid", start: "top 80%", toggleActions: "play none none reverse" } });
 
       gsap.fromTo(".contact-section", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: 1, ease: "power3.out", scrollTrigger: { trigger: ".contact-section", start: "top 80%", toggleActions: "play none none reverse" } });
     });
@@ -125,32 +122,8 @@ export default function Home() {
       {/* FAQ */}
       <FaqSection />
 
-      {/* Projects */}
-      <section id="projects" className="py-32">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 mb-6">{t.projects.badge}</span>
-            <h2 className="text-5xl md:text-6xl font-black text-slate-900 mb-6">{t.projects.title.split(" ")[0]} <span className="gradient-text">{t.projects.title.split(" ").slice(1).join(" ")}</span></h2>
-            <p className="text-lg text-slate-500 max-w-2xl mx-auto">{t.projects.subtitle}</p>
-          </div>
-          <div className="projects-grid grid md:grid-cols-2 gap-8">
-            {t.projects.items.map((p, i) => (
-              <div key={i} className="project-card group">
-                <div className="glass rounded-3xl overflow-hidden shadow-lg shadow-slate-900/5 hover:shadow-2xl hover:shadow-slate-900/10 transition-all duration-500">
-                  <div className="relative overflow-hidden">
-                    <img src={projectImages[i]} alt={p.title} className="w-full h-64 object-cover img-parallax group-hover:scale-105 transition-transform duration-700" />
-                    <div className="absolute top-4 left-4"><span className="glass-strong px-3 py-1 rounded-full text-xs font-semibold text-slate-700">{p.tag}</span></div>
-                  </div>
-                  <div className="p-8">
-                    <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-brand-600 transition-colors">{p.title}</h3>
-                    <p className="text-slate-500 leading-relaxed text-sm">{p.desc}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Projects — pinned stacked-card scroll effect */}
+      <StackedProjects />
 
       {/* Hub */}
       <section className="py-32 bg-gradient-to-b from-white to-slate-50/50">
@@ -172,8 +145,10 @@ export default function Home() {
       </section>
 
       {/* AI Solutions */}
-      <section className="py-32">
-        <div className="max-w-7xl mx-auto px-6">
+      <section className="py-32 relative overflow-hidden">
+        <div className="ambient-glow w-[450px] h-[450px] bg-indigo-500/10 bottom-0 -right-40" />
+        <div className="ambient-glow w-[350px] h-[350px] bg-cyan-400/10 top-10 -left-24" />
+        <div className="relative z-10 max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div>
               <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold text-brand-600 bg-brand-50 border border-brand-100 mb-6">{t.aiSolutions.badge}</span>
@@ -198,8 +173,9 @@ export default function Home() {
       </section>
 
       {/* R&D */}
-      <section className="py-32 bg-gradient-to-b from-slate-50/50 to-white">
-        <div className="max-w-7xl mx-auto px-6 text-center">
+      <section className="py-32 bg-gradient-to-b from-slate-50/50 to-white relative overflow-hidden">
+        <div className="ambient-glow w-[500px] h-[500px] bg-purple-500/10 top-1/2 -translate-y-1/2 -left-40" />
+        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-100 mb-6">{t.rnd.badge}</span>
           <h2 className="text-5xl md:text-6xl font-black text-slate-900 mb-6">{t.rnd.title.split(" ")[0]} <span className="gradient-text">{t.rnd.title.split(" ").slice(1).join(" ")}</span></h2>
           <p className="text-lg text-slate-500 max-w-2xl mx-auto mb-16">{t.rnd.desc}</p>

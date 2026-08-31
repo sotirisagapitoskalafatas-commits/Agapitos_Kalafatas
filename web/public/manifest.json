@@ -1,22 +1,18 @@
 {
-  "name": "CRM Pro - Agapitos Kalafatas",
-  "short_name": "CRM Pro",
-  "description": "Professional CRM/ERP Dashboard",
-  "start_url": "/admin/crm",
+  "name": "Agapitos Kalafatas | AI & Innovation Hub",
+  "short_name": "Agapitos Kalafatas",
+  "description": "Full-Stack SaaS Architect & Digital Operations Strategist. AI-powered software engineering, intelligent systems, and predictive analytics.",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#6366f1",
-  "background_color": "#f8fafc",
+  "theme_color": "#3b82f6",
+  "background_color": "#ffffff",
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
     }
   ]
 }
