@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import UnifiedContactForm from "@/components/UnifiedContactForm";
 import Scene3DBackground from "@/components/Scene3DBackground";
+import Navbar from "@/components/Navbar";
 import { useLocale } from "@/contexts/LanguageContext";
 
 export default function ContactPage() {
@@ -17,11 +18,13 @@ export default function ContactPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50/30 relative overflow-hidden">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50/30 relative overflow-hidden">
       <Scene3DBackground className="opacity-20" />
 
       {/* Header */}
-      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-[72px] z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/" className="text-slate-400 hover:text-slate-900 transition-colors">← {tC.backHome}</Link>
@@ -99,5 +102,6 @@ export default function ContactPage() {
         </div>
       </footer>
     </main>
+    </>
   );
 }

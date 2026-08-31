@@ -5,6 +5,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import gsap from "gsap";
 import Scene3DBackground from "@/components/Scene3DBackground";
+import Navbar from "@/components/Navbar";
 
 interface Message {
   id: string;
@@ -95,9 +96,11 @@ export default function ChatPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white flex flex-col">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <header className="chat-header border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50">
+      <header className="chat-header border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-[72px] z-50">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link
@@ -218,5 +221,6 @@ export default function ChatPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

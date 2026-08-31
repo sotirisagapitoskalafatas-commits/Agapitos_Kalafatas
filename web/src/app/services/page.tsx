@@ -14,6 +14,7 @@ import {
   Zap,
 } from "lucide-react";
 import { getServicesList } from "@/lib/servicesData";
+import Navbar from "@/components/Navbar";
 import { useLocale } from "@/contexts/LanguageContext";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -68,9 +69,11 @@ export default function ServicesHubPage() {
   const { t, locale } = useLocale();
   const servicesList = getServicesList(locale);
   return (
-    <main className="min-h-screen bg-white">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-white">
       {/* Hero */}
-      <section className="bg-slate-900 text-white py-20">
+      <section className="bg-slate-900 text-white pt-28 pb-20">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-400 text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-blue-500/20">
             <Zap className="w-3.5 h-3.5" />
@@ -153,5 +156,6 @@ export default function ServicesHubPage() {
         </div>
       </section>
     </main>
+    </>
   );
 }

@@ -16,6 +16,7 @@ import {
   Mail,
 } from "lucide-react";
 import { getServicesData, getServicesList } from "@/lib/servicesData";
+import Navbar from "@/components/Navbar";
 import { useLocale } from "@/contexts/LanguageContext";
 
 interface PageProps {
@@ -35,9 +36,11 @@ export default function ServiceDetailPage({ params }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-white">
       {/* Back Link */}
-      <div className="bg-slate-50 border-b border-slate-200">
+      <div className="bg-slate-50 border-b border-slate-200 pt-24">
         <div className="max-w-6xl mx-auto px-4 py-4">
           <Link
             href="/services"
@@ -336,5 +339,6 @@ export default function ServiceDetailPage({ params }: PageProps) {
         </div>
       </section>
     </main>
+    </>
   );
 }
