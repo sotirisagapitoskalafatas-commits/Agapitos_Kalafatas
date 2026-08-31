@@ -25,7 +25,8 @@ export async function POST(request: NextRequest) {
     }
 
     if (verifyAdminCredentials(username, password)) {
-      return NextResponse.json({ success: true, token: generateSessionToken(username) });
+      const token = await generateSessionToken(username);
+      return NextResponse.json({ success: true, token });
     }
 
     return NextResponse.json(
