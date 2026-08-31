@@ -1,5 +1,6 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,7 +9,10 @@ const supabase = createClient(
 
 const BUCKET = "client_documents";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { searchParams } = new URL(req.url);
   const leadId = searchParams.get("lead_id");
   if (!leadId) return NextResponse.json({ error: "lead_id required" }, { status: 400 });
@@ -21,15 +25,19 @@ export async function GET(req: Request) {
 
   const documents = await Promise.all(
     (data || []).map(async (file) => {
-      const { data: urlData } = await supabase.storage.from(BUCKET).getPublicUrl(`${leadId}/${file.name}`);
-      return { name: file.name, url: urlData.publicUrl, path: `${leadId}/${file.name}` };
+      const path = `${leadId}/${file.name}`;
+      const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
+      return { name: file.name, url: signed?.signedUrl ?? "", path };
     })
   );
 
   return NextResponse.json({ documents });
 }
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const formData = await req.formData();
   const file = formData.get("file") as File | null;
   const leadId = formData.get("lead_id") as string | null;
@@ -44,11 +52,14 @@ export async function POST(req: Request) {
   });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(filePath);
-  return NextResponse.json({ document: { name: file.name, url: urlData.publicUrl, path: filePath } });
+  const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(filePath, 3600);
+  return NextResponse.json({ document: { name: file.name, url: signed?.signedUrl ?? "", path: filePath } });
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { path } = await req.json();
   if (!path) return NextResponse.json({ error: "path required" }, { status: 400 });
 

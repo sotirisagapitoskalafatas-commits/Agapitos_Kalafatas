@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
 
 const InvoicePDFDownload = dynamic(
@@ -9,10 +8,10 @@ const InvoicePDFDownload = dynamic(
   { ssr: false }
 );
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function invoiceAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+}
 
 interface InvoiceItem {
   description: string;
@@ -82,19 +81,17 @@ export default function InvoicesPage() {
 
   const fetchInvoices = useCallback(async () => {
     setLoading(true);
+    const headers = invoiceAuthHeaders();
+
     const [invRes, settingsRes] = await Promise.all([
-      supabase
-        .from("invoices")
-        .select("*, leads(first_name, last_name, email, phone)")
-        .order("created_at", { ascending: false }),
-      supabase.from("system_settings").select("*").limit(1).single(),
+      fetch("/api/crm/invoices", { headers }).then(r => r.json()).catch(() => []),
+      fetch("/api/crm/settings", { headers }).then(r => r.json()).catch(() => null),
     ]);
 
-    if (!invRes.error && invRes.data) {
-      setInvoices(invRes.data as Invoice[]);
-    }
+    if (Array.isArray(invRes)) setInvoices(invRes as Invoice[]);
+    else if (!invRes.error && invRes.data) setInvoices(invRes.data as Invoice[]);
 
-    if (!settingsRes.error && settingsRes.data) {
+    if (settingsRes && !settingsRes.error && settingsRes.data) {
       const s = settingsRes.data;
       setCompany({
         company_name: s.company_name || "Agapitos Kalafatas",
@@ -329,11 +326,6 @@ function NewInvoiceModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const supabaseClient = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   const [leads, setLeads] = useState<{ id: string; first_name: string; last_name: string }[]>([]);
   const [form, setForm] = useState({
     lead_id: "",
@@ -346,13 +338,14 @@ function NewInvoiceModal({
   ]);
 
   useEffect(() => {
-    supabaseClient
-      .from("leads")
-      .select("id, first_name, last_name")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => {
-        if (data) setLeads(data);
-      });
+    const headers = invoiceAuthHeaders();
+    fetch("/api/crm/leads", { headers })
+      .then((r) => r.json())
+      .then((data) => {
+        const list = Array.isArray(data) ? data : data?.data ?? [];
+        if (Array.isArray(list)) setLeads(list as { id: string; first_name: string; last_name: string }[]);
+      })
+      .catch(() => {});
   }, []);
 
   const addItem = () =>
@@ -373,7 +366,7 @@ function NewInvoiceModal({
     e.preventDefault();
     await fetch("/api/crm/invoices", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: invoiceAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         ...form,
         items,

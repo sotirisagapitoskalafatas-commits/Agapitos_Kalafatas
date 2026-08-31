@@ -1,14 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
-const SERVICE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
+  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+}
 
 interface Lead {
   id: string;
@@ -152,13 +149,23 @@ export default function CRMDashboard() {
   const [showNewInvoice, setShowNewInvoice] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginUser === "agapitos" && loginPass === "atlas2026") {
-      setAuthToken(btoa(`${loginUser}:${loginPass}`));
-      setIsLoggedIn(true);
-    } else {
-      setLoginError("Invalid credentials");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ username: loginUser, password: loginPass }),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        setAuthToken(data.token);
+        setIsLoggedIn(true);
+      } else {
+        setLoginError(data.error || "Invalid credentials");
+      }
+    } catch {
+      setLoginError("Unable to reach authentication service");
     }
   };
 
@@ -176,23 +183,29 @@ export default function CRMDashboard() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
+    const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
+    const authHeaders: Record<string, string> = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
     const [leadsRes, dealsRes, eventsRes, commsRes, invRes, dashRes, notifRes] = await Promise.all([
-      supabase.from("leads").select("*").order("created_at", { ascending: false }),
-      fetch("/api/crm/deals").then(r => r.json()).catch(() => []),
-      fetch("/api/crm/events").then(r => r.json()).catch(() => []),
-      fetch("/api/crm/communications").then(r => r.json()).catch(() => []),
-      fetch("/api/crm/invoices").then(r => r.json()).catch(() => []),
-      fetch("/api/crm/dashboard").then(r => r.json()).catch(() => null),
-      supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(50),
+      fetch("/api/crm/leads", { headers: authHeaders }).then(r => r.json()).catch(() => []),
+      fetch("/api/crm/deals", { headers: authHeaders }).then(r => r.json()).catch(() => []),
+      fetch("/api/crm/events", { headers: authHeaders }).then(r => r.json()).catch(() => []),
+      fetch("/api/crm/communications", { headers: authHeaders }).then(r => r.json()).catch(() => []),
+      fetch("/api/crm/invoices", { headers: authHeaders }).then(r => r.json()).catch(() => []),
+      fetch("/api/crm/dashboard", { headers: authHeaders }).then(r => r.json()).catch(() => null),
+      fetch("/api/crm/notifications", { headers: authHeaders }).then(r => r.json()).catch(() => []),
     ]);
 
     if (!leadsRes.error && leadsRes.data) setLeads(leadsRes.data as Lead[]);
+    else if (Array.isArray(leadsRes)) setLeads(leadsRes as Lead[]);
     if (dealsRes && !dealsRes.error) setDeals(dealsRes);
     if (eventsRes && !eventsRes.error) setEvents(eventsRes);
     if (commsRes && !commsRes.error) setComms(commsRes);
     if (invRes && !invRes.error) setInvoices(invRes);
     if (dashRes) setDashboard(dashRes);
     if (!notifRes.error && notifRes.data) setNotifications(notifRes.data);
+    else if (Array.isArray(notifRes)) setNotifications(notifRes as any[]);
     setLoading(false);
   }, []);
 
@@ -201,20 +214,28 @@ export default function CRMDashboard() {
   }, [isLoggedIn, fetchAll]);
 
   const updateLeadStatus = async (id: string, status: string) => {
-    await supabase.from("leads").update({ status }).eq("id", id);
+    await fetch("/api/crm/leads", {
+      method: "PATCH",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ id, status }),
+    });
     fetchAll();
     if (selectedLead) setSelectedLead({ ...selectedLead, status });
   };
 
   const updateLeadNotes = async (id: string, notes: string) => {
-    await supabase.from("leads").update({ notes }).eq("id", id);
+    await fetch("/api/crm/leads", {
+      method: "PATCH",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ id, notes }),
+    });
     if (selectedLead) setSelectedLead({ ...selectedLead, notes });
   };
 
   const moveDeal = async (id: string, stage: string) => {
     await fetch("/api/crm/deals", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ id, stage }),
     });
     fetchAll();
@@ -223,7 +244,7 @@ export default function CRMDashboard() {
   const toggleEventComplete = async (id: string, completed: boolean) => {
     await fetch("/api/crm/events", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ id, completed: !completed }),
     });
     fetchAll();
@@ -756,7 +777,7 @@ function InvoicesView({ invoices, onNew }: { invoices: Invoice[]; onNew: () => v
   const updateInvoiceStatus = async (id: string, status: string) => {
     await fetch("/api/crm/invoices", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ id, status }),
     });
     onNew();
@@ -916,7 +937,7 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
 
   useEffect(() => {
     if (lead?.id) {
-      fetch(`/api/documents?lead_id=${lead.id}`)
+      fetch(`/api/documents?lead_id=${lead.id}`, { headers: getAuthHeaders() })
         .then(r => r.json())
         .then(data => setLeadDocuments(data.documents || []))
         .catch(() => {});
@@ -927,7 +948,11 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
     const formData = new FormData();
     formData.append("file", file);
     formData.append("lead_id", leadId);
-    const res = await fetch("/api/documents", { method: "POST", body: formData });
+    const res = await fetch("/api/documents", {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: formData,
+    });
     if (res.ok) {
       const data = await res.json();
       setLeadDocuments(prev => [...prev, data.document]);
@@ -935,7 +960,11 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
   };
 
   const deleteDocument = async (doc: {path: string}) => {
-    await fetch("/api/documents", { method: "DELETE", headers: {"Content-Type": "application/json"}, body: JSON.stringify({path: doc.path}) });
+    await fetch("/api/documents", {
+      method: "DELETE",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ path: doc.path }),
+    });
     setLeadDocuments(prev => prev.filter(d => d.path !== doc.path));
   };
 
@@ -1069,7 +1098,7 @@ function NewDealModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
     e.preventDefault();
     await fetch("/api/crm/deals", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ ...form, value: parseFloat(form.value) || 0 }),
     });
     onSaved();
@@ -1117,7 +1146,7 @@ function NewEventModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: ()
     e.preventDefault();
     await fetch("/api/crm/events", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(form),
     });
     onSaved();
@@ -1177,7 +1206,7 @@ function NewCommModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
     e.preventDefault();
     await fetch("/api/crm/communications", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(form),
     });
     onSaved();
@@ -1248,7 +1277,7 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
     e.preventDefault();
     await fetch("/api/crm/invoices", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ ...form, items, tax_rate: parseFloat(form.tax_rate) || 24 }),
     });
     onSaved();
@@ -1449,7 +1478,7 @@ function SettingsView() {
     try {
       const res = await fetch("/api/settings", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(settings),
       });
       if (res.ok) setSaveMsg("Settings saved successfully!");

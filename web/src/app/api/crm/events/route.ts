@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAuth, unauthorizedResponse } from '@/lib/admin-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -7,6 +8,9 @@ const supabase = createClient(
 );
 
 export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { searchParams } = new URL(req.url);
   const from = searchParams.get('from');
   const to = searchParams.get('to');
@@ -25,6 +29,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const body = await req.json();
   const { data, error } = await supabase
     .from('calendar_events')
@@ -37,6 +44,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { id, ...updates } = await req.json();
   const { data, error } = await supabase
     .from('calendar_events')
@@ -50,6 +60,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });

@@ -1,16 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  verifyAdminCredentials,
+  generateSessionToken,
+  getAdminCredentials,
+} from "@/lib/admin-auth";
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password } = await request.json();
+    let username = "";
+    let password = "";
+    try {
+      const body = await request.json();
+      username = body?.username ?? "";
+      password = body?.password ?? "";
+    } catch {
+      // fall through to validation
+    }
 
-    const adminUser = process.env.ADMIN_USERNAME || "agapitos";
-    const adminPass = process.env.ADMIN_PASSWORD || "atlas2026";
+    if (!username || !password) {
+      return NextResponse.json(
+        { error: "Username and password are required" },
+        { status: 400 }
+      );
+    }
 
-    if (username === adminUser && password === adminPass) {
-      // Return base64 encoded token
-      const token = btoa(`${username}:${password}`);
-      return NextResponse.json({ success: true, token });
+    if (verifyAdminCredentials(username, password)) {
+      return NextResponse.json({ success: true, token: generateSessionToken(username) });
     }
 
     return NextResponse.json(
@@ -18,9 +33,16 @@ export async function POST(request: NextRequest) {
       { status: 401 }
     );
   } catch (error) {
+    console.error("Login API error:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  // Expose whether admin auth is configured so the client can fail-closed.
+  const configured = getAdminCredentials() !== null;
+  return NextResponse.json({ configured });
 }

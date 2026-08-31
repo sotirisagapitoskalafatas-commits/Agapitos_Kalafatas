@@ -25,6 +25,11 @@ interface Msg {
   error?: boolean;
 }
 
+function agentAuthHeaders(): Record<string, string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export default function AgentPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginUser, setLoginUser] = useState("");
@@ -39,7 +44,7 @@ export default function AgentPage() {
 
   const fetchApprovals = useCallback(async () => {
     try {
-      const res = await fetch("/api/agent/approvals");
+      const res = await fetch("/api/agent/approvals", { headers: agentAuthHeaders() });
       const data = await res.json();
       if (data.approvals) setApprovals(data.approvals);
     } catch {}
@@ -55,14 +60,24 @@ export default function AgentPage() {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginUser === "agapitos" && loginPass === "atlas2026") {
-      localStorage.setItem("crm_token", btoa(`${loginUser}:${loginPass}`));
-      setIsLoggedIn(true);
-      setLoginError("");
-    } else {
-      setLoginError("Invalid credentials");
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: loginUser, password: loginPass }),
+      });
+      const data = await res.json();
+      if (res.ok && data.token) {
+        localStorage.setItem("crm_token", data.token);
+        setIsLoggedIn(true);
+        setLoginError("");
+      } else {
+        setLoginError(data.error || "Invalid credentials");
+      }
+    } catch {
+      setLoginError("Unable to reach authentication service");
     }
   };
 
@@ -74,7 +89,10 @@ export default function AgentPage() {
     try {
       await fetch("/api/agent/approvals", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          ...agentAuthHeaders(),
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ approvalId, decision, decidedBy: "admin" }),
       });
       fetchApprovals();

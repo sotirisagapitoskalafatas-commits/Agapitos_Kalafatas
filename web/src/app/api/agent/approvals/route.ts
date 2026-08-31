@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listPendingApprovals, decideApproval } from "@/lib/agents/approvals";
+import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 // GET /api/agent/approvals — list pending actions requiring admin approval
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
   try {
     const approvals = await listPendingApprovals();
     return NextResponse.json({ approvals });
@@ -16,6 +19,8 @@ export async function GET() {
 
 // POST /api/agent/approvals — { approvalId, decision: "approved" | "rejected" }
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.ok) return unauthorizedResponse();
   try {
     const { approvalId, decision, decidedBy } = await request.json();
     if (!approvalId || !decision) {

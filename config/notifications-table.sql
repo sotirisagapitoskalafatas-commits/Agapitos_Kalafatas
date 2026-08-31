@@ -14,17 +14,9 @@ CREATE INDEX idx_notifications_created_at ON notifications (created_at DESC);
 -- RLS policies
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
--- Service role can do everything
+-- Admin reads notifications via the authenticated /api/crm/notifications endpoint
+-- and webhooks log via the server-side service role. The anon key is locked out.
 CREATE POLICY "Service role full access on notifications"
   ON notifications FOR ALL
-  USING (auth.role() = 'service_role');
-
--- Anon can read (for CRM dashboard)
-CREATE POLICY "Anon can read notifications"
-  ON notifications FOR SELECT
-  USING (true);
-
--- Anon can insert (for webhook logging)
-CREATE POLICY "Anon can insert notifications"
-  ON notifications FOR INSERT
-  WITH CHECK (true);
+  TO service_role
+  USING (true) WITH CHECK (true);

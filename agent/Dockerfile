@@ -17,8 +17,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY agent/__init__.py agent/__init__.py
 COPY agent/brain.py agent/brain.py
 COPY agent/config.py agent/config.py
+COPY agent/ears.py agent/ears.py
 COPY agent/memory.py agent/memory.py
 COPY agent/mouth.py agent/mouth.py
+COPY agent/ptt.py agent/ptt.py
+COPY agent/signals.py agent/signals.py
 COPY agent/vlog.py agent/vlog.py
 COPY agent/server.py server.py
 

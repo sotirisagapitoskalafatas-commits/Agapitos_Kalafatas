@@ -98,13 +98,6 @@ class GeminiBrain:
         """Reset for a new turn."""
         self._dirty = False
 
-    async def query(self, text: str):
-        """Send a query and return the full response."""
-        self._dirty = True
-        self.session["turns"] += 1
-        self.session["in_tokens"] += len(text.split()) * 2  # rough estimate
-        return await self._client.generate_content_async(text)
-
     async def ask_stream(self, utterance: str):
         """Yield complete sentences as they stream out of Gemini."""
         self._dirty = True
@@ -150,19 +143,3 @@ class GeminiBrain:
         except Exception as e:
             log(f"[brain] Gemini error: {e}")
             yield f"I hit an error: {str(e)[:200]}"
-
-    async def context_usage(self):
-        """Return context window usage info."""
-        return {
-            "model": self.model,
-            "turns": self.session["turns"],
-            "tokens": self.session,
-        }
-
-    async def set_model(self, model: str):
-        """Switch model (requires restart of chat)."""
-        self.model = model
-        if self._chat:
-            self._history = self._chat.history
-        await self.stop()
-        await self.start()

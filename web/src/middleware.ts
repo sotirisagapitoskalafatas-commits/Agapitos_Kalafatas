@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { getAdminCredentials } from "./lib/admin-auth";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect /admin routes
   if (pathname.startsWith("/admin")) {
-    // Check for basic auth header
-    const authHeader = request.headers.get("authorization");
+    // Fail closed: if no admin credentials are configured (production), block all access.
+    const creds = getAdminCredentials();
+    if (!creds) {
+      return new NextResponse("Admin access is not configured", { status: 503 });
+    }
 
+    const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Basic ")) {
       return new NextResponse("Authentication required", {
         status: 401,
@@ -18,16 +22,16 @@ export function middleware(request: NextRequest) {
       });
     }
 
-    // Decode credentials
     const base64Credentials = authHeader.split(" ")[1];
-    const credentials = atob(base64Credentials);
+    let credentials = "";
+    try {
+      credentials = atob(base64Credentials);
+    } catch {
+      return new NextResponse("Invalid credentials", { status: 401 });
+    }
     const [username, password] = credentials.split(":");
 
-    // Validate against env vars (with fallback to defaults)
-    const adminUser = process.env.ADMIN_USER || "agapitos";
-    const adminPass = process.env.ADMIN_PASS || "atlas2026";
-
-    if (username !== adminUser || password !== adminPass) {
+    if (username !== creds.user || password !== creds.pass) {
       return new NextResponse("Invalid credentials", {
         status: 401,
         headers: {
@@ -41,5 +45,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Note: only page routes are protected by HTTP Basic Auth. API routes
+  // (/api/*) are protected individually via Bearer session tokens in admin-auth.
   matcher: ["/admin/:path*"],
 };

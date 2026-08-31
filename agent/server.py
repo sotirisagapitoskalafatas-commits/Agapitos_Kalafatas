@@ -22,11 +22,29 @@ from agent.memory import MemoryVault
 from agent.mouth import Mouth
 from agent.vlog import log
 
+# Security: only allow expected frontend origins to connect. Never use "*".
+# Production origin is the Vercel frontend; localhost covers local development.
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.environ.get(
+        "ALLOWED_ORIGINS",
+        "https://agapitoskalafatas.vercel.app,"
+        "https://agapitoskalafatas.vercel.app/,"
+        "http://localhost:3000,http://localhost:8000",
+    ).split(",")
+    if o.strip()
+]
+
+# Guardrails against abuse / runaway connections.
+MAX_WS_MESSAGE_BYTES = 64 * 1024  # 64 KB per message
+MAX_TEXT_LEN = 4000               # longest allowed user text
+MAX_MESSAGES_PER_MINUTE = 60      # crude per-connection rate limit
+
 app = FastAPI(title="Agapitos Kalafatas AI Agent Core")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,6 +54,15 @@ app.add_middleware(
 brain: GeminiBrain | None = None
 memory: MemoryVault | None = None
 mouth: Mouth | None = None
+
+
+def _is_allowed_origin(websocket: WebSocket) -> bool:
+    origin = websocket.headers.get("origin")
+    if not origin:
+        # No Origin header (non-browser client). Reject to be safe.
+        return False
+    return origin.rstrip("/") in {o.rstrip("/") for o in ALLOWED_ORIGINS}
+
 
 
 @app.on_event("startup")
@@ -76,32 +103,77 @@ async def health():
 
 @app.websocket("/ws/agent")
 async def agent_websocket(websocket: WebSocket):
+    # Origin check: deny connections from unexpected websites so the public
+    # chat relay cannot be abused as an open LLM proxy.
+    if not _is_allowed_origin(websocket):
+        log(f"[server] rejected connection from origin {websocket.headers.get('origin')}")
+        await websocket.close(code=1008)  # policy violation
+        return
+
     await websocket.accept()
     log("[server] client connected")
+
+    # Per-connection rate limiting (sliding window).
+    window_start = time.monotonic()
+    window_count = 0
+
+    def _throttled() -> bool:
+        nonlocal window_start, window_count
+        now = time.monotonic()
+        if now - window_start >= 60:
+            window_start = now
+            window_count = 0
+        window_count += 1
+        return window_count > MAX_MESSAGES_PER_MINUTE
 
     try:
         while True:
             data = await websocket.receive_text()
-            payload = json.loads(data)
+            if len(data.encode("utf-8")) > MAX_WS_MESSAGE_BYTES:
+                log("[server] message too large, closing")
+                await websocket.close(code=1009)  # message too big
+                return
 
-            msg_type = payload.get("type", "")
+            try:
+                payload = json.loads(data)
+            except (json.JSONDecodeError, TypeError):
+                await websocket.send_json({"type": "error", "content": "Invalid JSON payload"})
+                continue
+
+            if not isinstance(payload, dict):
+                await websocket.send_json({"type": "error", "content": "Invalid payload"})
+                continue
+
+            if _throttled():
+                await websocket.send_json({"type": "error", "content": "Rate limit exceeded"})
+                continue
+
+            msg_type = payload.get("type")
+            if not isinstance(msg_type, str):
+                await websocket.send_json({"type": "error", "content": "Missing message type"})
+                continue
 
             if msg_type == "text_message":
                 # Text-based interaction (from chat widget)
                 text = payload.get("text", "")
                 history = payload.get("history", [])
-
-                if not text.strip():
+                if not isinstance(text, str) or not text.strip():
                     continue
+                if isinstance(history, list):
+                    history = [h for h in history if isinstance(h, dict)][-10:]
+                else:
+                    history = []
+
+                text = text[:MAX_TEXT_LEN]
 
                 # Update brain context from history
                 if history and brain:
                     brain._history = []
-                    for msg in history[-10:]:
+                    for msg in history:
                         role = "user" if msg.get("role") == "user" else "model"
                         brain._history.append({
                             "role": role,
-                            "parts": [{"text": msg.get("content", "")}]
+                            "parts": [{"text": str(msg.get("content", ""))[:MAX_TEXT_LEN]}]
                         })
                     brain._chat = brain._client.start_chat(history=brain._history)
 

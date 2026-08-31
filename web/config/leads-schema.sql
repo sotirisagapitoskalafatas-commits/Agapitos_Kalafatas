@@ -13,14 +13,12 @@ create table if not exists leads (
 -- Enable Row Level Security (RLS)
 alter table leads enable row level security;
 
--- Policy: Allow public insert (for the chat widget to save leads)
-create policy "Allow public insert on leads" on leads
-  for insert with check (true);
-
--- Policy: Allow authenticated read (for admin dashboard)
-create policy "Allow authenticated read on leads" on leads
-  for select using (true);
-
--- Policy: Allow authenticated update (for admin status changes)
-create policy "Allow authenticated update on leads" on leads
-  for update using (true);
+-- CRITICAL: Lead data is sensitive (PII). The anon key must not be able to read,
+-- update, or insert leads. All lead reads and writes flow through the server-side
+-- API routes (/api/leads, /api/chat, /api/crm/leads) which use the service role
+-- (service_role bypasses RLS). These policies therefore only grant access to the
+-- service role, locking the anon key out of the leads table.
+create policy "Service role full access on leads"
+  on leads for all
+  to service_role
+  using (true) with check (true);

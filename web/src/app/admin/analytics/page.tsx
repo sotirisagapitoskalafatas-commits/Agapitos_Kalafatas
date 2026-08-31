@@ -1,18 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import Link from "next/link";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
   LineChart, Line,
 } from "recharts";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 interface Lead {
   id: string;
@@ -46,15 +40,24 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     async function fetchData() {
+      const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+
       const [leadsRes, invoicesRes, dealsRes] = await Promise.all([
-        supabase.from("leads").select("*"),
-        supabase.from("invoices").select("*"),
-        supabase.from("deals").select("*"),
+        fetch("/api/crm/leads", { headers }).then(r => r.json()).catch(() => []),
+        fetch("/api/crm/invoices", { headers }).then(r => r.json()).catch(() => []),
+        fetch("/api/crm/deals", { headers }).then(r => r.json()).catch(() => []),
       ]);
 
+      if (Array.isArray(leadsRes)) setLeads(leadsRes as Lead[]);
       if (!leadsRes.error && leadsRes.data) setLeads(leadsRes.data as Lead[]);
+
+      if (Array.isArray(invoicesRes)) setInvoices(invoicesRes as Invoice[]);
       if (!invoicesRes.error && invoicesRes.data) setInvoices(invoicesRes.data as Invoice[]);
+
+      if (Array.isArray(dealsRes)) setDeals(dealsRes as Deal[]);
       if (!dealsRes.error && dealsRes.data) setDeals(dealsRes.data as Deal[]);
+
       setLoading(false);
     }
     fetchData();

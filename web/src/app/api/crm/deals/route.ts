@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { requireAuth, unauthorizedResponse } from '@/lib/admin-auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { data, error } = await supabase
     .from('deals')
     .select('*, leads(first_name, last_name, phone, email)')
@@ -17,6 +21,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const body = await req.json();
   const { data, error } = await supabase
     .from('deals')
@@ -37,6 +44,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { id, ...updates } = await req.json();
   updates.updated_at = new Date().toISOString();
 
@@ -64,6 +74,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const auth = await requireAuth(req);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { searchParams } = new URL(req.url);
   const id = searchParams.get('id');
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });

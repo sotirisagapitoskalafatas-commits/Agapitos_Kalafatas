@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -32,7 +33,10 @@ export async function POST(request: NextRequest) {
         client_name: clientName,
         client_contact: clientContact,
         project_details: projectDetails || "",
-        status: "New",
+        first_name: clientName,
+        phone: clientContact,
+        comments: projectDetails || "",
+        status: "new_lead",
       },
     ]);
 
@@ -87,28 +91,10 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.ok) return unauthorizedResponse();
+
   try {
-    // Check for auth token
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const adminUser = process.env.ADMIN_USERNAME || "agapitos";
-    const adminPass = process.env.ADMIN_PASSWORD || "atlas2026";
-
-    // Simple token check (base64 encoded credentials)
-    try {
-      const decoded = atob(token);
-      const [user, pass] = decoded.split(":");
-      if (user !== adminUser || pass !== adminPass) {
-        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-      }
-    } catch {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
-
     const supabase = getSupabase();
     if (!supabase) {
       return NextResponse.json(

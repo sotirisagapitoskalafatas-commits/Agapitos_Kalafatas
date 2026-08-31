@@ -143,6 +143,12 @@ end;
 $$;
 
 -- 11. Row Level Security
+-- CRITICAL: All CRM data (leads, deals, events, communications, invoices) is
+-- sensitive / PII and MUST NOT be readable or writable with the anon key.
+-- Admin access flows through the authenticated Next.js /api/crm/* endpoints,
+-- which use the Supabase service role (service_role bypasses RLS). The policies
+-- below therefore GRANT access to service_role only, effectively locking the
+-- anon key out of all CRM data.
 alter table public.leads enable row level security;
 alter table public.knowledge_vectors enable row level security;
 alter table public.knowledge_base enable row level security;
@@ -151,34 +157,46 @@ alter table public.events enable row level security;
 alter table public.communications enable row level security;
 alter table public.invoices enable row level security;
 
--- Admin can do everything (service role bypasses RLS, but these policies
--- allow the anon key to read/write for the admin dashboard)
-create policy "Admin full access on leads"
+-- Leads: service role only (no anon access)
+create policy "Service role full access on leads"
   on public.leads for all
+  to service_role
   using (true) with check (true);
 
-create policy "Admin full access on knowledge_vectors"
+-- Knowledge vectors: service role only (RAG runs server-side)
+create policy "Service role full access on knowledge_vectors"
   on public.knowledge_vectors for all
+  to service_role
   using (true) with check (true);
 
-create policy "Admin full access on knowledge_base"
+-- Knowledge base: service role only (RAG runs server-side; anon never reads it)
+create policy "Service role full access on knowledge_base"
   on public.knowledge_base for all
+  to service_role
   using (true) with check (true);
 
-create policy "Admin full access on deals"
+-- Deals / pipeline: service role only
+create policy "Service role full access on deals"
   on public.deals for all
+  to service_role
   using (true) with check (true);
 
-create policy "Admin full access on events"
+-- Events: service role only
+create policy "Service role full access on events"
   on public.events for all
+  to service_role
   using (true) with check (true);
 
-create policy "Admin full access on communications"
+-- Communications: service role only
+create policy "Service role full access on communications"
   on public.communications for all
+  to service_role
   using (true) with check (true);
 
-create policy "Admin full access on invoices"
+-- Invoices: service role only (financial data)
+create policy "Service role full access on invoices"
   on public.invoices for all
+  to service_role
   using (true) with check (true);
 
 -- 12. Updated_at trigger

@@ -37,14 +37,19 @@ create policy "admin read own org approvals"
     or organization_id is null
   );
 
--- Backend (service role) creates proposals + authorizes execution, so allow inserts.
-create policy "insert approvals"
+-- Backend (service role) creates proposals + authorizes execution, so allow inserts
+-- from the service role only. The anon key cannot inject proposals.
+create policy "service role insert approvals"
   on public.agent_action_approvals
   for insert
+  to service_role
   with check (true);
 
-create policy "update approvals"
+-- Only the service role (via the authenticated /api/agent/approvals endpoint)
+-- may update an approval's status. Anonymous/external users cannot decide approvals.
+create policy "service role update approvals"
   on public.agent_action_approvals
   for update
+  to service_role
   using (true)
   with check (true);
