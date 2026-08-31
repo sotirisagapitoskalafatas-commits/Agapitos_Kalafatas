@@ -16,54 +16,28 @@ import {
   ChevronDown,
   ChevronUp,
   Upload,
-  Menu,
-  X,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { useLocale } from "@/contexts/LanguageContext";
 
-const faqs = [
-  {
-    q: "Είναι δωρεάν η υπηρεσία;",
-    a: "Ναι, η υπηρεσία μας είναι εντελώς δωρεάν, χωρίς κρυφές χρεώσεις. Αποζημιωνόμαστε από τους παρόχους, όχι από εσάς.",
-  },
-  {
-    q: "Πώς γίνεται η αλλαγή παρόχου;",
-    a: "Η διαδικασία είναι απλή και διεκπεραιώνεται εξ ολοκλήρου από εμάς. Δεν απαιτείται καμία αλλαγή στον μετρητή ή καλωδίωση.",
-  },
-  {
-    q: "Χρειάζεται να πληρώσω για αλλαγή;",
-    a: "Όχι, η αλλαγή παρόχου ηλεκτρικού ρεύματος ή φυσικού αερίου είναι απολύτως δωρεάν.",
-  },
-  {
-    q: "Πόσος χρόνος χρειάζεται;",
-    a: "Συνήθως απαιτούνται περίπου 7 εργάσιμες ημέρες για την ολοκλήρωση της μετάβασης στον νέο πάροχο.",
-  },
-  {
-    q: "Μπορεί να διακοπεί το ρεύμα;",
-    a: "Σε καμία περίπτωση. Η ηλεκτροδότωση παραμένει αδιάλειπτη καθ' όλη τη διάρκεια της διαδικασίας.",
-  },
-];
-
-const services = [
-  { title: "Ρεύμα", desc: "Φθηνά προγράμματα ενέργειας ειδικά για σένα. Συγκρίνουμε πάροχους και βρίσκουμε την πιο αποδοτική λύση.", icon: Zap, iconColor: "text-amber-500" },
-  { title: "Αέριο", desc: "Εξατομικευμένες λύσεις φυσικού αερίου για το σπίτι και την επιχείρηση με τα καλύτερα τιμολογιακά πλάνα.", icon: Flame, iconColor: "text-orange-500" },
-  { title: "Φωτοβολταϊκά", desc: "Καινοτομία και βιώσιμη ανάπτυξη στον χώρο σου. Επένδυσε στην πράσινη ενέργεια με ασφάλεια.", icon: Sun, iconColor: "text-yellow-500" },
-  { title: "Ηλεκτροκίνηση", desc: "Οδηγούμε οικολογικά, κινούμαστε ηλεκτρικά. Λύσεις φόρτισης και EV για κάθε ανάγκη.", icon: Car, iconColor: "text-blue-500" },
-  { title: "Αποθήκευση Ενέργειας", desc: "Λύσεις αποθήκευσης ενέργειας με μπαταρίες για αυτονομία και εξοικονόμηση.", icon: BatteryCharging, iconColor: "text-emerald-500" },
-  { title: "Εξοικονόμηση Ενέργειας", desc: "Ανάλυση κατανάλωσης και στρατηγικές για μείωση του λογαριασμού ρεύματος.", icon: TrendingDown, iconColor: "text-indigo-500" },
-];
-
-const regions = [
-  { title: "Αττική", desc: "Η αφετηρία της εξοικονόμησης. Συγκρίνουμε άμεσα τα προγράμματα για σπίτι ή επιχείρηση.", location: "Αθήνα" },
-  { title: "Κεντρική Ελλάδα", desc: "Λύσεις για κάθε κατανάλωση, από μικρές κατοικίες μέχρι αγροτικές εγκαταστάσεις.", location: "Θεσσαλία" },
-  { title: "Βόρεια Ελλάδα", desc: "Υποστήριξη για επιχειρήσεις και οικογένειες σε Μακεδονία & Θράκη.", location: "Θεσσαλονίκη" },
-  { title: "Νησιά Ιονίου", desc: "Εξυπηρέτηση σε κάθε νησί με προτάσεις που λαμβάνουν υπόψη την εποχικότητα.", location: "Κέρκυρα · Ζάκυνθος" },
-  { title: "Νησιά Αιγαίου", desc: "Προγράμματα ρεύματος, φωτοβολταϊκά και λύσεις ηλεκτροκίνησης.", location: "Κυκλάδες · Δωδεκάνησα" },
-  { title: "Κρήτη", desc: "Σχεδιάζουμε το επόμενο βήμα με ενεργειακή αυτονομία και τουριστικές μονάδες.", location: "Ηράκλειο · Χανιά" },
-];
+const iconMap: Record<string, React.ElementType> = {
+  zap: Zap,
+  flame: Flame,
+  sun: Sun,
+  car: Car,
+  battery: BatteryCharging,
+  trending: TrendingDown,
+};
 
 export default function EnergyPage() {
+  const { t } = useLocale();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  const faqs = t.energyPage?.faqs || [];
+  const services = t.energyPage?.services || [];
+  const regions = t.energyPage?.regions || [];
+
+  const tEnergy = t.energyPage || {};
 
   return (
     <div className="bg-slate-50 text-slate-900 min-h-screen font-sans antialiased">
@@ -74,17 +48,17 @@ export default function EnergyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 bg-amber-50 text-amber-800 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase">
-              <Zap className="w-3.5 h-3.5 text-amber-600" /> Εξειδικευμένοι Σύμβουλοι Ενέργειας
+              <Zap className="w-3.5 h-3.5 text-amber-600" /> {tEnergy.badge}
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight">
-              Ο προσωπικός σου <span className="text-amber-500">σύμβουλος ενέργειας</span>
+              {tEnergy.title1} <span className="text-amber-500">{tEnergy.titleHighlight}</span>
             </h1>
             <p className="text-lg text-slate-600 max-w-2xl leading-relaxed">
-              Δίπλα σου με όλες τις ενεργειακές λύσεις για το σπίτι και την επιχείρησή σου! Συγκρίνουμε και βρίσκουμε μαζί τον φθηνότερο πάροχο — δωρεάν.
+              {tEnergy.title2}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <a href="#contact" className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-8 py-4 rounded-2xl shadow-lg shadow-amber-500/20 text-center transition-all">
-                Δες τις Λύσεις
+                {tEnergy.ctaViewSolutions}
               </a>
               <a href="tel:+306977691776" className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-8 py-4 rounded-2xl transition-all">
                 <Phone className="w-5 h-5 text-amber-600" /> +30 697 769 1776
@@ -96,19 +70,19 @@ export default function EnergyPage() {
             <div className="grid grid-cols-2 gap-6 text-center">
               <div className="bg-white p-6 rounded-2xl shadow-sm">
                 <div className="text-3xl font-black text-amber-600 mb-1">100%</div>
-                <div className="text-xs font-bold text-slate-500 uppercase">Δωρεάν Υπηρεσία</div>
+                <div className="text-xs font-bold text-slate-500 uppercase">{tEnergy.statFree}</div>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm">
                 <div className="text-3xl font-black text-slate-900 mb-1">7</div>
-                <div className="text-xs font-bold text-slate-500 uppercase">Εργάσιμες για Αλλαγή</div>
+                <div className="text-xs font-bold text-slate-500 uppercase">{tEnergy.statDays}</div>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm">
                 <div className="text-3xl font-black text-slate-900 mb-1">24/7</div>
-                <div className="text-xs font-bold text-slate-500 uppercase">Υποστήριξη</div>
+                <div className="text-xs font-bold text-slate-500 uppercase">{tEnergy.statSupport}</div>
               </div>
               <div className="bg-white p-6 rounded-2xl shadow-sm">
                 <div className="text-3xl font-black text-amber-600 mb-1">12.000+</div>
-                <div className="text-xs font-bold text-slate-500 uppercase">Ικανοποιημένοι</div>
+                <div className="text-xs font-bold text-slate-500 uppercase">{tEnergy.statSatisfied}</div>
               </div>
             </div>
           </div>
@@ -119,9 +93,9 @@ export default function EnergyPage() {
       <section id="greece" className="py-20 bg-slate-100/70 border-y border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <h2 className="text-xs font-black uppercase text-amber-600 tracking-wider">Σε όλη την Ελλάδα</h2>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900">Η ενέργεια ταξιδεύει μαζί σου</h3>
-            <p className="text-slate-600">Καθώς κατεβαίνεις, γνωρίζεις τις λύσεις μας σε κάθε γωνιά της Ελλάδας — από την Αθήνα μέχρι την Κρήτη.</p>
+            <h2 className="text-xs font-black uppercase text-amber-600 tracking-wider">{tEnergy.greeceBadge}</h2>
+            <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900">{tEnergy.greeceTitle}</h3>
+            <p className="text-slate-600">{tEnergy.greeceDesc}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -147,14 +121,14 @@ export default function EnergyPage() {
       <section id="services" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <h2 className="text-xs font-black uppercase text-amber-600 tracking-wider">Υπηρεσίες</h2>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900">Για το σπίτι και την επιχείρηση!</h3>
-            <p className="text-slate-600">Ολοκληρωμένες ενεργειακές λύσεις προσαρμοσμένες στις δικές σου ανάγκες.</p>
+            <h2 className="text-xs font-black uppercase text-amber-600 tracking-wider">{tEnergy.servicesBadge}</h2>
+            <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900">{tEnergy.servicesTitle}</h3>
+            <p className="text-slate-600">{tEnergy.servicesDesc}</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {services.map((srv, idx) => {
-              const Icon = srv.icon;
+              const Icon = iconMap[srv.icon] || Zap;
               return (
                 <div key={idx} className="p-8 rounded-3xl bg-slate-50 border border-slate-200/80 hover:border-amber-400 transition-all space-y-4">
                   <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center border border-slate-100">
@@ -163,7 +137,7 @@ export default function EnergyPage() {
                   <h4 className="text-xl font-bold text-slate-900">{srv.title}</h4>
                   <p className="text-slate-600 text-sm leading-relaxed">{srv.desc}</p>
                   <a href="#contact" className="inline-flex items-center gap-1 text-xs font-bold text-amber-600 hover:text-amber-700 pt-2">
-                    Δες περισσότερα →
+                    {tEnergy.seeMore} →
                   </a>
                 </div>
               );
@@ -177,16 +151,16 @@ export default function EnergyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-6">
             <div className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-400 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase">
-              Ποιοι Είμαστε
+              {tEnergy.whoWeAre}
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">Ο προσωπικός σου σύμβουλος ενέργειας!</h2>
+            <h2 className="text-3xl sm:text-4xl font-black tracking-tight">{tEnergy.aboutTitle}</h2>
             <p className="text-slate-300 leading-relaxed">
-              Είμαστε μια ομάδα εξειδικευμένων ενεργειακών συμβούλων, αφοσιωμένοι στη δημιουργία αξίας και ασφάλειας για τους πελάτες μας. Στόχος μας είναι η παροχή ολοκληρωμένων ενεργειακών λύσεων που ικανοποιούν πλήρως τις ανάγκες και τις προσδοκίες σου.
+              {tEnergy.aboutText}
             </p>
             <div className="p-6 rounded-2xl bg-slate-800/80 border border-slate-700 space-y-2">
-              <h3 className="font-bold text-amber-400">Το όραμά μας</h3>
+              <h3 className="font-bold text-amber-400">{tEnergy.visionTitle}</h3>
               <p className="text-sm text-slate-300">
-                Διασφαλίζουμε ότι κάθε πελάτης έχει τον δικό του ατομικό σύμβουλο ενέργειας, που παρέχει εξατομικευμένες υπηρεσίες καθ&apos; όλη τη διάρκεια της συνεργασίας.
+                {tEnergy.visionText}
               </p>
             </div>
           </div>
@@ -194,11 +168,11 @@ export default function EnergyPage() {
           <div className="bg-slate-800 p-8 rounded-3xl border border-slate-700 space-y-4">
             <div className="flex items-center gap-3 text-amber-400">
               <ShieldCheck className="w-8 h-8" />
-              <span className="font-bold text-lg">Privacy-First Architecture</span>
+              <span className="font-bold text-lg">{tEnergy.privacyTitle}</span>
             </div>
-            <h3 className="text-xl font-bold">Το GDPR δεν είναι checkbox. Είναι η αρχιτεκτονική.</h3>
+            <h3 className="text-xl font-bold">{tEnergy.privacyHeading}</h3>
             <p className="text-sm text-slate-300 leading-relaxed">
-              Το σύστημά μας είναι χτισμένο privacy-first. Δεν κάνουμε ποτέ scraping third-party sites ή social platforms. Κάθε επαφή έχει τεκμηριωμένο lawful basis και μπορεί να ασκήσει τα δικαιώματά της από ένα self-service πάνελ.
+              {tEnergy.privacyText}
             </p>
           </div>
         </div>
@@ -208,9 +182,9 @@ export default function EnergyPage() {
       <section id="faq" className="py-24 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16 space-y-3">
-            <h2 className="text-xs font-black uppercase text-amber-600 tracking-wider">Συχνές Ερωτήσεις</h2>
-            <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900">Όλα όσα χρειάζεται να γνωρίζεις</h3>
-            <p className="text-slate-600">Όλα όσα πρέπει να ξέρεις για την αλλαγή παρόχου ενέργειας.</p>
+            <h2 className="text-xs font-black uppercase text-amber-600 tracking-wider">{tEnergy.faqBadge}</h2>
+            <h3 className="text-3xl sm:text-4xl font-extrabold text-slate-900">{tEnergy.faqTitle}</h3>
+            <p className="text-slate-600">{tEnergy.faqDesc}</p>
           </div>
 
           <div className="space-y-4">
@@ -243,11 +217,11 @@ export default function EnergyPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12">
           <div className="lg:col-span-5 space-y-6">
             <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-800 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide uppercase">
-              Ζητήστε να σας καλέσουμε!
+              {tEnergy.contactBadge}
             </div>
-            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">Έτοιμος να εξοικονομήσεις χρήματα;</h2>
+            <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">{tEnergy.contactTitle}</h2>
             <p className="text-slate-600 leading-relaxed">
-              Συμπλήρωσε τη φόρμα και ένας εξειδικευμένος σύμβουλος θα επικοινωνήσει άμεσα για να σου προτείνει το κατάλληλο πρόγραμμα — ΔΩΡΕΑΝ!
+              {tEnergy.contactDesc}
             </p>
             <div className="space-y-4 pt-4">
               <div className="flex items-center gap-3 text-slate-700 font-medium">
@@ -262,70 +236,68 @@ export default function EnergyPage() {
           </div>
 
           <div className="lg:col-span-7 bg-white p-8 sm:p-10 rounded-3xl border border-slate-200 shadow-xl">
-            <form onSubmit={(e) => { e.preventDefault(); alert("Η αίτηση στάλθηκε επιτυχώς!"); }} className="space-y-6">
+            <form onSubmit={(e) => { e.preventDefault(); alert(tEnergy.formSuccess); }} className="space-y-6">
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Όνομα</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">{tEnergy.formFirstName}</label>
                   <input type="text" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Επώνυμο</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">{tEnergy.formLastName}</label>
                   <input type="text" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
                 </div>
               </div>
               <div className="grid sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Email (προαιρετικό)</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">{tEnergy.formEmail}</label>
                   <input type="email" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Τηλέφωνο *</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">{tEnergy.formPhone}</label>
                   <input type="tel" required className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-amber-500 outline-none" />
                 </div>
               </div>
               <div className="grid sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Τύπος Ακινήτου *</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">{tEnergy.formPropertyType}</label>
                   <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none">
-                    <option>Σπίτι</option>
-                    <option>Επιχείρηση</option>
+                    <option>{tEnergy.formHome}</option>
+                    <option>{tEnergy.formBusiness}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Περιοχή</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">{tEnergy.formRegion}</label>
                   <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none">
-                    <option>Αττική</option>
-                    <option>Θεσσαλονίκη</option>
-                    <option>Κεντρική Μακεδονία</option>
-                    <option>Κρήτη</option>
-                    <option>Άλλη Περιοχή</option>
+                    <option>{regions[0]?.title || "Attica"}</option>
+                    <option>{regions[2]?.title || "Northern Greece"}</option>
+                    <option>{regions[5]?.title || "Crete"}</option>
+                    <option>{tEnergy.formOtherRegion}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Υπηρεσία</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase mb-2">{tEnergy.formService}</label>
                   <select className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none">
-                    <option>Ρεύμα</option>
-                    <option>Φυσικό Αέριο</option>
-                    <option>Φωτοβολταϊκά</option>
-                    <option>Ηλεκτροκίνηση</option>
+                    {services.map((s, i) => (
+                      <option key={i}>{s.title}</option>
+                    ))}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase mb-2">Ανέβασε λογαριασμούς / αρχεία (προαιρετικό)</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase mb-2">{tEnergy.formUpload}</label>
                 <div className="border-2 border-dashed border-slate-200 rounded-2xl p-6 text-center bg-slate-50 hover:bg-slate-100/50 transition-colors cursor-pointer">
                   <Upload className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                  <p className="text-xs font-medium text-slate-600">PDF, JPG ή PNG έως 25MB — πολλαπλά αρχεία</p>
+                  <p className="text-xs font-medium text-slate-600">{tEnergy.formUploadHint}</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <input type="checkbox" required className="mt-1 w-4 h-4 text-amber-500 rounded border-slate-300 focus:ring-amber-500" />
                 <label className="text-xs text-slate-600 leading-relaxed">
-                  Συναινώ στην επεξεργασία των δεδομένων μου για να επικοινωνήσετε μαζί μου, σύμφωνα με την πολιτική απορρήτου GDPR.
+                  {tEnergy.formConsent}
                 </label>
               </div>
               <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-4 rounded-2xl shadow-lg shadow-amber-500/20 transition-all text-center">
-                Ζητήστε κλήση
+                {tEnergy.formSubmit}
               </button>
             </form>
           </div>
@@ -343,24 +315,24 @@ export default function EnergyPage() {
               <span className="font-bold text-white">Agapitos Kalafatas</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">
-              Εξειδικευμένοι Σύμβουλοι Ενέργειας. Συγκρίνουμε και βρίσκουμε μαζί τον φθηνότερο πάροχο ενέργειας για το σπίτι και την επιχείρησή σου.
+              {tEnergy.footerDesc}
             </p>
           </div>
           <div className="space-y-2">
-            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Επικοινωνία</h4>
+            <h4 className="text-white font-bold text-xs uppercase tracking-wider">{tEnergy.footerContact}</h4>
             <p className="text-xs">+30 697 769 1776</p>
             <p className="text-xs">kalafatasagapitos@gmail.com</p>
           </div>
           <div className="space-y-2">
-            <h4 className="text-white font-bold text-xs uppercase tracking-wider">Υπηρεσίες</h4>
-            <p className="text-xs">Ρεύμα · Αέριο · Φωτοβολταϊκά · Ηλεκτροκίνηση</p>
+            <h4 className="text-white font-bold text-xs uppercase tracking-wider">{tEnergy.footerServices}</h4>
+            <p className="text-xs">{tEnergy.footerServicesList}</p>
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between text-xs gap-4">
           <p>© 2026 Agapitos Kalafatas. All rights reserved.</p>
           <div className="flex gap-4">
-            <Link href="/" className="hover:text-white">Αρχική</Link>
-            <Link href="/contact" className="hover:text-white">Επικοινωνία</Link>
+            <Link href="/" className="hover:text-white">{tEnergy.footerHome}</Link>
+            <Link href="/contact" className="hover:text-white">{tEnergy.footerContactLink}</Link>
           </div>
         </div>
       </footer>

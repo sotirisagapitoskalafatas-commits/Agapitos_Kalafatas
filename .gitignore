@@ -14,6 +14,7 @@ config/.gemini_key
 # Next.js
 web/.next/
 web/out/
+*.tsbuildinfo
 
 # Logs
 logs/

@@ -15,13 +15,18 @@ import {
   MessageSquare,
   Mail,
 } from "lucide-react";
-import { servicesData, servicesList } from "@/lib/servicesData";
+import { getServicesData, getServicesList } from "@/lib/servicesData";
+import { useLocale } from "@/contexts/LanguageContext";
 
 interface PageProps {
   params: { slug: string };
 }
 
 export default function ServiceDetailPage({ params }: PageProps) {
+  const { t, locale } = useLocale();
+  const tD = t.serviceDetailPage || {};
+  const servicesData = getServicesData(locale);
+  const servicesList = getServicesList(locale);
   const { slug } = params;
   const service = servicesData[slug];
 
@@ -39,7 +44,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
             className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-blue-600 transition-colors font-medium"
           >
             <ArrowLeft className="w-4 h-4" />
-            Όλες οι Υπηρεσίες
+            {tD.allServices}
           </Link>
         </div>
       </div>
@@ -49,7 +54,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
         <div className="max-w-6xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-400 text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-blue-500/20">
             <Zap className="w-3.5 h-3.5" />
-            Agapitos Kalafatas
+            {t.servicesPage?.badge || "Agapitos Kalafatas"}
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
             {service.heroTitle}
@@ -65,7 +70,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
               href="/contact"
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-600/25 text-sm"
             >
-              Ζητήστε Δωρεάν Εκτίμηση
+              {tD.requestFreeEstimate}
               <ArrowRight className="w-4 h-4" />
             </Link>
             <a
@@ -101,10 +106,10 @@ export default function ServiceDetailPage({ params }: PageProps) {
       {/* Benefits Grid */}
       <section className="py-16 max-w-6xl mx-auto px-4">
         <h2 className="text-2xl font-bold mb-3 text-slate-900">
-          Βασικές Δυνατότητες
+          {tD.keyFeatures}
         </h2>
         <p className="text-slate-500 mb-10">
-          Αυτό που προσφέρουμε σε κάθε έργο:
+          {tD.keyFeaturesSub}
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {service.benefits.map((benefit, i) => (
@@ -132,10 +137,10 @@ export default function ServiceDetailPage({ params }: PageProps) {
       <section className="py-16 bg-slate-50/50">
         <div className="max-w-6xl mx-auto px-4">
           <h2 className="text-2xl font-bold mb-3 text-slate-900">
-            Τι Περιλαμβάνει η Υπηρεσία
+            {tD.whatsIncluded}
           </h2>
           <p className="text-slate-500 mb-8">
-            Πλήρης κάλυψη από την αρχή μέχρι την παράδοση:
+            {tD.whatsIncludedSub}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {service.offerings[0]?.items.map((item, i) => (
@@ -159,10 +164,10 @@ export default function ServiceDetailPage({ params }: PageProps) {
       {service.pricing && service.pricing.length > 0 && (
         <section className="py-16 max-w-6xl mx-auto px-4">
           <h2 className="text-2xl font-bold mb-3 text-slate-900">
-            Τιμολόγηση
+            {tD.pricing}
           </h2>
           <p className="text-slate-500 mb-10">
-            Διαλέξτε το πακέτο που ταιριάζει στις ανάγκες σας:
+            {tD.pricingSub}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {service.pricing.map((tier, i) => (
@@ -176,7 +181,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
               >
                 {tier.highlight && (
                   <div className="text-xs font-bold text-blue-600 bg-blue-100 px-3 py-1 rounded-full inline-block mb-4">
-                    ΔΗΜΟΦΙΛΕΣΤΕΡΟ
+                    {tD.mostPopular}
                   </div>
                 )}
                 <h3 className="text-lg font-bold text-slate-900 mb-2">
@@ -207,7 +212,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
                       : "bg-slate-100 hover:bg-slate-200 text-slate-900"
                   }`}
                 >
-                  Ζητήστε Προσφορά
+                  {tD.requestQuote}
                 </Link>
               </div>
             ))}
@@ -218,10 +223,10 @@ export default function ServiceDetailPage({ params }: PageProps) {
       {/* Target Audience */}
       <section className="py-16 max-w-6xl mx-auto px-4">
         <h2 className="text-2xl font-bold mb-3 text-slate-900">
-          Τις Ποιος Χρειάζεται
+          {tD.targetAudience}
         </h2>
         <p className="text-slate-500 mb-8">
-          Η υπηρεσία αυτή απευθύνεται σε:
+          {tD.targetAudienceSub}
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {service.audience.map((item, i) => (
@@ -242,7 +247,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
       <section className="py-16 bg-slate-50/50">
         <div className="max-w-4xl mx-auto px-4">
           <h2 className="text-2xl font-bold mb-8 text-slate-900">
-            Συχνές Ερωτήσεις
+            {tD.faq}
           </h2>
           <div className="space-y-4">
             {service.faqs.map((faq, i) => (
@@ -268,7 +273,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
       {/* Related Services */}
       <section className="py-16 max-w-6xl mx-auto px-4">
         <h2 className="text-2xl font-bold mb-8 text-slate-900">
-          Άλλες Υπηρεσίες
+          {tD.otherServices}
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {servicesList
@@ -285,7 +290,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
                   {s.heroTitle.split(" ").slice(0, 4).join(" ")}...
                 </h3>
                 <div className="flex items-center text-xs font-semibold text-blue-600 mt-3 group-hover:translate-x-1 transition-transform">
-                  Μάθετε περισσότερα &rarr;
+                  {tD.learnMore} &rarr;
                 </div>
               </Link>
             ))}
@@ -311,7 +316,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
               className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-600/25"
             >
               <Mail className="w-4 h-4" />
-              Ζητήστε Δωρεάν Εκτίμηση
+              {tD.requestFreeEstimate}
             </Link>
             <a
               href="tel:+306977691776"
@@ -325,7 +330,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
               className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-emerald-600/25"
             >
               <MessageSquare className="w-4 h-4" />
-              Ζητήστε Βοήθεια
+              {tD.requestHelp}
             </Link>
           </div>
         </div>

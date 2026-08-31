@@ -16,124 +16,42 @@ import {
   PhoneCall,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { useLocale } from "@/contexts/LanguageContext";
 
-const insuranceCategories = [
-  {
-    id: "health",
-    title: "Ασφάλιση Υγείας",
-    subtitle: "BEWELL",
-    icon: HeartPulse,
-    color: "text-rose-500",
-    bgColor: "bg-rose-50",
-    description:
-      "Η υγεία αποτελεί μία από τις σημαντικότερες προτεραιότητες για κάθε άνθρωπο και οικογένεια. Η κατάλληλη ασφαλιστική λύση μπορεί να προσφέρει καλύτερη οργάνωση, πρόσβαση σε υπηρεσίες φροντίδας και οικονομική υποστήριξη όταν προκύψει μια ανάγκη.",
-    includes: [
-      "Νοσοκομειακή περίθαλψη",
-      "Διαγνωστικές εξετάσεις",
-      "Ιατρική φροντίδα",
-      "Προσωπική καθοδήγηση",
-    ],
-  },
-  {
-    id: "home",
-    title: "Ασφάλιση Κατοικίας",
-    icon: Home,
-    color: "text-teal-500",
-    bgColor: "bg-teal-50",
-    description:
-      "Η κατοικία είναι ένας από τους σημαντικότερους χώρους της ζωής μας. Η ασφάλισή της συμβάλλει στην προστασία τόσο του ίδιου του ακινήτου όσο και της περιουσίας που βρίσκεται μέσα σε αυτό.",
-    includes: [
-      "Πυρκαγιά και φυσικά φαινόμενα",
-      "Σεισμός και πλημμύρα",
-      "Κλοπή και ζημιές",
-      "Κτίριο και περιεχόμενο",
-      "Ιδιοκατοίκηση ή ενοικιαζόμενο ακίνητο",
-    ],
-  },
-  {
-    id: "business",
-    title: "Ασφάλιση Επιχείρησης",
-    icon: Briefcase,
-    color: "text-blue-500",
-    bgColor: "bg-blue-50",
-    description:
-      "Κάθε επιχείρηση έχει διαφορετικές ανάγκες, κινδύνους και προτεραιότητες. Η σωστή ασφαλιστική προσέγγιση βοηθά στην προστασία της επαγγελματικής δραστηριότητας και της απρόσκοπτης λειτουργίας της.",
-    includes: [
-      "Επαγγελματικός χώρος",
-      "Εξοπλισμός και εμπορεύματα",
-      "Απρόβλεπτες ζημιές",
-      "Διακοπή εργασιών",
-      "Ευθύνη απέναντι σε πελάτες ή συνεργάτες",
-    ],
-  },
-  {
-    id: "auto",
-    title: "Ασφάλιση Αυτοκινήτου",
-    icon: Car,
-    color: "text-amber-500",
-    bgColor: "bg-amber-50",
-    description:
-      "Η ασφάλιση αυτοκινήτου δεν αποτελεί μόνο μία απαραίτητη υποχρέωση, αλλά και ένα σημαντικό μέσο προστασίας για τον οδηγό, το όχημα και τους τρίτους.",
-    includes: [
-      "Υποχρεωτική αστική ευθύνη",
-      "Προστασία του οχήματος",
-      "Οδική βοήθεια",
-      "Θραύση κρυστάλλων",
-      "Κλοπή, πυρκαγιά ή φυσικά φαινόμενα",
-    ],
-  },
-  {
-    id: "liability",
-    title: "Ασφάλιση Αστικής Ευθύνης",
-    icon: ShieldCheck,
-    color: "text-indigo-500",
-    bgColor: "bg-indigo-50",
-    description:
-      "Η αστική ευθύνη μπορεί να προστατεύσει έναν ιδιώτη ή επαγγελματία από οικονομικές απαιτήσεις τρίτων, όταν προκληθεί σωματική βλάβη ή υλική ζημιά.",
-    includes: [
-      "Επαγγελματική αστική ευθύνη",
-      "Προσωπική ευθύνη",
-      "Αποζημιώσεις προς τρίτους",
-      "Νομικά έξοδα",
-      "Λύσεις ανάλογα με το επάγγελμα ή τη δραστηριότητα",
-    ],
-  },
-  {
-    id: "savings",
-    title: "Αποταμίευση",
-    icon: PiggyBank,
-    color: "text-emerald-500",
-    bgColor: "bg-emerald-50",
-    description:
-      "Η συστηματική αποταμίευση μπορεί να βοηθήσει στην επίτευξη προσωπικών και οικογενειακών στόχων, δημιουργώντας μεγαλύτερη οικονομική ασφάλεια για το μέλλον.",
-    includes: [
-      "Δημιουργία αποθεματικού",
-      "Μακροπρόθεσμοι στόχοι",
-      "Σπουδές παιδιών",
-      "Μελλοντικό συμπληρωματικό εισόδημα",
-      "Προσωπικός οικονομικός σχεδιασμός",
-    ],
-  },
-  {
-    id: "travel",
-    title: "Ταξιδιωτική Ασφάλιση",
-    icon: Plane,
-    color: "text-cyan-500",
-    bgColor: "bg-cyan-50",
-    description:
-      "Ένα ταξίδι μπορεί να συνοδευτεί από απρόβλεπτες καταστάσεις. Η ταξιδιωτική ασφάλιση προσφέρει επιλογές υποστήριξης για ταξίδια στην Ελλάδα και το εξωτερικό.",
-    includes: [
-      "Επείγουσα ιατρική βοήθεια",
-      "Απρόβλεπτα περιστατικά στο ταξίδι",
-      "Αποσκευές και προσωπικά αντικείμενα",
-      "Ακύρωση ή αλλαγή ταξιδιού",
-      "Υποστήριξη στο εξωτερικό",
-    ],
-  },
-];
+const iconMap: Record<string, React.ElementType> = {
+  health: HeartPulse,
+  home: Home,
+  business: Briefcase,
+  auto: Car,
+  liability: ShieldCheck,
+  savings: PiggyBank,
+  travel: Plane,
+};
+
+const colorMap: Record<string, { color: string; bgColor: string }> = {
+  health: { color: "text-rose-500", bgColor: "bg-rose-50" },
+  home: { color: "text-teal-500", bgColor: "bg-teal-50" },
+  business: { color: "text-blue-500", bgColor: "bg-blue-50" },
+  auto: { color: "text-amber-500", bgColor: "bg-amber-50" },
+  liability: { color: "text-indigo-500", bgColor: "bg-indigo-50" },
+  savings: { color: "text-emerald-500", bgColor: "bg-emerald-50" },
+  travel: { color: "text-cyan-500", bgColor: "bg-cyan-50" },
+};
+
+const categoryIds = ["health", "home", "business", "auto", "liability", "savings", "travel"];
 
 export default function InsurancePage() {
+  const { t } = useLocale();
   const [openId, setOpenId] = useState<string | null>(null);
+
+  const tIns = t.insurancePage || {};
+  const categories = (tIns.categories || []).map((cat, idx) => ({
+    ...cat,
+    id: categoryIds[idx] || String(idx),
+    icon: iconMap[categoryIds[idx]] || ShieldCheck,
+    color: colorMap[categoryIds[idx]]?.color || "text-rose-500",
+    bgColor: colorMap[categoryIds[idx]]?.bgColor || "bg-rose-50",
+  }));
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans antialiased">
@@ -144,17 +62,17 @@ export default function InsurancePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7 space-y-6">
             <div className="inline-flex items-center gap-2 bg-rose-100 text-rose-800 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide">
-              <ShieldCheck className="w-3.5 h-3.5 text-rose-600" /> Προηγμένες Λύσεις Ασφάλισης
+              <ShieldCheck className="w-3.5 h-3.5 text-rose-600" /> {tIns.badge}
             </div>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black text-slate-900 tracking-tight leading-tight">
-              Ασφάλεια που <span className="text-rose-600">προστατεύει</span> ό,τι αξίζει
+              {tIns.title1} <span className="text-rose-600">{tIns.titleHighlight}</span> {tIns.title2}
             </h1>
             <p className="text-lg text-slate-600 max-w-2xl leading-relaxed">
-              Ολοκληρωμένα προγράμματα υγείας (BEWELL), ασφάλιση κατοικίας και αυτοκινήτου με εξατομικευμένη καθοδήγηση και εγγύηση καλύτερης κάλυψης.
+              {tIns.subtitle}
             </p>
             <div className="flex flex-wrap gap-4 pt-2">
               <a href="#plans" className="bg-rose-600 hover:bg-rose-700 text-white font-bold px-8 py-4 rounded-2xl shadow-lg shadow-rose-600/20 transition-all">
-                Δες τα Προγράμματα
+                {tIns.ctaViewPlans}
               </a>
               <a href="tel:+306977691776" className="flex items-center gap-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-800 font-bold px-6 py-4 rounded-2xl transition-all">
                 <Phone className="w-5 h-5 text-rose-600" /> +30 697 769 1776
@@ -163,12 +81,12 @@ export default function InsurancePage() {
           </div>
 
           <div className="lg:col-span-5 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
-            <h3 className="text-xl font-bold text-slate-900">Γρήγορη Εκτίμηση Κόστους</h3>
+            <h3 className="text-xl font-bold text-slate-900">{tIns.quickEstimateTitle}</h3>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Επιλογή Κλάδου</label>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">{tIns.planLabel}</label>
                 <div className="grid grid-cols-3 gap-2">
-                  {["Υγεία BEWELL", "Κατοικία", "Αυτοκίνητο"].map((plan) => (
+                  {[tIns.planHealth, tIns.planHome, tIns.planAuto].map((plan) => (
                     <button
                       key={plan}
                       className="py-3 px-2 rounded-xl text-xs font-bold border bg-slate-50 border-slate-200 text-slate-600 hover:bg-rose-50 hover:border-rose-500 hover:text-rose-700 transition-all"
@@ -179,15 +97,15 @@ export default function InsurancePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Ονοματεπώνυμο</label>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">{tIns.fullNameLabel}</label>
                 <input
                   type="text"
-                  placeholder="π.χ. Γιώργος Παπαδόπουλος"
+                  placeholder={tIns.fullNamePlaceholder}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-rose-500"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">Τηλέφωνο Επικοινωνίας</label>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-2">{tIns.phoneLabel}</label>
                 <input
                   type="tel"
                   placeholder="69XXXXXXXX"
@@ -195,7 +113,7 @@ export default function InsurancePage() {
                 />
               </div>
               <button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm">
-                Ζητήστε Προσφορά
+                {tIns.requestQuote}
               </button>
             </div>
           </div>
@@ -207,15 +125,15 @@ export default function InsurancePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 mb-4">
-              Λύσεις Ασφάλισης
+              {tIns.insuranceSolutionsTitle}
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Επιλέξτε τον τομέα που σας ενδιαφέρει για να δείτε αναλυτικά τι περιλαμβάνει η κάθε κάλυψη — ή επικοινωνήστε μαζί μου για μια εξατομικευμένη πρόταση.
+              {tIns.insuranceSolutionsDesc}
             </p>
           </div>
 
           <div className="space-y-4">
-            {insuranceCategories.map((cat) => {
+            {categories.map((cat) => {
               const Icon = cat.icon;
               const isOpen = openId === cat.id;
 
@@ -262,7 +180,7 @@ export default function InsurancePage() {
 
                       <div>
                         <h4 className="text-sm font-bold text-slate-900 uppercase tracking-wider mb-4">
-                          Τι μπορεί να περιλαμβάνει:
+                          {tIns.includesHeading}
                         </h4>
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {cat.includes.map((item, index) => (
@@ -280,7 +198,7 @@ export default function InsurancePage() {
                           className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
                         >
                           <PhoneCall className="w-4 h-4" />
-                          Ζητήστε προσφορά
+                          {tIns.requestOffer}
                         </a>
                       </div>
                     </div>
@@ -300,12 +218,12 @@ export default function InsurancePage() {
               <span className="text-white font-bold text-2xl">AK</span>
             </div>
             <div className="text-center md:text-left flex-1">
-              <h3 className="text-xl font-bold text-slate-900">Αγαπητός Καλαφάτας</h3>
+              <h3 className="text-xl font-bold text-slate-900">{tIns.advisorName}</h3>
               <p className="text-rose-600 font-medium text-sm mb-3">
-                Ασφαλιστική Σύμβουλος | Digital & Advisory Services
+                {tIns.advisorRole}
               </p>
               <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                Από το 2019 βρίσκομαι δίπλα στους ανθρώπους που με εμπιστεύονται, προσφέροντας προσωπική και ουσιαστική ασφαλιστική καθοδήγηση. Στόχος μου είναι να κάνω την ασφάλιση απλή, κατανοητή και ανθρώπινη.
+                {tIns.advisorText}
               </p>
               <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                 <a
@@ -318,7 +236,7 @@ export default function InsurancePage() {
                   href="mailto:kalafatasagapitos@gmail.com"
                   className="px-5 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
                 >
-                  Στείλτε email
+                  {tIns.sendEmail}
                 </a>
                 <a
                   href="https://linkedin.com/in/agapitos-kalafatas-red-ai"
@@ -341,12 +259,12 @@ export default function InsurancePage() {
             <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">A</span>
             </div>
-            <span className="font-semibold text-white">Αγαπητός Καλαφάτας</span>
+            <span className="font-semibold text-white">{tIns.advisorName}</span>
           </div>
           <div className="flex items-center gap-6 text-xs text-slate-400">
-            <Link href="/" className="hover:text-white transition-colors">Αρχική</Link>
-            <Link href="/energy" className="hover:text-white transition-colors">Ενέργεια</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Επικοινωνία</Link>
+            <Link href="/" className="hover:text-white transition-colors">{tIns.footerHome}</Link>
+            <Link href="/energy" className="hover:text-white transition-colors">{tIns.footerEnergy}</Link>
+            <Link href="/contact" className="hover:text-white transition-colors">{tIns.footerContact}</Link>
           </div>
           <p className="text-xs text-slate-500">© 2026 Agapitos Kalafatas. All rights reserved.</p>
         </div>

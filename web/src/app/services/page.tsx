@@ -13,7 +13,8 @@ import {
   Code2,
   Zap,
 } from "lucide-react";
-import { servicesList } from "@/lib/servicesData";
+import { getServicesList } from "@/lib/servicesData";
+import { useLocale } from "@/contexts/LanguageContext";
 
 const iconMap: Record<string, React.ElementType> = {
   "web-development": Globe,
@@ -64,6 +65,8 @@ const colorMap: Record<string, { bg: string; text: string; border: string }> = {
 };
 
 export default function ServicesHubPage() {
+  const { t, locale } = useLocale();
+  const servicesList = getServicesList(locale);
   return (
     <main className="min-h-screen bg-white">
       {/* Hero */}
@@ -71,14 +74,13 @@ export default function ServicesHubPage() {
         <div className="max-w-6xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-400 text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-blue-500/20">
             <Zap className="w-3.5 h-3.5" />
-            Agapitos Kalafatas
+            {t.servicesPage?.badge || "Agapitos Kalafatas"}
           </div>
           <h1 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-            Ψηφιακές Λύσεις
+            {t.servicesPage?.title || "Digital Solutions"}
           </h1>
           <p className="text-slate-300 text-lg max-w-2xl mx-auto leading-relaxed">
-            Από την κατασκευή ιστοσελίδων μέχρι custom λογισμικό και AI
-            ενσωματώσεις — ολοκληρωμένες ψηφιακές λύσεις για κάθε ανάγκη.
+            {t.servicesPage?.subtitle || "From website development to custom software and AI integrations — comprehensive digital solutions for every need."}
           </p>
         </div>
       </section>
@@ -123,7 +125,7 @@ export default function ServicesHubPage() {
                   </div>
                 </div>
                 <div className="flex items-center text-sm font-semibold text-blue-600 group-hover:translate-x-1 transition-transform">
-                  Μάθετε περισσότερα
+                  {t.servicesPage?.learnMore || "Learn more"}
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </div>
               </Link>
@@ -136,16 +138,16 @@ export default function ServicesHubPage() {
       <section className="py-16 bg-slate-50">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">
-            Δεν βρίσκετε αυτό που ψάχνετε;
+            {t.servicesPage?.notFinding || "Can't find what you're looking for?"}
           </h2>
           <p className="text-slate-500 mb-8">
-            Ζητήστε δωρεάν συμβουλευτική — ας συζητήσουμε τις ανάγκες σας.
+            {t.servicesPage?.consultingDesc || "Request free consulting — let's discuss your needs."}
           </p>
           <Link
             href="/contact"
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-600/25 text-sm"
           >
-            Επικοινωνήστε Μαζί Μας
+            {t.servicesPage?.contactUs || "Contact Us"}
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

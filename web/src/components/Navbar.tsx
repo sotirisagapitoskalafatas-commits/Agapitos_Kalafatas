@@ -7,41 +7,41 @@ import { ChevronDown, Globe, Zap, ShieldCheck, Menu, X } from "lucide-react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLocale } from "@/contexts/LanguageContext";
 
-const sectors = [
-  {
-    href: "/services",
-    label: "Ψηφιακές Λύσεις",
-    desc: "E-shop, Sites, Custom Apps & SEO",
-    icon: Globe,
-    iconBg: "bg-blue-50",
-    iconColor: "text-blue-600",
-    hoverBg: "group-hover:bg-blue-600",
-    hoverText: "group-hover:text-white",
-  },
-  {
-    href: "/energy",
-    label: "Ενέργεια",
-    desc: "Ρεύμα, Αέριο, Φωτοβολταϊκά & EV",
-    icon: Zap,
-    iconBg: "bg-amber-50",
-    iconColor: "text-amber-600",
-    hoverBg: "group-hover:bg-amber-600",
-    hoverText: "group-hover:text-white",
-  },
-  {
-    href: "/insurance",
-    label: "Ασφάλιση",
-    desc: "Υγεία BEWELL, Κατοικία, Αυτοκίνητο",
-    icon: ShieldCheck,
-    iconBg: "bg-rose-50",
-    iconColor: "text-rose-600",
-    hoverBg: "group-hover:bg-rose-600",
-    hoverText: "group-hover:text-white",
-  },
-];
-
 export default function Navbar() {
   const { t } = useLocale();
+
+  const sectors = [
+    {
+      href: "/services",
+      label: t.sectors?.digitalSolutions || "Digital Solutions",
+      desc: t.sectors?.digitalSolutionsDesc || "E-shop, Sites, Custom Apps & SEO",
+      icon: Globe,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-600",
+      hoverBg: "group-hover:bg-blue-600",
+      hoverText: "group-hover:text-white",
+    },
+    {
+      href: "/energy",
+      label: t.sectors?.energy || "Energy",
+      desc: t.sectors?.energyDesc || "Electricity, Gas, Solar & EV",
+      icon: Zap,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-600",
+      hoverBg: "group-hover:bg-amber-600",
+      hoverText: "group-hover:text-white",
+    },
+    {
+      href: "/insurance",
+      label: t.sectors?.insurance || "Insurance",
+      desc: t.sectors?.insuranceDesc || "Health BEWELL, Home, Auto",
+      icon: ShieldCheck,
+      iconBg: "bg-rose-50",
+      iconColor: "text-rose-600",
+      hoverBg: "group-hover:bg-rose-600",
+      hoverText: "group-hover:text-white",
+    },
+  ];
   const pathname = usePathname();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -159,7 +159,7 @@ export default function Navbar() {
       {mobileOpen && (
         <div className="md:hidden bg-white border-b border-slate-200 px-4 py-6 space-y-4">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">
-            Επιλέξτε Τομέα
+            {t.sectors?.selectSector || "Select Sector"}
           </p>
           {sectors.map((sector) => {
             const Icon = sector.icon;

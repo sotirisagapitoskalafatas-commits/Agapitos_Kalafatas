@@ -248,7 +248,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-6 text-sm text-slate-500">
             <Link href="/chat" className="hover:text-slate-900 transition-colors">Atlas AI</Link>
-            <Link href="/services" className="hover:text-slate-900 transition-colors">Υπηρεσίες</Link>
+            <Link href="/services" className="hover:text-slate-900 transition-colors">{t.nav.services}</Link>
             <Link href="/admin/crm" className="hover:text-slate-900 transition-colors">CRM</Link>
           </div>
           <p className="text-xs text-slate-400">{t.footer.rights}</p>

@@ -102,6 +102,408 @@
     "placeholder": "Tapez votre message...",
     "minimize": "Réduire le chat"
   },
+  "sectors": {
+    "selectSector": "Sélectionner le Secteur",
+    "digitalSolutions": "Solutions Numériques",
+    "digitalSolutionsDesc": "E-shop, Sites, Apps Sur Mesure & SEO",
+    "energy": "Énergie",
+    "energyDesc": "Électricité, Gaz, Solaire & VE",
+    "insurance": "Assurance",
+    "insuranceDesc": "Santé BEWELL, Habitation, Auto"
+  },
+  "servicesPage": {
+    "badge": "Agapitos Kalafatas",
+    "title": "Solutions Numériques",
+    "subtitle": "De la création de sites web aux logiciels sur mesure et intégrations IA — solutions numériques complètes pour chaque besoin.",
+    "learnMore": "En savoir plus",
+    "notFinding": "Vous ne trouvez pas ce que vous cherchez ?",
+    "consultingDesc": "Demandez une consultation gratuite — discutons de vos besoins.",
+    "contactUs": "Contactez-nous"
+  },
+  "energyPage": {
+    "badge": "Conseillers Énergie Spécialisés",
+    "title1": "Votre conseiller",
+    "titleHighlight": "énergie personnel",
+    "title2": "à vos côtés avec toutes les solutions énergétiques pour votre maison et votre entreprise ! Nous comparons et trouvons ensemble le fournisseur le moins cher — gratuitement.",
+    "ctaViewSolutions": "Voir les Solutions",
+    "statFree": "Service Gratuit",
+    "statDays": "Jours pour Changer",
+    "statSupport": "Support",
+    "statSatisfied": "Clients Satisfaits",
+    "greeceBadge": "Partout en Grèce",
+    "greeceTitle": "L'énergie voyage avec vous",
+    "greeceDesc": "En descendant, découvrez nos solutions dans chaque coin de la Grèce — d'Athènes à la Crète.",
+    "servicesBadge": "Services",
+    "servicesTitle": "Pour la maison et l'entreprise !",
+    "servicesDesc": "Solutions énergétiques complètes adaptées à vos besoins.",
+    "seeMore": "Voir plus",
+    "whoWeAre": "Qui Sommes-Nous",
+    "aboutTitle": "Votre conseiller énergie personnel !",
+    "aboutText": "Nous sommes une équipe de conseillers énergétiques spécialisés, dédiés à créer de la valeur et de la sécurité pour nos clients. Notre objectif est de fournir des solutions énergétiques complètes qui satisfont pleinement vos besoins et attentes.",
+    "visionTitle": "Notre vision",
+    "visionText": "Nous veillons à ce que chaque client ait son propre conseiller énergie personnel, fournissant des services personnalisés tout au long du partenariat.",
+    "privacyTitle": "Architecture Privacy-First",
+    "privacyHeading": "Le RGPD n'est pas une case à cocher. C'est l'architecture.",
+    "privacyText": "Notre système est construit privacy-first. Nous ne scrappons jamais des sites tiers ou des plateformes sociales. Chaque contact a une base légale documentée et peut exercer ses droits depuis un panneau en libre-service.",
+    "faqBadge": "Questions Fréquentes",
+    "faqTitle": "Tout ce que vous devez savoir",
+    "faqDesc": "Tout ce que vous devez savoir sur le changement de fournisseur d'énergie.",
+    "faqs": [
+      { "q": "Le service est-il gratuit ?", "a": "Oui, notre service est entièrement gratuit, sans frais cachés. Nous sommes rémunérés par les fournisseurs, pas par vous." },
+      { "q": "Comment se passe le changement de fournisseur ?", "a": "Le processus est simple et entièrement géré par nous. Aucun changement au compteur ou au câblage n'est requis." },
+      { "q": "Dois-je payer pour changer ?", "a": "Non, le changement de fournisseur d'électricité ou de gaz est totalement gratuit." },
+      { "q": "Combien de temps cela prend-il ?", "a": "Il faut généralement environ 7 jours ouvrables pour terminer la transition vers le nouveau fournisseur." },
+      { "q": "L'électricité peut-elle être coupée ?", "a": "Pas du tout. Votre alimentation reste ininterrompue pendant tout le processus." }
+    ],
+    "services": [
+      { "title": "Électricité", "desc": "Des tarifs d'énergie bon marché faits pour vous. Nous comparons les fournisseurs et trouvons la solution la plus rentable.", "icon": "zap", "iconColor": "text-amber-500" },
+      { "title": "Gaz", "desc": "Solutions de gaz naturel sur mesure pour la maison et l'entreprise avec les meilleurs plans tarifaires.", "icon": "flame", "iconColor": "text-orange-500" },
+      { "title": "Solaire (Photovoltaïque)", "desc": "Innovation et développement durable pour votre espace. Investissez dans l'énergie verte en toute sécurité.", "icon": "sun", "iconColor": "text-yellow-500" },
+      { "title": "E-Mobilité", "desc": "Nous conduisons écologiquement, nous nous déplaçons électriquement. Solutions de recharge et VE pour chaque besoin.", "icon": "car", "iconColor": "text-blue-500" },
+      { "title": "Stockage d'Énergie", "desc": "Solutions de stockage d'énergie par batteries pour l'autonomie et les économies.", "icon": "battery", "iconColor": "text-emerald-500" },
+      { "title": "Économies d'Énergie", "desc": "Analyse de consommation et stratégies pour réduire votre facture d'électricité.", "icon": "trending", "iconColor": "text-indigo-500" }
+    ],
+    "regions": [
+      { "title": "Attique", "desc": "Le point de départ des économies. Nous comparons rapidement les plans pour la maison ou l'entreprise.", "location": "Athènes" },
+      { "title": "Grèce Centrale", "desc": "Solutions pour chaque consommation, des petites maisons aux installations agricoles.", "location": "Thessalie" },
+      { "title": "Grèce du Nord", "desc": "Support pour les entreprises et les familles en Macédoine & Thrace.", "location": "Thessalonique" },
+      { "title": "Îles Ioniennes", "desc": "Service sur chaque île avec des propositions tenant compte de la saisonnalité.", "location": "Corfou · Zante" },
+      { "title": "Îles de la Mer Égée", "desc": "Plans d'électricité, solaire et solutions d'e-mobilité.", "location": "Cyclades · Dodécanèse" },
+      { "title": "Crète", "desc": "Nous concevons la prochaine étape avec l'autonomie énergétique et les unités touristiques.", "location": "Héraklion · La Canée" }
+    ],
+    "contactBadge": "Demandez un rappel !",
+    "contactTitle": "Prêt à économiser de l'argent ?",
+    "contactDesc": "Remplissez le formulaire et un conseiller spécialisé vous contactera immédiatement pour vous proposer le plan adapté — GRATUIT !",
+    "formFirstName": "Prénom",
+    "formLastName": "Nom",
+    "formEmail": "Email (optionnel)",
+    "formPhone": "Téléphone *",
+    "formPropertyType": "Type de Bien *",
+    "formHome": "Maison",
+    "formBusiness": "Entreprise",
+    "formRegion": "Région",
+    "formOtherRegion": "Autre Région",
+    "formService": "Service",
+    "formUpload": "Téléverser des factures / fichiers (optionnel)",
+    "formUploadHint": "PDF, JPG ou PNG jusqu'à 25 Mo — plusieurs fichiers",
+    "formConsent": "Je consens au traitement de mes données afin que vous puissiez me contacter, conformément à la politique de confidentialité RGPD.",
+    "formSubmit": "Demander un appel",
+    "formSuccess": "Votre demande a été envoyée avec succès !",
+    "footerDesc": "Conseillers énergétiques spécialisés. Nous comparons et trouvons ensemble le fournisseur d'énergie le moins cher pour votre maison et votre entreprise.",
+    "footerContact": "Contact",
+    "footerServices": "Services",
+    "footerServicesList": "Électricité · Gaz · Solaire · E-Mobilité",
+    "footerHome": "Accueil",
+    "footerContactLink": "Contact"
+  },
+  "insurancePage": {
+    "badge": "Solutions d'Assurance Avancées",
+    "title1": "Une protection qui",
+    "titleHighlight": "protège",
+    "title2": "ce qui compte",
+    "subtitle": "Programmes santé complets (BEWELL), assurance habitation et auto avec un accompagnement personnalisé et une garantie de meilleure couverture.",
+    "ctaViewPlans": "Voir les Programmes",
+    "quickEstimateTitle": "Estimation Rapide des Coûts",
+    "planLabel": "Sélectionner la Branche",
+    "planHealth": "Santé BEWELL",
+    "planHome": "Habitation",
+    "planAuto": "Auto",
+    "fullNameLabel": "Nom Complet",
+    "fullNamePlaceholder": "ex. Jean Papadopoulos",
+    "phoneLabel": "Téléphone de Contact",
+    "requestQuote": "Demander un Devis",
+    "insuranceSolutionsTitle": "Solutions d'Assurance",
+    "insuranceSolutionsDesc": "Sélectionnez le secteur qui vous intéresse pour voir en détail ce que comprend chaque couverture — ou contactez-moi pour une proposition personnalisée.",
+    "includesHeading": "Ce qui peut être inclus :",
+    "requestOffer": "Demander un devis",
+    "advisorName": "Agapitos Kalafatas",
+    "advisorRole": "Conseiller en Assurance | Digital & Advisory Services",
+    "advisorText": "Depuis 2019, je suis aux côtés des personnes qui me font confiance, offrant un accompagnement assurantiel personnel et significatif. Mon objectif est de rendre l'assurance simple, compréhensible et humaine.",
+    "sendEmail": "Envoyer un email",
+    "footerHome": "Accueil",
+    "footerEnergy": "Énergie",
+    "footerContact": "Contact",
+    "categories": [
+      { "title": "Assurance Santé", "subtitle": "BEWELL", "description": "La santé est l'une des priorités les plus importantes pour chaque personne et chaque famille. La bonne solution d'assurance peut offrir une meilleure organisation, l'accès aux services de soins et un soutien financier lorsqu'un besoin survient.", "includes": ["Soins hospitaliers", "Examens diagnostiques", "Soins médicaux", "Accompagnement personnel"] },
+      { "title": "Assurance Habitation", "subtitle": "", "description": "La maison est l'un des lieux les plus importants de notre vie. L'assurer aide à protéger à la fois le bien lui-même et les biens qui s'y trouvent.", "includes": ["Incendie et phénomènes naturels", "Séisme et inondation", "Vol et dommages", "Bâtiment et contenu", "Propriété occupée ou louée"] },
+      { "title": "Assurance Entreprise", "subtitle": "", "description": "Chaque entreprise a des besoins, des risques et des priorités différents. La bonne approche assurantielle aide à protéger l'activité professionnelle et son bon fonctionnement.", "includes": ["Locaux professionnels", "Équipement et marchandises", "Dommages imprévus", "Interruption d'activité", "Responsabilité envers clients ou partenaires"] },
+      { "title": "Assurance Auto", "subtitle": "", "description": "L'assurance auto n'est pas seulement une obligation nécessaire, mais aussi un moyen de protection important pour le conducteur, le véhicule et les tiers.", "includes": ["Responsabilité civile obligatoire", "Protection du véhicule", "Assistance routière", "Bris de glace", "Vol, incendie ou phénomènes naturels"] },
+      { "title": "Assurance Responsabilité", "subtitle": "", "description": "La responsabilité peut protéger un particulier ou un professionnel contre les demandes financières de tiers lorsqu'un préjudice corporel ou matériel survient.", "includes": ["Responsabilité professionnelle", "Responsabilité personnelle", "Indemnisation des tiers", "Frais juridiques", "Solutions selon la profession ou l'activité"] },
+      { "title": "Épargne", "subtitle": "", "description": "L'épargne systématique peut aider à atteindre des objectifs personnels et familiaux, créant une plus grande sécurité financière pour l'avenir.", "includes": ["Constitution d'une réserve", "Objectifs à long terme", "Études des enfants", "Revenu complémentaire futur", "Planification financière personnelle"] },
+      { "title": "Assurance Voyage", "subtitle": "", "description": "Un voyage peut être accompagné de situations imprévues. L'assurance voyage offre des options d'assistance pour les voyages en Grèce et à l'étranger.", "includes": ["Assistance médicale d'urgence", "Incidents de voyage imprévus", "Bagages et objets personnels", "Annulation ou modification du voyage", "Assistance à l'étranger"] }
+    ]
+  },
+  "contactPage": {
+    "backHome": "Accueil",
+    "headerTitle": "Contact",
+    "badgeTitle": "Contact",
+    "heroTitle1": "Demandez un",
+    "heroHighlight": "Devis",
+    "heroDesc": "Solutions énergétiques, développement SaaS, systèmes IA et services d'assurance. Remplissez le formulaire et nous vous contacterons rapidement.",
+    "phoneContact": "Contact Téléphonique",
+    "servicesTitle": "Services",
+    "directContact": "Contact Direct",
+    "directContactDesc": "Besoin d'aide immédiate ?",
+    "requestAtlas": "Demander à Atlas AI",
+    "svcSaaS": "SaaS & Développement Web",
+    "svcEnergy": "Électricité & Gaz Naturel",
+    "svcSolar": "Solaire & VE",
+    "svcAI": "Agents IA & Systèmes",
+    "svcLife": "Assurance Vie",
+    "svcHome": "Habitation",
+    "svcAuto": "Auto"
+  },
+  "serviceDetailPage": {
+    "allServices": "Tous les Services",
+    "requestFreeEstimate": "Demander une Estimation Gratuite",
+    "keyFeatures": "Fonctionnalités Clés",
+    "keyFeaturesSub": "Ce que nous livrons sur chaque projet :",
+    "whatsIncluded": "Ce qui est Inclus dans le Service",
+    "whatsIncludedSub": "Couverture complète du début à la livraison :",
+    "pricing": "Tarification",
+    "pricingSub": "Choisissez le forfait qui correspond à vos besoins :",
+    "mostPopular": "LE PLUS POPULAIRE",
+    "requestQuote": "Demander un Devis",
+    "targetAudience": "À Qui Cela S'adresse",
+    "targetAudienceSub": "Ce service est conçu pour :",
+    "faq": "Questions Fréquentes",
+    "otherServices": "Autres Services",
+    "learnMore": "En savoir plus",
+    "requestHelp": "Demander de l'Aide"
+  },
+  "serviceData": {
+    "web-development": {
+      "slug": "web-development",
+      "icon": "🌐",
+      "heroTitle": "Développement de Sites Web Sur Mesure Haute Esthétique",
+      "heroSubtitle": "Votre vitrine numérique conçue pour se démarquer. Nous créons des sites rapides, sécurisés et responsives qui transforment les visiteurs en clients.",
+      "heroTagline": "Investissez dans un site web qui convertit.",
+      "whyTitle": "Pourquoi un bon site web fait la différence",
+      "whyText": "Un site réussi n'est pas seulement beau — il convertit. Nous nous concentrons sur la vitesse, l'expérience mobile et la stratégie qui attire des clients.",
+      "benefits": [
+        { "title": "Architecture Mobile-First & Responsive", "desc": "Adaptation complète à tous les écrans avec la convivialité mobile en priorité." },
+        { "title": "Optimisation Core Web Vitals", "desc": "Code propre sans plugins inutiles pour un chargement ultra-rapide et une expérience utilisateur optimale." },
+        { "title": "Gestion de Contenu Autonome (CMS)", "desc": "Environnement de gestion convivial pour mettre à jour textes, images et articles sans connaissances techniques." },
+        { "title": "Base SEO On-Page", "desc": "Préparation technique complète pour les moteurs de recherche (Meta tags, OpenGraph, XML Sitemaps, Schema.org)." },
+        { "title": "Sécurité & SSL", "desc": "Chiffrement HTTPS, protection pare-feu et sauvegardes régulières pour une sécurité absolue." },
+        { "title": "Analytics & Suivi", "desc": "Intégration Google Analytics 4 et suivi des conversions pour des résultats mesurables." }
+      ],
+      "offerings": [
+        { "title": "Ce qui est inclus", "items": ["Conception UI/UX avant le développement", "Développement avec Next.js/React", "Responsive sur tous les appareils", "CMS pour gestion autonome", "Optimisation SEO", "Formation gratuite", "1 mois de support gratuit"] }
+      ],
+      "pricing": [
+        { "name": "Site d'Entreprise", "price": "900", "description": "Jusqu'à 5 pages, responsive, SEO, blog", "features": ["Design Responsive", "Jusqu'à 5 pages", "Formulaire de contact", "Base SEO", "SSL", "60 jours de support", "Formation"] },
+        { "name": "Site Sur Mesure", "price": "1,400", "description": "Solution personnalisée avec fonctionnalités avancées", "features": ["Design sur mesure", "Pages illimitées", "Gestion CMS", "SEO avancé", "Système de blog", "Analytics", "3 mois de support"], "highlight": true }
+      ],
+      "audience": ["Entreprises qui veulent une présence professionnelle", "Freelances & consultants", "Organismes éducatifs", "Petites & moyennes entreprises"],
+      "faqs": [
+        { "q": "Combien de temps cela prend-il ?", "a": "2-4 semaines pour un site d'entreprise, selon la complexité." },
+        { "q": "Puis-je le gérer moi-même ?", "a": "Oui, nous livrons un CMS convivial et une formation gratuite." },
+        { "q": "Le SEO est-il inclus ?", "a": "Oui, une base SEO On-Page complète sur chaque projet." },
+        { "q": "Combien coûte un site web ?", "a": "À partir de 1 200 € pour un site de base. Demandez une estimation gratuite." }
+      ],
+      "ctaTitle": "Prêt à construire votre présence numérique ?",
+      "ctaDesc": "Demandez une estimation gratuite et discutons de la façon dont nous pouvons vous aider."
+    },
+    "eshop-development": {
+      "slug": "eshop-development",
+      "icon": "🛒",
+      "heroTitle": "Développement d'E-shop Sur Mesure Haute Conversion",
+      "heroSubtitle": "Plateformes e-commerce haute performance avec SEO, vitesse, intégration bancaire et ERP.",
+      "heroTagline": "Transformez les visiteurs en acheteurs.",
+      "whyTitle": "Pourquoi un e-shop gagne des clients 24h/24",
+      "whyText": "Un e-shop à succès n'est pas seulement un catalogue en ligne. C'est une machine de vente 24h/24. Nous nous concentrons sur la vitesse (moins de 1,5 s), une expérience d'achat fluide et l'automatisation complète.",
+      "benefits": [
+        { "title": "Vitesse Éclair & Core Web Vitals", "desc": "Code optimisé pour une réponse instantanée qui retient les acheteurs sur le site." },
+        { "title": "Intégration Bancaire & IRIS", "desc": "Traitement immédiat des paiements par cartes, IRIS Payment, Klarna, PayPal et contre-remboursement." },
+        { "title": "Intégration Automatique ERP", "desc": "Synchronisation simultanée du stock, des prix, des commandes et des documents." },
+        { "title": "Flux pour Skroutz, BestPrice & Google Shopping", "desc": "Flux XML/JSON prêts pour une connexion directe aux moteurs de comparaison de prix." },
+        { "title": "Checkout Mobile-First", "desc": "Processus d'achat simplifié en 1-2 étapes (One-Page Checkout)." },
+        { "title": "Multilingue & Multi-devises", "desc": "Prise en charge de plusieurs langues et devises pour le marché international." }
+      ],
+      "offerings": [
+        { "title": "Ce qui est inclus", "items": ["Développement e-commerce sur mesure", "Gestion complète des produits", "Connexion bancaire & paiements", "Flux Skroutz/BestPrice", "SEO & Google Shopping", "Checkout Mobile-First", "Documents automatiques", "1 mois de support gratuit"] }
+      ],
+      "pricing": [
+        { "name": "E-shop Basique", "price": "1,400", "description": "WooCommerce, 10+ produits, 1 mode de paiement", "features": ["Configuration WooCommerce", "Jusqu'à 50 produits", "1 mode de paiement", "1 zone de livraison", "SEO-friendly", "SSL", "60 jours de support"] },
+        { "name": "E-shop Sur Mesure", "price": "2,500", "description": "Développement sur mesure complet avec intégration ERP", "features": ["Développement sur mesure", "Produits illimités", "Plusieurs modes de paiement", "Flux Skroutz/BestPrice", "Synchronisation ERP", "Multilingue", "3 mois de support"], "highlight": true }
+      ],
+      "audience": ["Entreprises e-commerce", "Marques qui veulent des ventes en ligne", "Commerce de détail", "Fabricants B2B"],
+      "faqs": [
+        { "q": "Combien de temps pour l'achèvement ?", "a": "3-6 semaines, selon le volume de produits et les intégrations." },
+        { "q": "Puis-je gérer produits et commandes ?", "a": "Absolument. Nous livrons un panneau de contrôle convivial et une formation." },
+        { "q": "La connexion transporteur est-elle incluse ?", "a": "Oui, nous intégrons le calcul des frais de livraison et l'émission automatique de bons." },
+        { "q": "Puis-je gérer offres et coupons ?", "a": "Oui, nous prenons en charge coupons, ventes flash, bundles et programmes de fidélité." }
+      ],
+      "ctaTitle": "Prêt à booster vos ventes en ligne ?",
+      "ctaDesc": "Demandez une estimation gratuite pour votre e-shop."
+    },
+    "ux-ui-branding": {
+      "slug": "ux-ui-branding",
+      "icon": "🎨",
+      "heroTitle": "Design UX/UI Stratégique & Identité d'Entreprise",
+      "heroSubtitle": "Nous créons des expériences visuelles captivantes. Du logo au prototype interactif.",
+      "heroTagline": "Un design qui inspire confiance.",
+      "whyTitle": "Pourquoi le design crée de la valeur",
+      "whyText": "L'expérience utilisateur n'est pas un luxe — c'est une nécessité. Nous construisons des marques qui inspirent confiance et font revenir les utilisateurs.",
+      "benefits": [
+        { "title": "Recherche Utilisateur & Wireframing", "desc": "Analyse de la concurrence et cartographie du parcours utilisateur pour un taux de conversion maximal." },
+        { "title": "Prototypes Figma Interactifs", "desc": "Prototypes interactifs entièrement fonctionnels avant le développement." },
+        { "title": "Design Systems & Bibliothèques de Composants", "desc": "Composants UI réutilisables pour une cohérence visuelle absolue." },
+        { "title": "Rebranding & Identité de Marque", "desc": "Conception de logo, palette de couleurs, typographie et charte graphique." },
+        { "title": "Accessibilité (WCAG 2.1)", "desc": "Conception conforme aux normes d'accessibilité pour tous les utilisateurs." },
+        { "title": "Stratégie de Tests A/B", "desc": "Tests de designs pour optimiser les taux de conversion." }
+      ],
+      "offerings": [
+        { "title": "Ce qui est inclus", "items": ["Recherche utilisateur & analyse de la concurrence", "Wireframes & prototypes interactifs", "Design UI dans Figma", "Design system & bibliothèque de composants", "Identité de marque (logo, couleurs, typographie)", "Charte graphique", "Stratégie de tests A/B"] }
+      ],
+      "pricing": [
+        { "name": "Identité de Marque", "price": "800", "description": "Logo, palette de couleurs, typographie", "features": ["Design du logo", "Palette de couleurs", "Typographie", "Charte graphique", "Cartes de visite", "2 révisions"] },
+        { "name": "Design UX/UI", "price": "1,200", "description": "Conception complète de l'expérience utilisateur", "features": ["Recherche utilisateur", "Wireframes", "Prototypes interactifs", "Design UI dans Figma", "Design system", "Stratégie de tests A/B"], "highlight": true },
+        { "name": "Rebrand Complet", "price": "2,000", "description": "Rebrand complet + UX/UI", "features": ["Stratégie de marque", "Logo + identité", "UX/UI complet", "Design system", "Charte graphique", "3 mois de support"] }
+      ],
+      "audience": ["Nouvelles entreprises qui ont besoin d'une marque", "Sites avec un faible taux de conversion", "Entreprises qui veulent un rebrand", "Plateformes SaaS"],
+      "faqs": [
+        { "q": "Ai-je besoin d'une refonte du logo ?", "a": "Si votre logo ne représente plus votre entreprise, un rebrand peut faire la différence." },
+        { "q": "Combien coûte le design UX/UI ?", "a": "Selon la complexité. Demandez un devis pour une estimation précise." },
+        { "q": "Combien de temps dure le processus ?", "a": "2-6 semaines selon le périmètre. Les prototypes sont prêts en 1-2 semaines." }
+      ],
+      "ctaTitle": "Vous voulez une marque qui se démarque ?",
+      "ctaDesc": "Demandez une estimation gratuite pour le design UX/UI et le branding."
+    },
+    "digital-marketing": {
+      "slug": "digital-marketing",
+      "icon": "📈",
+      "heroTitle": "Marketing de Performance & Publicité avec ROI Mesurable",
+      "heroSubtitle": "Augmentez vos ventes et vos prospects. Nous concevons et exécutons des campagnes ciblées.",
+      "heroTagline": "Chaque euro revient de manière mesurable.",
+      "whyTitle": "Pourquoi la publicité doit être mesurée",
+      "whyText": "Chaque euro dépensé en publicité doit rapporter. Nous nous concentrons sur des résultats mesurables, pas sur les likes.",
+      "benefits": [
+        { "title": "Google Search & Shopping Ads", "desc": "Publicités de recherche ciblées pour les utilisateurs recherchant activement vos services." },
+        { "title": "Meta Ads (Facebook & Instagram)", "desc": "Contenu créatif et ciblage d'audience avancé." },
+        { "title": "Suivi des Conversions & Analytics", "desc": "Suivi complet des conversions avec GA4 et Google Tag Manager." },
+        { "title": "Campagnes de Remarketing Dynamique", "desc": "Reciblage des visiteurs qui n'ont pas finalisé un achat." },
+        { "title": "Content Marketing & Stratégie de Blog", "desc": "Contenu qui attire le trafic organique et renforce la crédibilité." },
+        { "title": "Automatisation Email Marketing", "desc": "Parcours email automatisés pour le nurturing et la rétention." }
+      ],
+      "offerings": [
+        { "title": "Ce qui est inclus", "items": ["Analyse de la concurrence & du marché", "Stratégie publicitaire", "Création publicitaire", "Gestion des campagnes", "Rapports hebdomadaires & analytics", "Tests A/B des publicités", "Suivi & reporting ROI"] }
+      ],
+      "pricing": [
+        { "name": "Pack Startup", "price": "300", "period": "/mois", "description": "Configuration Google Ads + Meta Ads", "features": ["Google Search Ads", "Configuration Meta Ads", "Suivi des conversions", "Rapports mensuels", "Tests A/B"] },
+        { "name": "Pack Croissance", "price": "600", "period": "/mois", "description": "Marketing de performance complet", "features": ["Google + Shopping Ads", "Meta Ads", "Remarketing", "Automatisation email", "Rapports hebdomadaires", "Stratégie de contenu"], "highlight": true },
+        { "name": "Enterprise", "price": "Sur mesure", "description": "Stratégie & exécution complètes", "features": ["Stratégie multicanal", "Gestionnaire de compte dédié", "Analytics personnalisés", "Tableaux de bord ROI", "Support prioritaire"] }
+      ],
+      "audience": ["E-shops qui veulent plus de ventes", "Entreprises de services", "Nouvelles entreprises", "Marques qui veulent de la notoriété"],
+      "faqs": [
+        { "q": "De quel budget ai-je besoin pour la publicité ?", "a": "Cela dépend du secteur. Nous commençons à partir de 300 €/mois pour des campagnes efficaces." },
+        { "q": "Comment mesurez-vous le ROI ?", "a": "Avec le suivi des conversions, GA4 et des rapports qui montrent exactement ce que chaque euro a rapporté." },
+        { "q": "À quelle vitesse vois-je des résultats ?", "a": "Google Ads : immédiat. Meta Ads : 3-7 jours. SEO : 3-6 mois." }
+      ],
+      "ctaTitle": "Vous voulez des résultats mesurables de la publicité ?",
+      "ctaDesc": "Demandez une analyse de campagne gratuite et une stratégie."
+    },
+    "web-mobile-apps": {
+      "slug": "web-mobile-apps",
+      "icon": "📱",
+      "heroTitle": "Applications Web & Mobiles Sur Mesure (SaaS & Portails)",
+      "heroSubtitle": "Transformez votre idée en logiciel fonctionnel. Nous développons des plateformes évolutives.",
+      "heroTagline": "De l'idée au logiciel.",
+      "whyTitle": "Pourquoi un logiciel sur mesure répond à vos besoins",
+      "whyText": "Votre idée a besoin d'un logiciel qui évolue. Nous développons SaaS, portails et apps mobiles qui supportent des milliers d'utilisateurs.",
+      "benefits": [
+        { "title": "Architecture SaaS Multi-tenant", "desc": "Architectures sécurisées et évolutives avec séparation des données." },
+        { "title": "Applications Mobiles Cross-Platform", "desc": "iOS & Android à partir d'un code unique avec des performances natives." },
+        { "title": "Tableaux de Bord en Temps Réel", "desc": "Panneaux de contrôle interactifs avec mises à jour de données en temps réel." },
+        { "title": "Contrôle d'Accès Basé sur les Rôles (RBAC)", "desc": "Contrôle strict des droits d'accès par rôle utilisateur." },
+        { "title": "Design API-first", "desc": "Architecture API permettant une intégration tierce facile." },
+        { "title": "CI/CD & DevOps", "desc": "Pipeline de déploiement automatisé pour des mises à jour rapides." }
+      ],
+      "offerings": [
+        { "title": "Ce qui est inclus", "items": ["Analyse des besoins & définition MVP", "Conception de l'architecture système", "Développement Frontend (React/Next.js)", "Développement Backend (Node.js/Python)", "Application mobile (React Native)", "Tests & QA", "Déploiement & surveillance"] }
+      ],
+      "pricing": [
+        { "name": "Lancement MVP", "price": "2,500", "description": "Plateforme SaaS MVP de base", "features": ["Définition MVP", "Frontend + Backend", "Authentification", "API de base", "Tests", "Déploiement"] },
+        { "name": "SaaS Complet", "price": "5,000", "description": "Plateforme SaaS complète", "features": ["Architecture sur mesure", "Multi-tenant", "RBAC", "Tableaux de bord temps réel", "CI/CD", "3 mois de support"], "highlight": true },
+        { "name": "Application Enterprise", "price": "Sur mesure", "description": "Application à grande échelle", "features": ["Architecture enterprise", "Mobile + Web", "Intégration ERP/CRM", "Sécurité avancée", "Équipe dédiée", "SLA"] }
+      ],
+      "audience": ["Startups", "Entreprises avec besoins sur mesure", "Organisations qui veulent du SaaS", "Besoin d'outils internes"],
+      "faqs": [
+        { "q": "Web ou app mobile ?", "a": "Cela dépend de l'usage. Les apps web sont plus rapides à développer, les apps mobiles offrent une meilleure expérience." },
+        { "q": "Combien coûte une plateforme SaaS ?", "a": "Selon les fonctionnalités. Demandez un devis détaillé." },
+        { "q": "Combien de temps cela prend-il ?", "a": "MVP : 6-10 semaines. App complète : 3-6 mois selon la complexité." }
+      ],
+      "ctaTitle": "Vous avez une idée d'application ?",
+      "ctaDesc": "Demandez une estimation gratuite pour le développement de votre application."
+    },
+    "hosting-support": {
+      "slug": "hosting-support",
+      "icon": "🛡️",
+      "heroTitle": "Support Technique Continu & Hébergement Cloud Géré",
+      "heroSubtitle": "Disponibilité garantie 99,9 % et sécurité absolue. Nous gérons la maintenance 24h/24.",
+      "heroTagline": "Nous nous occupons de tout, vous vous concentrez.",
+      "whyTitle": "Pourquoi le support n'est pas un luxe",
+      "whyText": "Votre site doit toujours être en ligne et sécurisé. Nous gérons la maintenance pendant que vous vous concentrez sur votre travail.",
+      "benefits": [
+        { "title": "Hébergement Cloud Géré", "desc": "Infrastructures haute vitesse sur AWS/Vercel avec mise à l'échelle automatique des ressources." },
+        { "title": "Sauvegardes Quotidiennes & Reprise Après Sinistre", "desc": "Stockage sécurisé des sauvegardes pour une récupération instantanée." },
+        { "title": "Correctifs de Sécurité & Protection Anti-Malware", "desc": "Mises à jour de sécurité continues, WAF et suppression des logiciels malveillants." },
+        { "title": "Surveillance 24/7 & Support SLA", "desc": "Surveillance du fonctionnement et réponse technique immédiate aux pannes." },
+        { "title": "Certificats SSL & Gestion de Domaine", "desc": "Gestion des domaines, SSL et enregistrements DNS." },
+        { "title": "Optimisation des Performances", "desc": "Optimisation régulière de la vitesse et stratégie de cache." }
+      ],
+      "offerings": [
+        { "title": "Ce qui est inclus", "items": ["Hébergement cloud géré", "Sauvegardes quotidiennes", "Correctifs de sécurité & WAF", "Surveillance 24/7", "Gestion SSL & domaines", "Optimisation des performances", "Support d'urgence", "Rapports mensuels"] }
+      ],
+      "pricing": [
+        { "name": "Hébergement Basique", "price": "50", "period": "/mois", "description": "Hébergement de base + sauvegarde", "features": ["Hébergement géré", "Sauvegardes quotidiennes", "SSL", "Surveillance", "Support email"] },
+        { "name": "Hébergement Pro", "price": "120", "period": "/mois", "description": "Support complet + sécurité", "features": ["Hébergement géré", "Sauvegardes quotidiennes", "Correctifs de sécurité", "WAF", "Surveillance 24/7", "Support prioritaire"], "highlight": true },
+        { "name": "Enterprise", "price": "300", "period": "/mois", "description": "SLA Enterprise + support dédié", "features": ["Infrastructure dédiée", "Reprise après sinistre", "SLA personnalisé", "Ingénieur dédié", "Rapports mensuels"] }
+      ],
+      "audience": ["Sites à fort trafic", "E-shops", "Sites d'entreprise", "Applications opérant 24h/24"],
+      "faqs": [
+        { "q": "Que comprend le support ?", "a": "Mises à niveau, sauvegardes, surveillance, sécurité et aide technique immédiate." },
+        { "q": "Combien coûte l'hébergement ?", "a": "À partir de 50 €/mois selon les besoins. Demandez un devis." },
+        { "q": "À quelle vitesse répondez-vous aux pannes ?", "a": "Pannes critiques : sous 1 heure. Non critiques : sous 4 heures." }
+      ],
+      "ctaTitle": "Vous voulez un hébergement sécurisé et rapide ?",
+      "ctaDesc": "Demandez des informations sur l'hébergement géré et le support."
+    },
+    "custom-integrations": {
+      "slug": "custom-integrations",
+      "icon": "⚙️",
+      "heroTitle": "Développement Logiciel Sur Mesure & Intégrations API",
+      "heroSubtitle": "Connectez tous vos outils professionnels en un seul écosystème.",
+      "heroTagline": "Vos outils, unis.",
+      "whyTitle": "Pourquoi les intégrations augmentent l'efficacité",
+      "whyText": "Vos outils ne communiquent pas entre eux. Nous les connectons — intégrations API, synchronisation CRM/ERP et automatisations IA.",
+      "benefits": [
+        { "title": "Développement & Intégration API", "desc": "Créer et consommer des API REST/GraphQL pour un échange de données sécurisé." },
+        { "title": "Synchronisation CRM & ERP", "desc": "Synchronisation automatique des commandes, clients et factures." },
+        { "title": "Agents IA & Workflows Personnalisés", "desc": "Intégration de modèles IA pour le support automatisé ou le traitement de documents." },
+        { "title": "Migrations de Base de Données & Pipelines ETL", "desc": "Transfert sécurisé de grands volumes de données depuis des systèmes existants." },
+        { "title": "Architecture Webhook & Événementielle", "desc": "Mises à jour en temps réel entre systèmes via des événements." },
+        { "title": "Sécurité & Conformité", "desc": "OAuth 2.0, clés API, limitation de débit et journalisation pour des intégrations sécurisées." }
+      ],
+      "offerings": [
+        { "title": "Ce qui est inclus", "items": ["Analyse des systèmes existants", "Conception & développement API", "Intégration CRM/ERP", "Développement d'agent IA", "Pipelines ETL", "Tests & documentation", "Surveillance & journalisation"] }
+      ],
+      "pricing": [
+        { "name": "Intégration API", "price": "1,200", "description": "Intégration API simple de 2 systèmes d'information", "features": ["Conception API", "REST/GraphQL", "Tests", "Documentation", "2 semaines"] },
+        { "name": "Sync CRM/ERP", "price": "2,500", "description": "Intégration complète CRM/ERP", "features": ["Analyse CRM/ERP", "Synchronisation bidirectionnelle", "Mises à jour en temps réel", "Gestion des erreurs", "Surveillance", "1 mois"], "highlight": true },
+        { "name": "Agent IA Sur Mesure", "price": "3,500", "description": "Automatisation propulsée par l'IA", "features": ["Conception d'agent IA", "Workflows personnalisés", "Intégration API", "Tests", "Déploiement", "3 mois de support"] }
+      ],
+      "audience": ["Entreprises avec plusieurs systèmes", "Organisations qui ont besoin d'automatisation", "Entreprises avec systèmes existants", "Startups qui ont besoin d'intégrations IA"],
+      "faqs": [
+        { "q": "Pouvez-vous connecter mon ERP ?", "a": "Oui, nous avons de l'expérience avec de nombreux systèmes ERP. Demandez des informations." },
+        { "q": "Combien coûte une intégration API ?", "a": "Selon la complexité. Demandez un devis détaillé." },
+        { "q": "Combien de temps cela prend-il ?", "a": "De 2 semaines pour une intégration simple à 3 mois pour un système complexe." }
+      ],
+      "ctaTitle": "Vous avez besoin d'intégration de systèmes ?",
+      "ctaDesc": "Demandez une analyse gratuite et une proposition pour vos intégrations."
+    }
+  },
   "lang": {
     "en": "English",
     "el": "Ελληνικά",
