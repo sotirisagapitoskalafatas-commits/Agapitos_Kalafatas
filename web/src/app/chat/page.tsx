@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import gsap from "gsap";
 import Scene3DBackground from "@/components/Scene3DBackground";
 import Navbar from "@/components/Navbar";
+import { useLocale } from "@/contexts/LanguageContext";
 
 interface Message {
   id: string;
@@ -14,11 +15,15 @@ interface Message {
 }
 
 export default function ChatPage() {
+  const { locale, t } = useLocale();
+  const tC = (t as any).chatPage ?? {};
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
       content:
+        tC.greeting ||
         "Hello! I'm Atlas, the AI agent built by Agapitos Kalafatas. I can help you understand his work, discuss full-stack architecture, or talk about any software engineering topic. How can I help you today?",
       timestamp: new Date(),
     },
@@ -27,6 +32,21 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === "1"
+          ? {
+              ...m,
+              content:
+                tC.greeting ||
+                "Hello! I'm Atlas, the AI agent built by Agapitos Kalafatas. I can help you understand his work, discuss full-stack architecture, or talk about any software engineering topic. How can I help you today?",
+            }
+          : m
+      )
+    );
+  }, [locale, tC.greeting]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,6 +97,7 @@ export default function ChatPage() {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content:
+          tC.errorResponse ||
           "I'm having trouble connecting. Please make sure the API is configured and try again.",
         timestamp: new Date(),
       };
@@ -120,7 +141,7 @@ export default function ChatPage() {
                     <div className="w-5 h-5 bg-brand-100 rounded flex items-center justify-center">
                       <span className="text-brand-600 text-xs font-bold">A</span>
                     </div>
-                    <span className="text-xs text-slate-400">Atlas</span>
+                    <span className="text-xs text-slate-400">{tC.atlas || "Atlas"}</span>
                   </div>
                 )}
                 <div className={`prose prose-sm max-w-none ${msg.role === "user" ? "prose-invert" : ""}`}>
@@ -171,7 +192,7 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Atlas anything..."
+              placeholder={tC.placeholder || "Ask Atlas anything..."}
               rows={1}
               className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 placeholder-slate-400 resize-none focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
             />
@@ -180,11 +201,11 @@ export default function ChatPage() {
               disabled={isLoading || !input.trim()}
               className="bg-brand-500 hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed text-white px-6 py-3 rounded-xl font-medium transition-all shadow-lg shadow-brand-500/25"
             >
-              Send
+              {tC.send || "Send"}
             </button>
           </div>
           <p className="text-xs text-slate-400 mt-2 text-center">
-            Atlas AI by Agapitos Kalafatas • Powered by Google Gemini
+            {tC.footer || "Atlas AI by Agapitos Kalafatas • Powered by Google Gemini"}
           </p>
         </div>
       </div>

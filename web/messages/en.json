@@ -9,6 +9,14 @@
     "energy": "Energy",
     "insurance": "Insurance"
   },
+  "chatPage": {
+    "atlas": "Atlas",
+    "greeting": "Hello! I'm Atlas, the AI agent built by Agapitos Kalafatas. I can help you understand his work, discuss full-stack architecture, or talk about any software engineering topic. How can I help you today?",
+    "errorResponse": "I'm having trouble connecting. Please make sure the API is configured and try again.",
+    "placeholder": "Ask Atlas anything...",
+    "send": "Send",
+    "footer": "Atlas AI by Agapitos Kalafatas • Powered by Google Gemini"
+  },
   "hero": {
     "badge": "Real-Time Artificial Intelligence",
     "title1": "AGAPITOS",

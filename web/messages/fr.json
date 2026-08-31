@@ -9,6 +9,14 @@
     "energy": "Énergie",
     "insurance": "Assurance"
   },
+  "chatPage": {
+    "atlas": "Atlas",
+    "greeting": "Bonjour ! Je suis Atlas, l'agent IA créé par Agapitos Kalafatas. Je peux vous aider à découvrir son travail, discuter d'architecture full-stack ou de tout sujet d'ingénierie logicielle. Comment puis-je vous aider aujourd'hui ?",
+    "errorResponse": "J'ai du mal à me connecter. Veuillez vérifier que l'API est configurée et réessayer.",
+    "placeholder": "Posez n'importe quelle question à Atlas...",
+    "send": "Envoyer",
+    "footer": "Atlas AI par Agapitos Kalafatas • Propulsé par Google Gemini"
+  },
   "hero": {
     "badge": "Intelligence Artificielle en Temps Réel",
     "title1": "AGAPITOS",
