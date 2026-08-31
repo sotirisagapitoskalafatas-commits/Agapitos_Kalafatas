@@ -28,17 +28,17 @@ function StackCard({ i, range, targetScale, progress, title, desc, tag, img }: S
     >
       <motion.div
         style={{ scale, opacity }}
-        className="relative w-full max-w-4xl mx-4 rounded-3xl overflow-hidden bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-900/10 p-2"
+        className="relative w-full max-w-7xl mx-4 rounded-3xl overflow-hidden bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-900/10 p-2"
       >
         <div className="relative overflow-hidden rounded-2xl">
-          <img src={img} alt={title} className="w-full h-72 object-cover bg-slate-900" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/70 via-transparent to-transparent" />
-          <span className="absolute top-4 left-4 glass-strong px-3 py-1 rounded-full text-xs font-semibold text-slate-700">
+          <img src={img} alt={title} className="w-full h-[60vh] min-h-[420px] object-cover bg-slate-900" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/75 via-slate-900/10 to-transparent" />
+          <span className="absolute top-5 left-5 glass-strong px-3.5 py-1.5 rounded-full text-sm font-semibold text-slate-700">
             {tag}
           </span>
-          <div className="absolute bottom-4 left-4 right-4">
-            <h3 className="text-2xl md:text-3xl font-bold text-white drop-shadow">{title}</h3>
-            <p className="text-slate-200 text-sm mt-1 max-w-xl drop-shadow">{desc}</p>
+          <div className="absolute bottom-6 left-6 right-6">
+            <h3 className="text-3xl md:text-4xl font-bold text-white drop-shadow">{title}</h3>
+            <p className="text-slate-200 text-base md:text-lg mt-2 max-w-2xl drop-shadow">{desc}</p>
           </div>
         </div>
       </motion.div>
@@ -68,7 +68,7 @@ export const StackedProjects: React.FC = () => {
         <p className="text-lg text-slate-500 max-w-2xl mx-auto">{t.projects.subtitle}</p>
       </div>
 
-      <div ref={container} className="relative" style={{ height: `${items.length * 100 + 40}vh` }}>
+      <div ref={container} className="relative" style={{ height: `${items.length * 130 + 40}vh` }}>
         {items.map((p, i) => {
           const targetScale = 1 - (items.length - i) * 0.05;
           return (
