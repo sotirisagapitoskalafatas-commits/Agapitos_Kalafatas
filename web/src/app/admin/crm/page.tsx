@@ -187,15 +187,27 @@ export default function CRMDashboard() {
     const authHeaders: Record<string, string> = token
       ? { Authorization: `Bearer ${token}` }
       : {};
-    const [leadsRes, dealsRes, eventsRes, commsRes, invRes, dashRes, notifRes] = await Promise.all([
-      fetch("/api/crm/leads", { headers: authHeaders }).then(r => r.json()).catch(() => []),
-      fetch("/api/crm/deals", { headers: authHeaders }).then(r => r.json()).catch(() => []),
-      fetch("/api/crm/events", { headers: authHeaders }).then(r => r.json()).catch(() => []),
-      fetch("/api/crm/communications", { headers: authHeaders }).then(r => r.json()).catch(() => []),
-      fetch("/api/crm/invoices", { headers: authHeaders }).then(r => r.json()).catch(() => []),
-      fetch("/api/crm/dashboard", { headers: authHeaders }).then(r => r.json()).catch(() => null),
-      fetch("/api/crm/notifications", { headers: authHeaders }).then(r => r.json()).catch(() => []),
-    ]);
+    const requests: Promise<{ status: number; body: any }>[] = [
+      fetch("/api/crm/leads", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/deals", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/events", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/communications", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/invoices", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/dashboard", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => null) })),
+      fetch("/api/crm/notifications", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+    ];
+
+    const results = await Promise.all(requests);
+
+    // If the stored token is rejected (401), it is stale/invalid — force a fresh login.
+    if (results.some(r => r.status === 401)) {
+      if (typeof window !== "undefined") localStorage.removeItem("crm_token");
+      setIsLoggedIn(false);
+      setLoading(false);
+      return;
+    }
+
+    const [leadsRes, dealsRes, eventsRes, commsRes, invRes, dashRes, notifRes] = results.map(r => r.body);
 
     if (!leadsRes.error && leadsRes.data) setLeads(leadsRes.data as Lead[]);
     else if (Array.isArray(leadsRes)) setLeads(leadsRes as Lead[]);

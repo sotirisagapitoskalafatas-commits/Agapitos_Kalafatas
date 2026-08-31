@@ -45,6 +45,11 @@ export default function AgentPage() {
   const fetchApprovals = useCallback(async () => {
     try {
       const res = await fetch("/api/agent/approvals", { headers: agentAuthHeaders() });
+      if (res.status === 401) {
+        if (typeof window !== "undefined") localStorage.removeItem("crm_token");
+        setIsLoggedIn(false);
+        return;
+      }
       const data = await res.json();
       if (data.approvals) setApprovals(data.approvals);
     } catch {}
