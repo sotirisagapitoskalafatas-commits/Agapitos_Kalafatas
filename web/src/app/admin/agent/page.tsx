@@ -42,6 +42,25 @@ export default function AgentPage() {
   const [approvals, setApprovals] = useState<any[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
+  const COMMANDS: Array<{ slug: string; name: string; category: string }> = [
+    { slug: "/monday-brief", name: "Monday Brief", category: "Week" },
+    { slug: "/friday-brief", name: "Friday Brief", category: "Week" },
+    { slug: "/invoice-chase", name: "Invoice Chase", category: "Money" },
+    { slug: "/cash-flow-snapshot", name: "Cash Flow Snapshot", category: "Money" },
+    { slug: "/lead-triage", name: "Lead Triage", category: "Sales" },
+    { slug: "/call-list", name: "Call List", category: "Sales" },
+    { slug: "/customer-pulse", name: "Customer Pulse", category: "Customers" },
+    { slug: "/handle-complaint", name: "Handle Complaint", category: "Customers" },
+    { slug: "/sales-brief", name: "Sales Brief", category: "Sales" },
+    { slug: "/content-strategy", name: "Content Strategy", category: "Marketing" },
+    { slug: "/review-contract", name: "Review Contract", category: "Paperwork" },
+    { slug: "/business-pulse", name: "Business Pulse", category: "Week" },
+  ];
+
+  const runQuickCommand = (slug: string) => {
+    setInput(slug);
+  };
+
   const fetchApprovals = useCallback(async () => {
     try {
       const res = await fetch("/api/agent/approvals", { headers: agentAuthHeaders() });
@@ -112,10 +131,13 @@ export default function AgentPage() {
     setMessages((m) => [...m, { role: "user", content: text }, { role: "agent", content: "", pending: true }]);
 
     try {
-      const res = await fetch("/api/agent", {
+      const isCommand = text.startsWith("/");
+      const res = await fetch(isCommand ? "/api/agent/command" : "/api/agent", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        headers: isCommand
+          ? { "Content-Type": "application/json", ...agentAuthHeaders() }
+          : { "Content-Type": "application/json" },
+        body: JSON.stringify(isCommand ? { command: text } : { message: text }),
       });
       const data = await res.json();
       if (!res.ok || data.error) {
@@ -129,6 +151,37 @@ export default function AgentPage() {
           return next;
         });
       } else {
+        const data = await res.json();
+        // Small Business Plugin command endpoint returns { response, staged, ... }
+        if (data.command) {
+          const cmdResult = data as any;
+          const stagedNote =
+            cmdResult.staged?.count > 0
+              ? `\n\n✍️ ${cmdResult.staged.count} action(s) staged as ${cmdResult.staged.actionType} — pending your approval in the panel. Nothing was sent yet.`
+              : "";
+          const missingNote =
+            cmdResult.connectorsMissing?.length
+              ? `\n\n_Note: connectors not yet connected — ${cmdResult.connectorsMissing.join(", ")} (stub data shown)._`
+              : "";
+          setMessages((m) => {
+            const next = [...m];
+            next[next.length - 1] = {
+              role: "agent",
+              content: cmdResult.response + stagedNote + missingNote,
+              result: {
+                finalAnswer: cmdResult.response,
+                steps: [{ agent: `command:${cmdResult.command}`, input: text, result: cmdResult.response, durationMs: 0 }],
+                provider: "plugin",
+                model: "stub",
+                requestId: cmdResult.requestId || "local",
+              },
+            };
+            return next;
+          });
+          fetchApprovals();
+          return;
+        }
+
         const result: AgentResult = data;
         setMessages((m) => {
           const next = [...m];
@@ -353,6 +406,23 @@ export default function AgentPage() {
                   ))}
                 </ul>
               )}
+
+              <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">
+                Small Business Commands{" "}
+                <span className="text-[10px] font-normal text-slate-400 normal-case">(tap to run)</span>
+              </h2>
+              <div className="flex flex-wrap gap-1.5 mb-5">
+                {COMMANDS.map((c) => (
+                  <button
+                    key={c.slug}
+                    onClick={() => runQuickCommand(c.slug)}
+                    className="px-2 py-1 rounded-lg border border-indigo-200 bg-indigo-50/60 text-indigo-700 text-[11px] font-semibold hover:bg-indigo-100 transition"
+                    title={c.name}
+                  >
+                    {c.slug}
+                  </button>
+                ))}
+              </div>
 
               <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Agent Registry</h2>
               <ul className="space-y-2">
