@@ -23,19 +23,7 @@ export default function ContactPage() {
       <main className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-brand-50/30 relative overflow-hidden">
       <Scene3DBackground className="opacity-20" />
 
-      {/* Header */}
-      <header className="border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-[72px] z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link href="/" className="text-slate-400 hover:text-slate-900 transition-colors">← {tC.backHome}</Link>
-            <div className="w-px h-6 bg-slate-200" />
-            <h1 className="text-slate-900 font-semibold">{tC.headerTitle}</h1>
-          </div>
-          <span className="text-sm text-slate-400">by Agapitos Kalafatas</span>
-        </div>
-      </header>
-
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-16">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 pt-24 pb-16">
         {/* Hero */}
         <div className="contact-hero text-center mb-16">
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold text-brand-600 bg-brand-50 border border-brand-100 mb-6">
