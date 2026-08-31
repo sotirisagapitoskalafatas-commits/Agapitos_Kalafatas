@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import gsap from "gsap";
 import Scene3DBackground from "@/components/Scene3DBackground";
@@ -35,7 +34,6 @@ export default function ChatPage() {
 
   // Animate chat container on mount
   useEffect(() => {
-    gsap.fromTo(".chat-header", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out" });
     gsap.fromTo(".chat-messages", { opacity: 0 }, { opacity: 1, duration: 0.8, ease: "power3.out", delay: 0.2 });
     gsap.fromTo(".chat-input", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.6, ease: "power3.out", delay: 0.4 });
   }, []);
@@ -99,38 +97,8 @@ export default function ChatPage() {
     <>
       <Navbar />
       <main className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      <header className="chat-header border-b border-slate-100 bg-white/80 backdrop-blur-sm sticky top-[72px] z-50">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="text-slate-400 hover:text-slate-900 transition-colors"
-            >
-              ← Home
-            </Link>
-            <div className="w-px h-6 bg-slate-200" />
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
-              <div>
-                <h1 className="text-slate-900 font-semibold">Atlas AI</h1>
-                <p className="text-xs text-slate-400">
-                  Powered by Gemini • Built by Agapitos
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm text-slate-400">Online</span>
-          </div>
-        </div>
-      </header>
-
       {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto relative">
+      <div className="flex-1 overflow-y-auto relative pt-24">
         <Scene3DBackground className="opacity-30" />
         <div className="chat-messages max-w-5xl mx-auto px-6 py-8 space-y-6 relative z-10">
           {messages.map((msg) => (
