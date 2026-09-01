@@ -73,17 +73,17 @@ insert into public.deals (id, lead_id, title, value, currency, stage, assigned_t
 -- ------------------------------------------------------------------
 insert into public.invoices (id, lead_id, deal_id, invoice_number, type, status, subtotal, tax_rate, tax_amount, total, currency, items, created_at) values
  ('c0000000-0000-4000-8000-000000000001','a0000000-0000-4000-8000-000000000009',null,'INV-2026-001','invoice','paid',403.23,24,96.77,500.00,'EUR','[]', now() - interval '55 days'),
- ('c0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000010','b0000000-0000-4000-8000-000000000006','INV-2026-002','invoice','paid',9193.55,24,2206.45,11400.00,'EUR','[]', now() - interval '40 days'),
+ ('c0000000-0000-4000-8000-000000000002','a0000000-0000-4000-8000-000000000010','b0000000-0000-4000-8000-000000000010','INV-2026-002','invoice','paid',9193.55,24,2206.45,11400.00,'EUR','[]', now() - interval '40 days'),
  ('c0000000-0000-4000-8000-000000000003','a0000000-0000-4000-8000-000000000003',null,'INV-2026-003','invoice','sent',3225.81,24,774.19,4000.00,'EUR','[]', now() - interval '10 days'),
- ('c0000000-0000-4000-8000-000000000004','a0000000-0000-4000-8000-000000000006','b0000000-0000-4000-8000-000000000003','INV-2026-004','invoice','draft',5040.32,24,1209.68,6250.00,'EUR','[]', now() - interval '3 days');
+ ('c0000000-0000-4000-8000-000000000004','a0000000-0000-4000-8000-000000000006','b0000000-0000-4000-8000-000000000006','INV-2026-004','invoice','draft',5040.32,24,1209.68,6250.00,'EUR','[]', now() - interval '3 days');
 
 -- ------------------------------------------------------------------
 -- 4) CALENDAR EVENTS  (upcoming within next 7 days for dashboard)
 -- ------------------------------------------------------------------
 insert into public.calendar_events (id, title, event_type, start_time, end_time, lead_id, deal_id, location, completed, created_at) values
  ('d0000000-0000-4000-8000-000000000001','Site visit — bakery PV','meeting', now() + interval '1 day', now() + interval '1 day' + interval '1 hour', 'a0000000-0000-4000-8000-000000000003','b0000000-0000-4000-8000-000000000001','Kolokotroni 12, Athens', false, now()),
- ('d0000000-0000-4000-8000-000000000002','Marina charger proposal call','call', now() + interval '2 days', now() + interval '2 days' + interval '30 minutes', 'a0000000-0000-4000-8000-000000000006','b0000000-0000-4000-8000-000000000003','Video call', false, now()),
- ('d0000000-0000-4000-8000-000000000003','Clinic SaaS demo','meeting', now() + interval '3 days', now() + interval '3 days' + interval '1 hour', 'a0000000-0000-4000-8000-000000000008','b0000000-0000-4000-8000-000000000005','Thessaly', false, now()),
+ ('d0000000-0000-4000-8000-000000000002','Marina charger proposal call','call', now() + interval '2 days', now() + interval '2 days' + interval '30 minutes', 'a0000000-0000-4000-8000-000000000006','b0000000-0000-4000-8000-000000000006','Video call', false, now()),
+ ('d0000000-0000-4000-8000-000000000003','Clinic SaaS demo','meeting', now() + interval '3 days', now() + interval '3 days' + interval '1 hour', 'a0000000-0000-4000-8000-000000000008','b0000000-0000-4000-8000-000000000008','Thessaly', false, now()),
  ('d0000000-0000-4000-8000-000000000004','Follow-up — gas quote','call', now() + interval '5 days', now() + interval '5 days' + interval '20 minutes', 'a0000000-0000-4000-8000-000000000002', null, 'Phone', false, now());
 
 -- ------------------------------------------------------------------
