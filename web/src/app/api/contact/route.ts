@@ -92,12 +92,20 @@ export async function POST(req: Request) {
       .from("leads")
       .insert([
         {
-          full_name: fullName,
+          first_name: firstName,
+          last_name: lastName,
+          client_name: fullName,
+          client_contact: phone,
           email: email || `${firstName.toLowerCase()}@placeholder.local`,
           phone,
+          property_type: propertyType,
+          region,
+          service_category: serviceCategory,
+          comments,
           company: null,
-          status: "NEW",
+          status: "new_lead",
           source: "website",
+          gdpr_consent: gdprConsent,
           notes,
           tags: [serviceCategory],
         },
