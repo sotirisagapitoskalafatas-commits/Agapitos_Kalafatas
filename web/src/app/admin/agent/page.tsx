@@ -150,38 +150,34 @@ export default function AgentPage() {
           };
           return next;
         });
-      } else {
-        const data = await res.json();
+      } else if (data.command) {
         // Small Business Plugin command endpoint returns { response, staged, ... }
-        if (data.command) {
-          const cmdResult = data as any;
-          const stagedNote =
-            cmdResult.staged?.count > 0
-              ? `\n\n✍️ ${cmdResult.staged.count} action(s) staged as ${cmdResult.staged.actionType} — pending your approval in the panel. Nothing was sent yet.`
-              : "";
-          const missingNote =
-            cmdResult.connectorsMissing?.length
-              ? `\n\n_Note: connectors not yet connected — ${cmdResult.connectorsMissing.join(", ")} (stub data shown)._`
-              : "";
-          setMessages((m) => {
-            const next = [...m];
-            next[next.length - 1] = {
-              role: "agent",
-              content: cmdResult.response + stagedNote + missingNote,
-              result: {
-                finalAnswer: cmdResult.response,
-                steps: [{ agent: `command:${cmdResult.command}`, input: text, result: cmdResult.response, durationMs: 0 }],
-                provider: "plugin",
-                model: "stub",
-                requestId: cmdResult.requestId || "local",
-              },
-            };
-            return next;
-          });
-          fetchApprovals();
-          return;
-        }
-
+        const cmdResult = data as any;
+        const stagedNote =
+          cmdResult.staged?.count > 0
+            ? `\n\n✍️ ${cmdResult.staged.count} action(s) staged as ${cmdResult.staged.actionType} — pending your approval in the panel. Nothing was sent yet.`
+            : "";
+        const missingNote =
+          cmdResult.connectorsMissing?.length
+            ? `\n\n_Note: connectors not yet connected — ${cmdResult.connectorsMissing.join(", ")} (stub data shown)._`
+            : "";
+        setMessages((m) => {
+          const next = [...m];
+          next[next.length - 1] = {
+            role: "agent",
+            content: cmdResult.response + stagedNote + missingNote,
+            result: {
+              finalAnswer: cmdResult.response,
+              steps: [{ agent: `command:${cmdResult.command}`, input: text, result: cmdResult.response, durationMs: 0 }],
+              provider: "plugin",
+              model: "stub",
+              requestId: cmdResult.requestId || "local",
+            },
+          };
+          return next;
+        });
+        fetchApprovals();
+      } else {
         const result: AgentResult = data;
         setMessages((m) => {
           const next = [...m];
