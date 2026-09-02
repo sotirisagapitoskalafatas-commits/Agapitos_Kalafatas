@@ -64,13 +64,13 @@ export async function POST(req: Request) {
           continue;
         }
 
-        const { data: urlData } = supabase.storage
+        const urlData = await supabase.storage
           .from("client_uploads")
-          .getPublicUrl(filePath);
+          .createSignedUrl(filePath, 60 * 60 * 24 * 7);
 
         uploadedFiles.push({
           name: file.name,
-          url: urlData.publicUrl,
+          url: urlData.data?.signedUrl || "",
           path: filePath,
         });
       }
@@ -108,6 +108,7 @@ export async function POST(req: Request) {
           gdpr_consent: gdprConsent,
           notes,
           tags: [serviceCategory],
+          attached_files: uploadedFiles,
         },
       ])
       .select()
