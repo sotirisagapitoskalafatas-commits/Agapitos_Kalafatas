@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
@@ -104,7 +104,30 @@ interface DashboardData {
   recentActivity: { id: string; entity_type: string; action: string; details: any; created_at: string }[];
 }
 
-type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics" | "notifications" | "settings";
+type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics" | "notifications" | "ai" | "settings";
+
+interface StepCall {
+  agent: string;
+  input: string;
+  result: string;
+  durationMs: number;
+}
+
+interface AgentResult {
+  finalAnswer: string;
+  steps: StepCall[];
+  provider: string;
+  model: string;
+  requestId: string;
+}
+
+interface Msg {
+  role: "user" | "agent";
+  content: string;
+  result?: AgentResult;
+  pending?: boolean;
+  error?: boolean;
+}
 
 const STAGES = [
   { key: "lead", label: "Lead", color: "bg-slate-100 border-slate-300" },
@@ -320,6 +343,7 @@ export default function CRMDashboard() {
             { key: "invoices" as Tab, label: "Invoices", icon: " " },
             { key: "analytics" as Tab, label: "Analytics", icon: " " },
             { key: "notifications" as Tab, label: "Notifications", icon: " " },
+            { key: "ai" as Tab, label: "AI Agent", icon: "🤖" },
             { key: "settings" as Tab, label: "Settings", icon: "⚙️" },
           ]).map((item) => (
             <button
@@ -335,13 +359,6 @@ export default function CRMDashboard() {
               {item.label}
             </button>
           ))}
-          <a
-            href="/admin/agent"
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-indigo-500/10 transition-all"
-          >
-            <span className="text-base">🤖</span>
-            AI Agent
-          </a>
         </nav>
 
         <div className="p-3 border-t border-slate-200/60">
@@ -358,7 +375,7 @@ export default function CRMDashboard() {
       {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main Content */}
-      <div className="flex-1 md:ml-64 ml-0 p-8">
+      <div className="flex-1 md:ml-64 ml-0 p-8 min-w-0">
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white/80 backdrop-blur-md rounded-xl shadow-lg border border-slate-200/80">
           <svg className="w-6 h-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             {sidebarOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
@@ -390,6 +407,7 @@ export default function CRMDashboard() {
             {tab === "invoices" && <InvoicesView invoices={invoices} onNew={() => setShowNewInvoice(true)} />}
             {tab === "analytics" && <AnalyticsView dashboard={dashboard} leads={leads} deals={deals} invoices={invoices} formatCurrency={formatCurrency} />}
             {tab === "notifications" && <NotificationsView notifications={notifications} onRefresh={fetchAll} />}
+            {tab === "ai" && <AgentView />}
             {tab === "settings" && <SettingsView />}
           </>
         )}
@@ -514,7 +532,7 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
                   {a.entity_type === "deal" ? " " : a.entity_type === "invoice" ? " " : " "}
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm text-white">{a.action} {a.entity_type}</p>
+                  <p className="text-sm text-slate-900">{a.action} {a.entity_type}</p>
                   <p className="text-[10px] text-slate-500">{new Date(a.created_at).toLocaleString("el-GR")}</p>
                 </div>
               </div>
@@ -544,7 +562,7 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
         <input
           type="text"
           placeholder="Search leads..."
-          className="flex-1 min-w-[200px] p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          className="flex-1 min-w-[200px] p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -582,8 +600,8 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
                 {filtered.map((lead) => (
                   <tr key={lead.id} className="hover:bg-slate-100/50 cursor-pointer transition-all" onClick={() => onSelect(lead)}>
                     <td className="p-4 text-slate-500 text-xs">{new Date(lead.created_at).toLocaleDateString("el-GR")}</td>
-                    <td className="p-4 font-semibold text-white">{lead.first_name} {lead.last_name}</td>
-                    <td className="p-4 font-mono text-indigo-400 text-xs">{lead.phone}</td>
+                    <td className="p-4 font-semibold text-slate-900">{lead.first_name} {lead.last_name}</td>
+                    <td className="p-4 font-mono text-indigo-600 text-xs">{lead.phone}</td>
                     <td className="p-4 text-slate-500 text-xs">{lead.email || "—"}</td>
                     <td className="p-4"><span className="text-xs px-2.5 py-1 rounded-lg bg-white/80 text-slate-600">{lead.service_category}</span></td>
                     <td className="p-4">
@@ -592,7 +610,7 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
                       </span>
                     </td>
                     <td className="p-4">
-                      <button className="text-xs bg-indigo-500/10 text-indigo-400 font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-500/20 transition-colors">
+                      <button className="text-xs bg-indigo-500/10 text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-500/20 transition-colors">
                         Open
                       </button>
                     </td>
@@ -685,7 +703,7 @@ function CalendarView({ events, onToggle, onNew }: { events: CalendarEvent[]; on
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <button onClick={() => setWeekOffset(0)} className="text-xs bg-indigo-500/10 text-indigo-400 px-4 py-2 rounded-xl font-medium">Today</button>
+          <button onClick={() => setWeekOffset(0)} className="text-xs bg-indigo-500/10 text-indigo-600 px-4 py-2 rounded-xl font-medium">Today</button>
           <button onClick={() => setWeekOffset(w => w - 1)} className="text-xs bg-white/80 text-slate-500 px-3 py-2 rounded-xl hover:bg-slate-200">←</button>
           <span className="text-sm font-bold text-slate-900">
             {days[0].toLocaleDateString("el-GR", { month: "short", day: "numeric" })} — {days[6].toLocaleDateString("el-GR", { month: "short", day: "numeric", year: "numeric" })}
@@ -701,7 +719,7 @@ function CalendarView({ events, onToggle, onNew }: { events: CalendarEvent[]; on
           {days.map((d, i) => (
             <div key={i} className={`p-3 text-center border-l border-slate-200/60 ${d.toDateString() === today.toDateString() ? "bg-indigo-500/10" : ""}`}>
               <p className="text-[10px] text-slate-500 uppercase font-bold">{d.toLocaleDateString("el-GR", { weekday: "short" })}</p>
-              <p className={`text-lg font-bold ${d.toDateString() === today.toDateString() ? "text-indigo-400" : "text-white"}`}>{d.getDate()}</p>
+              <p className={`text-lg font-bold ${d.toDateString() === today.toDateString() ? "text-indigo-600" : "text-slate-900"}`}>{d.getDate()}</p>
             </div>
           ))}
         </div>
@@ -755,8 +773,8 @@ function CommsView({ comms, onNew }: { comms: CommRecord[]; onNew: () => void })
                   <div className="w-9 h-9 bg-white/80 rounded-xl flex items-center justify-center text-sm">{COMM_ICONS[c.comm_type] || " "}</div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold text-white">{c.subject || c.comm_type}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.direction === "inbound" ? "bg-green-500/10 text-green-400" : "bg-blue-500/10 text-blue-400"}`}>
+                      <span className="text-sm font-semibold text-slate-900">{c.subject || c.comm_type}</span>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full ${c.direction === "inbound" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
                         {c.direction}
                       </span>
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-500">{c.comm_type}</span>
@@ -827,10 +845,10 @@ function InvoicesView({ invoices, onNew }: { invoices: Invoice[]; onNew: () => v
               <tbody className="divide-y divide-slate-800/50">
                 {filtered.map(inv => (
                   <tr key={inv.id} className="hover:bg-slate-100/50">
-                    <td className="p-4 font-mono text-indigo-400 text-xs font-bold">{inv.invoice_number}</td>
+                    <td className="p-4 font-mono text-indigo-600 text-xs font-bold">{inv.invoice_number}</td>
                     <td className="p-4"><span className="text-xs px-2.5 py-1 rounded-lg bg-white/80 text-slate-600 capitalize">{inv.type}</span></td>
-                    <td className="p-4 text-white text-sm">{inv.leads ? `${inv.leads.first_name} ${inv.leads.last_name}` : "—"}</td>
-                    <td className="p-4 text-white font-bold">€{(inv.total || 0).toLocaleString("el-GR")}</td>
+                    <td className="p-4 text-slate-900 text-sm">{inv.leads ? `${inv.leads.first_name} ${inv.leads.last_name}` : "—"}</td>
+                    <td className="p-4 text-slate-900 font-bold">€{(inv.total || 0).toLocaleString("el-GR")}</td>
                     <td className="p-4">
                       <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${statusColors[inv.status] || ""}`}>{inv.status}</span>
                     </td>
@@ -875,7 +893,7 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
   return (
     <div className="space-y-6">
       <div className="flex justify-end">
-        <a href="/admin/analytics" className="text-sm bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 font-semibold px-5 py-2.5 rounded-xl transition-all border border-indigo-500/20">
+        <a href="/admin/analytics" className="text-sm bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 font-semibold px-5 py-2.5 rounded-xl transition-all border border-indigo-500/20">
            Full Analytics →
         </a>
       </div>
@@ -895,7 +913,7 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
         <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Deal Win Rate</h3>
           <div className="text-center py-4">
-            <p className="text-5xl font-bold text-indigo-400">{winRate}%</p>
+            <p className="text-5xl font-bold text-indigo-600">{winRate}%</p>
             <p className="text-xs text-slate-500 mt-2">{wonDeals.length} won / {lostDeals.length} lost / {deals.length} total</p>
           </div>
         </div>
@@ -905,19 +923,19 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
           <div className="space-y-4">
             <div>
               <p className="text-[10px] text-slate-500 uppercase font-bold">Pipeline</p>
-              <p className="text-lg font-bold text-amber-400">{formatCurrency(dashboard.kpis.pipelineValue)}</p>
+              <p className="text-lg font-bold text-amber-600">{formatCurrency(dashboard.kpis.pipelineValue)}</p>
             </div>
             <div>
               <p className="text-[10px] text-slate-500 uppercase font-bold">Won</p>
-              <p className="text-lg font-bold text-green-400">{formatCurrency(dashboard.kpis.wonRevenue)}</p>
+              <p className="text-lg font-bold text-green-600">{formatCurrency(dashboard.kpis.wonRevenue)}</p>
             </div>
             <div>
               <p className="text-[10px] text-slate-500 uppercase font-bold">Paid Invoices</p>
-              <p className="text-lg font-bold text-emerald-400">{formatCurrency(dashboard.kpis.paidInvoices)}</p>
+              <p className="text-lg font-bold text-emerald-600">{formatCurrency(dashboard.kpis.paidInvoices)}</p>
             </div>
             <div>
               <p className="text-[10px] text-slate-500 uppercase font-bold">Pending</p>
-              <p className="text-lg font-bold text-yellow-400">{formatCurrency(dashboard.kpis.pendingInvoices)}</p>
+              <p className="text-lg font-bold text-yellow-700">{formatCurrency(dashboard.kpis.pendingInvoices)}</p>
             </div>
           </div>
         </div>
@@ -987,10 +1005,10 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
           <div className="flex justify-between items-start border-b border-slate-200/60 pb-4">
             <div>
               <span className="text-[10px] font-semibold uppercase text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg">Lead #{lead.id.substring(0, 8)}</span>
-              <h2 className="text-2xl font-bold mt-2 text-white">{lead.first_name} {lead.last_name}</h2>
+              <h2 className="text-2xl font-bold mt-2 text-slate-900">{lead.first_name} {lead.last_name}</h2>
               <p className="text-xs text-slate-500 mt-1">{new Date(lead.created_at).toLocaleString("el-GR")}</p>
             </div>
-            <button onClick={onClose} className="text-slate-500 hover:text-white text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/80 transition-colors">✕</button>
+            <button onClick={onClose} className="text-slate-500 hover:text-slate-900 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200 transition-colors">✕</button>
           </div>
 
           <div className="flex items-center gap-2 bg-slate-100/80 p-3 rounded-xl border border-slate-200/80">
@@ -1000,7 +1018,7 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
                 key={s}
                 onClick={() => updateStatus(lead.id, s)}
                 className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  lead.status === s ? "bg-indigo-500 text-white" : "bg-slate-700 text-slate-500 hover:bg-slate-600"
+                  lead.status === s ? "bg-indigo-500 text-white" : "bg-white/70 text-slate-600 border border-slate-200 hover:bg-slate-100"
                 }`}
               >
                 {s.replace("_", " ")}
@@ -1011,17 +1029,17 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
           <div className="grid grid-cols-2 gap-3">
             <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
               <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Phone</span>
-              <span className="font-semibold text-sm text-white">{lead.phone}</span>
+              <span className="font-semibold text-sm text-slate-900">{lead.phone}</span>
             </div>
             <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
               <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Email</span>
-              <span className="font-semibold text-sm text-white">{lead.email || "Not provided"}</span>
+              <span className="font-semibold text-sm text-slate-900">{lead.email || "Not provided"}</span>
             </div>
           </div>
 
           <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
             <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Service</span>
-            <span className="text-xs px-2.5 py-1 rounded-lg bg-slate-700 text-slate-600">{lead.service_category}</span>
+            <span className="text-xs px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700">{lead.service_category}</span>
           </div>
 
           {lead.attached_files?.length > 0 && (
@@ -1029,10 +1047,13 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
               <h3 className="font-bold mb-3 text-xs uppercase text-slate-500">Attached Files</h3>
               <div className="space-y-2">
                 {lead.attached_files.map((f, i) => (
-                  <a key={i} href={f.url} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-xl text-indigo-400 hover:bg-indigo-500/10 transition-all text-xs font-semibold">
-                    <span>{f.name}</span>
-                    <span>Download →</span>
-                  </a>
+                  <div key={i} className="flex items-center justify-between p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-xl">
+                    <a href={f.url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 break-all">{f.name}</a>
+                    <div className="flex gap-1.5 ml-2 shrink-0">
+                      <a href={f.url} target="_blank" rel="noreferrer" className="px-2 py-1 text-[11px] font-semibold bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Open</a>
+                      <a href={f.url} download={f.name} className="px-2 py-1 text-[11px] font-semibold bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">⬇</a>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -1042,7 +1063,7 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
             <h3 className="font-bold mb-2 text-xs uppercase text-slate-500">Notes</h3>
             <textarea
               rows={4}
-              className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-white resize-none"
+              className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900 resize-none"
               placeholder="Add notes about this lead..."
               defaultValue={lead.notes || ""}
               onBlur={(e) => updateNotes(lead.id, e.target.value)}
@@ -1079,24 +1100,343 @@ function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; 
               />
               <div className="text-2xl mb-1"> </div>
               <p className="text-xs text-slate-500">Drag & drop or click to upload</p>
-              <p className="text-[10px] text-slate-400">PDF, JPG, PNG, DOC up to 25MB</p>
+              <p className="text-[10px] text-slate-500">PDF, JPG, PNG, DOC up to 25MB</p>
             </div>
             
             {/* Uploaded files list */}
             {leadDocuments.length > 0 && (
               <div className="mt-3 space-y-1">
                 {leadDocuments.map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                    <span className="text-xs text-slate-600 truncate">{doc.name}</span>
-                    <div className="flex gap-2">
-                      <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-xs text-indigo-600 hover:underline">View</a>
-                      <button onClick={() => deleteDocument(doc)} className="text-xs text-red-400 hover:text-red-600">×</button>
+                  <div key={i} className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/60">
+                    <div className="min-w-0">
+                      <span className="text-xs text-slate-700 truncate block font-medium">{doc.name}</span>
+                      <span className="text-[10px] text-slate-500">{doc.url.split("?").slice(0, 2).join("").length > 60 ? "uploaded file" : ""}</span>
+                    </div>
+                    <div className="flex gap-1.5 shrink-0">
+                      <a
+                        href={doc.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="Open full view in new tab"
+                        className="px-2 py-1 text-[11px] font-semibold bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
+                      >
+                        Full View
+                      </a>
+                      <a
+                        href={doc.url}
+                        download={doc.name}
+                        title="Download file"
+                        className="px-2 py-1 text-[11px] font-semibold bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
+                      >
+                        ⬇
+                      </a>
+                      <button
+                        onClick={() => deleteDocument(doc)}
+                        title="Delete file"
+                        className="px-2 py-1 text-[11px] font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
+                      >
+                        ×
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── AI AGENT VIEW (embedded) ─── */
+function AgentView() {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [approvals, setApprovals] = useState<any[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const COMMANDS: Array<{ slug: string; name: string; category: string }> = [
+    { slug: "/monday-brief", name: "Monday Brief", category: "Week" },
+    { slug: "/friday-brief", name: "Friday Brief", category: "Week" },
+    { slug: "/invoice-chase", name: "Invoice Chase", category: "Money" },
+    { slug: "/cash-flow-snapshot", name: "Cash Flow Snapshot", category: "Money" },
+    { slug: "/lead-triage", name: "Lead Triage", category: "Sales" },
+    { slug: "/call-list", name: "Call List", category: "Sales" },
+    { slug: "/customer-pulse", name: "Customer Pulse", category: "Customers" },
+    { slug: "/handle-complaint", name: "Handle Complaint", category: "Customers" },
+    { slug: "/sales-brief", name: "Sales Brief", category: "Sales" },
+    { slug: "/content-strategy", name: "Content Strategy", category: "Marketing" },
+    { slug: "/review-contract", name: "Review Contract", category: "Paperwork" },
+    { slug: "/business-pulse", name: "Business Pulse", category: "Week" },
+  ];
+
+  const fetchApprovals = useCallback(async () => {
+    try {
+      const res = await fetch("/api/agent/approvals", { headers: getAuthHeaders() });
+      const data = await res.json();
+      if (data.approvals) setApprovals(data.approvals);
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchApprovals();
+  }, [fetchApprovals]);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const decide = async (approvalId: string, decision: "approved" | "rejected") => {
+    try {
+      await fetch("/api/agent/approvals", {
+        method: "POST",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ approvalId, decision, decidedBy: "admin" }),
+      });
+      fetchApprovals();
+    } catch {}
+  };
+
+  const send = async () => {
+    const text = input.trim();
+    if (!text || loading) return;
+    setInput("");
+    setLoading(true);
+    setMessages((m) => [...m, { role: "user", content: text }, { role: "agent", content: "", pending: true }]);
+
+    try {
+      const isCommand = text.startsWith("/");
+      const res = await fetch(isCommand ? "/api/agent/command" : "/api/agent", {
+        method: "POST",
+        headers: isCommand
+          ? { "Content-Type": "application/json", ...getAuthHeaders() }
+          : { "Content-Type": "application/json" },
+        body: JSON.stringify(isCommand ? { command: text } : { message: text }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        setMessages((m) => {
+          const next = [...m];
+          next[next.length - 1] = { role: "agent", content: data.error || "Something went wrong. Please try again.", error: true };
+          return next;
+        });
+      } else if (data.command) {
+        const cmdResult = data as any;
+        const stagedNote =
+          cmdResult.staged?.count > 0
+            ? `\n\n✍️ ${cmdResult.staged.count} action(s) staged as ${cmdResult.staged.actionType} — pending your approval in the panel. Nothing was sent yet.`
+            : "";
+        const missingNote =
+          cmdResult.connectorsMissing?.length
+            ? `\n\n_Note: connectors not yet connected — ${cmdResult.connectorsMissing.join(", ")} (stub data shown)._`
+            : "";
+        setMessages((m) => {
+          const next = [...m];
+          next[next.length - 1] = {
+            role: "agent",
+            content: cmdResult.response + stagedNote + missingNote,
+            result: {
+              finalAnswer: cmdResult.response,
+              steps: [{ agent: `command:${cmdResult.command}`, input: text, result: cmdResult.response, durationMs: 0 }],
+              provider: "plugin",
+              model: "stub",
+              requestId: cmdResult.requestId || "local",
+            },
+          };
+          return next;
+        });
+        fetchApprovals();
+      } else {
+        const result: AgentResult = data;
+        setMessages((m) => {
+          const next = [...m];
+          next[next.length - 1] = { role: "agent", content: result.finalAnswer, result };
+          return next;
+        });
+      }
+    } catch {
+      setMessages((m) => {
+        const next = [...m];
+        next[next.length - 1] = { role: "agent", content: "Network error. Could not reach the agent service.", error: true };
+        return next;
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Chat panel */}
+      <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl border border-slate-200/70 rounded-2xl shadow-xl overflow-hidden flex flex-col" style={{ height: "calc(100vh - 9rem)" }}>
+        {/* Suggestions */}
+        <div className="px-4 pt-3 flex gap-2 overflow-x-auto pb-1 border-b border-slate-200/60 bg-white/40">
+          {["How many leads are in the CRM?", "What's my sales pipeline value?", "Tell me about e-shop pricing", "What is the win rate?"].map((s) => (
+            <button
+              key={s}
+              onClick={() => setInput(s)}
+              className="whitespace-nowrap px-3 py-1.5 text-xs bg-slate-100 border border-slate-200 rounded-full text-slate-600 hover:border-indigo-400 hover:text-indigo-600 transition"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {messages.length === 0 && (
+            <div className="text-center text-slate-500 mt-16">
+              <div className="text-5xl mb-3">🤖</div>
+              <p className="font-medium text-slate-500">Atlas Master is ready</p>
+              <p className="text-sm">Ask me anything about your business, services, or CRM data.</p>
+            </div>
+          )}
+
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
+                m.role === "user"
+                  ? "bg-indigo-600 text-white rounded-br-md"
+                  : m.pending
+                  ? "bg-white/80 border border-slate-200 text-slate-500 rounded-bl-md"
+                  : m.error
+                  ? "bg-red-50 border border-red-200 text-red-700 rounded-bl-md"
+                  : "bg-white/80 border border-slate-200 text-slate-800 rounded-bl-md"
+              }`}>
+                {m.pending ? (
+                  <span className="flex items-center gap-2">
+                    <span className="inline-block h-3 w-3 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                    Master is dispatching sub-agents…
+                  </span>
+                ) : (
+                  <div className="whitespace-pre-wrap">{m.content}</div>
+                )}
+
+                {m.result && (
+                  <div className="mt-3 pt-3 border-t border-slate-200 space-y-1.5">
+                    {m.result.steps.map((s, j) => (
+                      <div key={j} className="flex items-center justify-between text-xs text-slate-500 bg-slate-50 rounded-lg px-2.5 py-1.5">
+                        <span className="font-medium text-indigo-600">→ {s.agent}</span>
+                        <span>{s.durationMs}ms</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span>{m.result.provider} · {m.result.model}</span>
+                      <span className="font-mono text-[10px]">{m.result.requestId.slice(0, 8)}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          <div ref={scrollRef} />
+        </div>
+
+        {/* Input */}
+        <div className="border-t border-slate-200/70 bg-white/50 p-3">
+          <div className="flex gap-2">
+            <textarea
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+              placeholder="Ask Atlas Master… (Enter to send, Shift+Enter for newline)"
+              rows={1}
+              className="flex-1 resize-none p-3 bg-white/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900"
+            />
+            <button
+              onClick={send}
+              disabled={loading || !input.trim()}
+              className="px-5 py-2 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition text-sm"
+            >
+              {loading ? "…" : "Send"}
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-500 mt-1.5 text-center">
+            The LLM proposes; Postgres &amp; tenant-scoped RPCs authorize. Requests are audited.
+          </p>
+        </div>
+      </div>
+
+      {/* Activity / Registry panel */}
+      <div className="bg-white/60 backdrop-blur-xl border border-slate-200/70 rounded-2xl shadow-xl overflow-y-auto p-5" style={{ height: "calc(100vh - 9rem)" }}>
+        <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">
+          Pending Approvals{" "}
+          {approvals.length > 0 && (
+            <span className="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-full">
+              {approvals.length}
+            </span>
+          )}
+        </h2>
+
+        {approvals.length === 0 ? (
+          <p className="text-xs text-slate-500 mb-4">No actions awaiting approval.</p>
+        ) : (
+          <ul className="space-y-2 mb-4">
+            {approvals.map((a) => (
+              <li key={a.id} className="bg-white/80 border border-amber-200 rounded-xl p-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-amber-600">{a.action_type}</span>
+                  <span className="text-[10px] text-slate-500 font-mono">{(a.idempotency_key || a.id).slice(0, 8)}</span>
+                </div>
+                <p className="text-xs font-semibold text-slate-800 mt-1">{a.summary}</p>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => decide(a.id, "approved")} className="flex-1 px-2 py-1 text-[11px] font-semibold bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">Approve</button>
+                  <button onClick={() => decide(a.id, "rejected")} className="flex-1 px-2 py-1 text-[11px] font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600">Reject</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">
+          Small Business Commands{" "}
+          <span className="text-[10px] font-normal text-slate-500 normal-case">(tap to run)</span>
+        </h2>
+        <div className="flex flex-wrap gap-1.5 mb-5">
+          {COMMANDS.map((c) => (
+            <button
+              key={c.slug}
+              onClick={() => setInput(c.slug)}
+              className="px-2 py-1 rounded-lg border border-indigo-200 bg-indigo-50/60 text-indigo-700 text-[11px] font-semibold hover:bg-indigo-100 transition"
+              title={c.name}
+            >
+              {c.slug}
+            </button>
+          ))}
+        </div>
+
+        <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">Agent Registry</h2>
+        <ul className="space-y-2">
+          {[
+            ["webdev", "Web & Software", "E-shops, SaaS, AI agents"],
+            ["energy", "Energy Services", "Electricity, gas, PV, EV"],
+            ["insurance", "Insurance", "Life, health, car, property"],
+            ["leadcrm", "Lead & CRM", "Leads, deals, pipeline, invoices"],
+            ["analytics", "Business Intel", "Pipeline metrics, forecasts"],
+            ["comms", "Communications", "Email & comm log"],
+            ["tasks", "Tasks", "To-dos & reminders"],
+            ["documents", "Documents", "Client document vault"],
+            ["operations", "Operations", "Adds leads/deals/events"],
+            ["general", "General Knowledge", "Company knowledge base"],
+          ].map(([id, name, desc]) => (
+            <li key={id} className="bg-white/80 border border-slate-200 rounded-xl p-3">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="font-semibold text-sm text-slate-800">{name}</span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">{desc}</p>
+            </li>
+          ))}
+        </ul>
+
+        <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mt-6 mb-2">Model Cascade</h2>
+        <div className="text-xs text-slate-500 space-y-1">
+          <p>1. <b>Router</b> — routes to agent (small)</p>
+          <p>2. <b>Specialist</b> — agent runs tools</p>
+          <p>3. <b>Tier</b> — complexity &amp; risk gating</p>
+          <p className="text-amber-600"><b>Writes</b> — proposed → approved → executed</p>
         </div>
       </div>
     </div>
@@ -1123,21 +1463,21 @@ function NewDealModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Deal Title *</label>
-            <input required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+            <input required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Value (€)</label>
-              <input type="number" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
+              <input type="number" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.value} onChange={e => setForm({ ...form, value: e.target.value })} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Expected Close</label>
-              <input type="date" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.expected_close_date} onChange={e => setForm({ ...form, expected_close_date: e.target.value })} />
+              <input type="date" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.expected_close_date} onChange={e => setForm({ ...form, expected_close_date: e.target.value })} />
             </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Linked Lead</label>
-            <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
+            <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
               <option value="">None</option>
               {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>)}
             </select>
@@ -1171,18 +1511,18 @@ function NewEventModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: ()
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Title *</label>
-            <input required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
+            <input required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Type</label>
-              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.event_type} onChange={e => setForm({ ...form, event_type: e.target.value })}>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={form.event_type} onChange={e => setForm({ ...form, event_type: e.target.value })}>
                 {["meeting", "call", "task", "reminder", "deadline"].map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Linked Lead</label>
-              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
                 <option value="">None</option>
                 {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>)}
               </select>
@@ -1191,16 +1531,16 @@ function NewEventModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: ()
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Start *</label>
-              <input type="datetime-local" required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} />
+              <input type="datetime-local" required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.start_time} onChange={e => setForm({ ...form, start_time: e.target.value })} />
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">End *</label>
-              <input type="datetime-local" required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} />
+              <input type="datetime-local" required className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.end_time} onChange={e => setForm({ ...form, end_time: e.target.value })} />
             </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Location</label>
-            <input className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
+            <input className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-3 bg-white/80 text-slate-500 rounded-xl font-medium hover:bg-slate-200">Cancel</button>
@@ -1232,13 +1572,13 @@ function NewCommModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Type</label>
-              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.comm_type} onChange={e => setForm({ ...form, comm_type: e.target.value })}>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={form.comm_type} onChange={e => setForm({ ...form, comm_type: e.target.value })}>
                 {["email", "phone", "sms", "whatsapp", "meeting", "note"].map(t => <option key={t} value={t}>{t}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Direction</label>
-              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.direction} onChange={e => setForm({ ...form, direction: e.target.value })}>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={form.direction} onChange={e => setForm({ ...form, direction: e.target.value })}>
                 <option value="outbound">Outbound</option>
                 <option value="inbound">Inbound</option>
               </select>
@@ -1246,18 +1586,18 @@ function NewCommModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Lead</label>
-            <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
+            <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
               <option value="">Select lead...</option>
               {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Subject</label>
-            <input className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
+            <input className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Notes / Body</label>
-            <textarea rows={4} className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none focus:ring-2 focus:ring-indigo-500 resize-none" value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} />
+            <textarea rows={4} className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 resize-none" value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} />
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={onClose} className="flex-1 py-3 bg-white/80 text-slate-500 rounded-xl font-medium hover:bg-slate-200">Cancel</button>
@@ -1303,7 +1643,7 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Type</label>
-              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={form.type} onChange={e => setForm({ ...form, type: e.target.value })}>
                 <option value="quote">Quote</option>
                 <option value="invoice">Invoice</option>
                 <option value="proforma">Proforma</option>
@@ -1311,7 +1651,7 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Client</label>
-              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
+              <select className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={form.lead_id} onChange={e => setForm({ ...form, lead_id: e.target.value })}>
                 <option value="">Select client...</option>
                 {leads.map(l => <option key={l.id} value={l.id}>{l.first_name} {l.last_name}</option>)}
               </select>
@@ -1321,15 +1661,15 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
           <div>
             <div className="flex justify-between items-center mb-2">
               <label className="text-xs font-semibold text-slate-500">Line Items</label>
-              <button type="button" onClick={addItem} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium">+ Add Item</button>
+              <button type="button" onClick={addItem} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium">+ Add Item</button>
             </div>
             <div className="space-y-2">
               {items.map((item, i) => (
                 <div key={i} className="flex gap-2 items-start">
-                  <input placeholder="Description" className="flex-1 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
-                  <input type="number" placeholder="Qty" className="w-20 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={item.quantity} onChange={e => updateItem(i, "quantity", e.target.value)} />
-                  <input type="number" placeholder="Price €" className="w-28 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={item.unit_price} onChange={e => updateItem(i, "unit_price", e.target.value)} />
-                  {items.length > 1 && <button type="button" onClick={() => removeItem(i)} className="p-3 text-red-400 hover:text-red-300">✕</button>}
+                  <input placeholder="Description" className="flex-1 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={item.description} onChange={e => updateItem(i, "description", e.target.value)} />
+                  <input type="number" placeholder="Qty" className="w-20 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={item.quantity} onChange={e => updateItem(i, "quantity", e.target.value)} />
+                  <input type="number" placeholder="Price €" className="w-28 p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={item.unit_price} onChange={e => updateItem(i, "unit_price", e.target.value)} />
+                  {items.length > 1 && <button type="button" onClick={() => removeItem(i)} className="p-3 text-red-500 hover:text-red-700">✕</button>}
                 </div>
               ))}
             </div>
@@ -1338,7 +1678,7 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">Tax Rate (%)</label>
-              <input type="number" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none" value={form.tax_rate} onChange={e => setForm({ ...form, tax_rate: e.target.value })} />
+              <input type="number" className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none" value={form.tax_rate} onChange={e => setForm({ ...form, tax_rate: e.target.value })} />
             </div>
             <div className="flex flex-col justify-end">
               <div className="bg-slate-100/80 p-4 rounded-xl border border-slate-200 space-y-1">
@@ -1351,7 +1691,7 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
 
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">Notes</label>
-            <textarea rows={2} className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-white outline-none resize-none" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
+            <textarea rows={2} className="w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none resize-none" value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} />
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -1377,7 +1717,7 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
             <h3 className="text-sm font-bold text-slate-900">Webhook Configuration</h3>
             <p className="text-xs text-slate-500 mt-1">Supabase Database Webhook → Slack + Email alerts</p>
           </div>
-          <button onClick={() => setConfigOpen(!configOpen)} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
+          <button onClick={() => setConfigOpen(!configOpen)} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
             {configOpen ? "Hide" : "Configure"}
           </button>
         </div>
@@ -1386,17 +1726,17 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
           <div className="space-y-4 pt-4 border-t border-slate-200/60">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-slate-100/80 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-green-400 mb-2">✅ Slack Notifications</h4>
+                <h4 className="text-xs font-bold text-green-700 mb-2">✅ Slack Notifications</h4>
                 <div className="space-y-2 text-xs">
-                  <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="text-green-400 font-medium">Active</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="text-green-700 font-medium">Active</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Channel</span><span className="text-slate-600">#Agapitos</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Trigger</span><span className="text-slate-600">INSERT on public.leads</span></div>
                 </div>
               </div>
               <div className="bg-slate-100/80 rounded-xl p-4">
-                <h4 className="text-xs font-bold text-blue-400 mb-2">✅ Email Notifications</h4>
+                <h4 className="text-xs font-bold text-blue-700 mb-2">✅ Email Notifications</h4>
                 <div className="space-y-2 text-xs">
-                  <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="text-green-400 font-medium">Active</span></div>
+                  <div className="flex justify-between"><span className="text-slate-500">Status</span><span className="text-green-700 font-medium">Active</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">To</span><span className="text-slate-600">kalafatasagapitos@gmail.com</span></div>
                   <div className="flex justify-between"><span className="text-slate-500">Provider</span><span className="text-slate-600">Resend API</span></div>
                 </div>
@@ -1404,7 +1744,7 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
             </div>
 
             <div className="bg-slate-100/50 rounded-xl p-4">
-              <h4 className="text-xs font-bold text-amber-400 mb-2">Setup Instructions</h4>
+              <h4 className="text-xs font-bold text-amber-600 mb-2">Setup Instructions</h4>
               <ol className="text-xs text-slate-500 space-y-1.5 list-decimal list-inside">
                 <li>Go to <span className="text-slate-600">Supabase Dashboard → Integrations → Webhooks</span></li>
                 <li>Create webhook: Table <span className="text-slate-600">public.leads</span>, Event <span className="text-slate-600">INSERT</span></li>
@@ -1420,7 +1760,7 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
       <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-slate-200/60">
           <h3 className="text-sm font-bold text-slate-900">Recent Notifications</h3>
-          <button onClick={onRefresh} className="text-xs text-indigo-400 hover:text-indigo-300 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
+          <button onClick={onRefresh} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
             ↻ Refresh
           </button>
         </div>
@@ -1436,26 +1776,26 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
             {notifications.map((n) => (
               <div key={n.id} className="p-4 hover:bg-slate-100/50 transition-colors">
                 <div className="flex items-start gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm flex-shrink-0 ${
-                    n.type === "slack" ? "bg-green-500/10 text-green-400" :
-                    n.type === "email" ? "bg-blue-500/10 text-blue-400" :
-                    "bg-purple-500/10 text-purple-400"
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-base flex-shrink-0 ${
+                    n.type === "slack" ? "bg-green-100 text-green-700" :
+                    n.type === "email" ? "bg-blue-100 text-blue-700" :
+                    "bg-purple-100 text-purple-700"
                   }`}>
                     {n.type === "slack" ? " " : n.type === "email" ? " " : " "}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        n.status === "sent" ? "bg-green-500/10 text-green-400" :
-                        n.status === "failed" ? "bg-red-500/10 text-red-400" :
-                        "bg-amber-500/10 text-amber-400"
+                        n.status === "sent" ? "bg-green-100 text-green-700" :
+                        n.status === "failed" ? "bg-red-100 text-red-700" :
+                        "bg-amber-100 text-amber-700"
                       }`}>
                         {n.status}
                       </span>
                       <span className="text-xs text-slate-500">{n.type}</span>
                     </div>
-                    <p className="text-sm text-white mt-1 truncate">{n.message}</p>
-                    <p className="text-[10px] text-slate-600 mt-1">{new Date(n.created_at).toLocaleString("el-GR")}</p>
+                    <p className="text-sm text-slate-900 mt-1 truncate">{n.message}</p>
+                    <p className="text-[10px] text-slate-500 mt-1">{new Date(n.created_at).toLocaleString("el-GR")}</p>
                   </div>
                 </div>
               </div>
@@ -1574,7 +1914,7 @@ function SettingsView() {
                 {settings.pipeline_stages.map((stage, i) => (
                   <div key={i} className="flex items-center gap-1 bg-slate-100 rounded-lg px-3 py-1.5">
                     <input className="bg-transparent text-sm text-slate-700 outline-none w-28" value={stage} onChange={(e) => { const s = [...settings.pipeline_stages]; s[i] = e.target.value; setSettings({...settings, pipeline_stages: s}); }} />
-                    <button onClick={() => setSettings({...settings, pipeline_stages: settings.pipeline_stages.filter((_, j) => j !== i)})} className="text-red-400 hover:text-red-600 text-xs">×</button>
+                    <button onClick={() => setSettings({...settings, pipeline_stages: settings.pipeline_stages.filter((_, j) => j !== i)})} className="text-red-500 hover:text-red-700 text-xs">×</button>
                   </div>
                 ))}
                 <button onClick={() => setSettings({...settings, pipeline_stages: [...settings.pipeline_stages, "New Stage"]})} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">+ Add Stage</button>
