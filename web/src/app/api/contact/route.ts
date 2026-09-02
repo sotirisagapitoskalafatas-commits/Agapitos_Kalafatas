@@ -88,6 +88,7 @@ export async function POST(req: Request) {
     const notes = notesParts.join("\n") || null;
 
     // Insert lead record — map to the existing leads table schema
+    // attached_files is patched separately so the form never breaks if the column is missing
     const { data: leadData, error: dbError } = await supabase
       .from("leads")
       .insert([
@@ -108,7 +109,6 @@ export async function POST(req: Request) {
           gdpr_consent: gdprConsent,
           notes,
           tags: [serviceCategory],
-          attached_files: uploadedFiles,
         },
       ])
       .select()
@@ -117,6 +117,14 @@ export async function POST(req: Request) {
     if (dbError) {
       console.error("Database error:", dbError);
       return NextResponse.json({ error: `Αποτυχία αποθήκευσης: ${dbError.message}` }, { status: 500 });
+    }
+
+    // Persist uploaded file metadata if any files were submitted
+    if (leadData && uploadedFiles.length > 0) {
+      await supabase
+        .from("leads")
+        .update({ attached_files: uploadedFiles })
+        .eq("id", leadData.id);
     }
 
     // Send email notification via Resend
