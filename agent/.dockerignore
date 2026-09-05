@@ -1,0 +1,6 @@
+agent/__pycache__
+agent/memory
+agent/voices
+.git
+.env
+.env.local
