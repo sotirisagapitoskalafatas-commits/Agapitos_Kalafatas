@@ -1,14 +1,20 @@
 // Connector layer for the Small Business Plugin.
 //
 // Each connector wraps an external tool (QuickBooks, Stripe, HubSpot, ...).
-// For this first slice the connectors return CLEARLY-MARKED SAMPLE DATA so the
+// For this first slice most connectors return CLEARLY-MARKED SAMPLE DATA so the
 // commands, the Human-In-The-Loop approval flow, and the UI all work end-to-end
-// without live credentials. Swap the `run` bodies for real API calls once a
-// connector's OAuth/secret is wired via `integration_credentials`.
+// without live credentials.
+//
+// The Stripe connector is LIVE: once a secret is available (the STRIPE_SECRET_KEY
+// env var, or a service-role-only row in `integration_credentials`), `read()`
+// calls the Stripe REST API directly (no SDK dependency). Without a secret it
+// falls back to the marked sample set, exactly like the other connectors.
 //
 // Golden rule (unchanged): the agent can READ connector data, but client/finance-
 // touching WRITES still go through the approval queue (agent_action_approvals).
 // Nothing here ever sends or mutates an external system.
+
+import { supabase } from "@/lib/agents/db";
 
 export type ConnectorId =
   | "quickbooks"
@@ -80,6 +86,129 @@ const sampleComms = [
 ];
 
 // ---------------------------------------------------------------------------
+// Live Stripe connector (REST over fetch — no SDK dependency).
+// ---------------------------------------------------------------------------
+
+const STRIPE_API = "https://api.stripe.com/v1";
+
+async function stripeApi<T = Record<string, any>>(
+  secret: string,
+  path: string,
+  account?: string
+): Promise<T> {
+  const res = await fetch(`${STRIPE_API}/${path}`, {
+    headers: {
+      Authorization: `Bearer ${secret}`,
+      ...(account ? { "Stripe-Account": account } : {}),
+    },
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Stripe API ${res.status}: ${text.slice(0, 200)}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+function mapStripeTime(epochSeconds: number): string {
+  return new Date(epochSeconds * 1000).toISOString();
+}
+
+// Credential resolution order: STRIPE_SECRET_KEY env var (highest priority),
+// then the service-role-only `integration_credentials` row (unique service_name =
+// 'stripe'). metadata.account / metadata.connected_account selects a Connect
+// account via the Stripe-Account header.
+async function loadStripeCredential(): Promise<{ secret: string; account?: string } | null> {
+  const envSecret = process.env.STRIPE_SECRET_KEY;
+  if (envSecret) return { secret: envSecret };
+
+  try {
+    const { data } = await supabase
+      .from("integration_credentials")
+      .select("encrypted_token, is_enabled, metadata")
+      .eq("service_name", "stripe")
+      .maybeSingle();
+    if (data?.is_enabled && data.encrypted_token) {
+      const meta = (data.metadata || {}) as Record<string, any>;
+      return {
+        secret: data.encrypted_token, // production decrypts the app-level encryption here
+        account: meta.account || meta.connected_account || undefined,
+      };
+    }
+  } catch {
+    // fall through to stub
+  }
+  return null;
+}
+
+async function readStripe(kind: string): Promise<ConnectorData> {
+  const cred = await loadStripeCredential();
+  if (!cred) {
+    if (kind === "settlements") {
+      return { connector: "stripe", stub: true, kind: "settlements", items: [...sampleSettlements] };
+    }
+    return { connector: "stripe", stub: true, kind, items: [] };
+  }
+
+  try {
+    if (kind === "settlements") {
+      const data = await stripeApi<{ data: any[] }>(cred.secret, "balance_transactions?limit=25", cred.account);
+      return {
+        connector: "stripe",
+        stub: false,
+        kind: "settlements",
+        items: data.data.map((t) => ({
+          id: t.id,
+          type: t.type,
+          amount: t.amount,
+          net: t.net,
+          currency: t.currency,
+          status: "settled",
+          time: mapStripeTime(t.created),
+        })),
+      };
+    }
+    if (kind === "disputes") {
+      const data = await stripeApi<{ data: any[] }>(cred.secret, "disputes?limit=25", cred.account);
+      return {
+        connector: "stripe",
+        stub: false,
+        kind: "disputes",
+        items: data.data.map((d) => ({
+          id: d.id,
+          status: d.status,
+          reason: d.reason,
+          amount: d.amount,
+          currency: d.currency,
+          time: mapStripeTime(d.created),
+        })),
+      };
+    }
+    if (kind === "payments") {
+      const data = await stripeApi<{ data: any[] }>(cred.secret, "charges?limit=25", cred.account);
+      return {
+        connector: "stripe",
+        stub: false,
+        kind: "payments",
+        items: data.data.map((c) => ({
+          id: c.id,
+          client: c.billing_details?.name || undefined,
+          email: c.receipt_email || undefined,
+          amount: c.amount,
+          currency: c.currency,
+          status: c.status,
+          paid: c.paid,
+          time: mapStripeTime(c.created),
+        })),
+      };
+    }
+    return { connector: "stripe", stub: false, kind, items: [] };
+  } catch (e: any) {
+    console.error("Stripe read failed:", e.message);
+    return { connector: "stripe", stub: false, kind, items: [] };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Connector implementations. All consumers call `getConnector(id)`.
 // ---------------------------------------------------------------------------
 
@@ -106,12 +235,9 @@ const connectors: Record<ConnectorId, Connector> = {
     },
   },
   stripe: {
-    meta: { id: "stripe", name: "Stripe", purpose: "Payments, disputes, refunds, settlements", stub: true },
+    meta: { id: "stripe", name: "Stripe", purpose: "Payments, disputes, refunds, settlements", stub: false },
     async read(kind) {
-      if (kind === "settlements") {
-        return { connector: "stripe", stub: true, kind: "settlements", items: [...sampleSettlements] };
-      }
-      return { connector: "stripe", stub: true, kind, items: [] };
+      return readStripe(kind);
     },
   },
   paypal: {
