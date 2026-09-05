@@ -172,14 +172,7 @@ async def agent_websocket(websocket: WebSocket):
 
                 # Update brain context from history
                 if history and brain:
-                    brain._history = []
-                    for msg in history:
-                        role = "user" if msg.get("role") == "user" else "model"
-                        brain._history.append({
-                            "role": role,
-                            "parts": [{"text": str(msg.get("content", ""))[:MAX_TEXT_LEN]}]
-                        })
-                    brain._chat = brain._client.start_chat(history=brain._history)
+                    await brain.rebuild_session(history)
 
                 # Stream response
                 full_reply = []

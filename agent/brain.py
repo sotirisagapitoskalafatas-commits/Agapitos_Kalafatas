@@ -1,11 +1,9 @@
 """The brain — a Gemini-powered AI session with streaming responses.
 
-Uses Google's Gemini API (google-generativeai) for the AI backbone.
+Uses Google's Gemini API (google-genai) for the AI backbone.
 Supports streaming output, tool use, and persistent conversation context.
 The session maintains memory across turns for coherent multi-turn dialogue.
 """
-import asyncio
-import json
 import os
 import re
 import time
@@ -24,8 +22,8 @@ class GeminiBrain:
         self.model = model or CFG["gemini"]["model"]
         self._client = None
         self._chat = None
+        self._config = None
         self._history = []
-        self._tools = []
         self.session = {
             "turns": 0,
             "out_tokens": 0,
@@ -38,7 +36,8 @@ class GeminiBrain:
     async def start(self):
         """Initialize the Gemini client and start a chat session."""
         try:
-            import google.generativeai as genai
+            from google import genai
+            from google.genai import types
 
             api_key = os.environ.get(CFG["gemini"]["api_key_env"])
             if not api_key:
@@ -51,41 +50,43 @@ class GeminiBrain:
                         f"or create {api_key_path} with your API key"
                     )
 
-            genai.configure(api_key=api_key)
-
-            generation_config = genai.types.GenerationConfig(
-                max_output_tokens=CFG["gemini"]["max_output_tokens"],
-                temperature=CFG["gemini"]["temperature"],
-                top_p=CFG["gemini"]["top_p"],
-            )
+            self._client = genai.Client(api_key=api_key)
 
             # Configure safety settings to be permissive for code generation
             safety_settings = [
-                {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
-                {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+                types.SafetySetting(category="HARM_CATEGORY_HARASSMENT", threshold="BLOCK_NONE"),
+                types.SafetySetting(category="HARM_CATEGORY_HATE_SPEECH", threshold="BLOCK_NONE"),
+                types.SafetySetting(category="HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold="BLOCK_NONE"),
+                types.SafetySetting(category="HARM_CATEGORY_DANGEROUS_CONTENT", threshold="BLOCK_NONE"),
             ]
 
-            self._client = genai.GenerativeModel(
-                model_name=self.model,
+            self._config = types.GenerateContentConfig(
+                max_output_tokens=CFG["gemini"]["max_output_tokens"],
+                temperature=CFG["gemini"]["temperature"],
+                top_p=CFG["gemini"]["top_p"],
                 system_instruction=CFG["gemini"]["system_prompt"],
-                generation_config=generation_config,
                 safety_settings=safety_settings,
             )
 
-            self._chat = self._client.start_chat(history=self._history)
+            self._chat = self._client.aio.chats.create(
+                model=self.model,
+                config=self._config,
+                history=self._history,
+            )
             log(f"[brain] Gemini {self.model} initialized")
         except ImportError:
             raise RuntimeError(
-                "google-generativeai not installed. "
-                "Run: pip install google-generativeai"
+                "google-genai not installed. "
+                "Run: pip install google-genai"
             )
 
     async def stop(self):
         """Clean up the session."""
         if self._chat:
-            self._history = self._chat.history
+            try:
+                self._history = list(await self._chat.get_history())
+            except Exception:
+                pass
         self._client = None
         self._chat = None
         log("[brain] session ended")
@@ -98,6 +99,34 @@ class GeminiBrain:
         """Reset for a new turn."""
         self._dirty = False
 
+    async def reset(self):
+        """Clear context and start a fresh chat session."""
+        self._history = []
+        if self._client:
+            self._chat = self._client.aio.chats.create(
+                model=self.model,
+                config=self._config,
+            )
+        self._dirty = False
+
+    async def rebuild_session(self, messages: list[dict]):
+        """Rebuild the active chat from client-supplied {role, content} history."""
+        from google.genai import types
+
+        self._history = [
+            types.Content(
+                role="user" if m.get("role") == "user" else "model",
+                parts=[types.Part(text=str(m.get("content", ""))[:2000])],
+            )
+            for m in messages[-10:]
+        ]
+        self._chat = self._client.aio.chats.create(
+            model=self.model,
+            config=self._config,
+            history=self._history,
+        )
+        self._dirty = False
+
     async def ask_stream(self, utterance: str):
         """Yield complete sentences as they stream out of Gemini."""
         self._dirty = True
@@ -105,25 +134,25 @@ class GeminiBrain:
         self.session["in_tokens"] += len(utterance.split()) * 2
 
         try:
-            response = await self._chat.send_message_async(utterance)
+            response = await self._chat.send_message(utterance)
 
             # Extract text from response
             text = ""
-            if hasattr(response, 'text') and response.text:
+            if getattr(response, "text", ""):
                 text = response.text
-            elif hasattr(response, 'candidates') and response.candidates:
+            elif getattr(response, "candidates", None):
                 for candidate in response.candidates:
-                    if hasattr(candidate, 'content') and candidate.content:
-                        for part in candidate.content.parts:
-                            if hasattr(part, 'text'):
+                    content = getattr(candidate, "content", None)
+                    if content and content.parts:
+                        for part in content.parts:
+                            if getattr(part, "text", ""):
                                 text += part.text
 
             # Update token counts
-            if hasattr(response, 'usage_metadata') and response.usage_metadata:
+            if getattr(response, "usage_metadata", None) and response.usage_metadata:
                 meta = response.usage_metadata
-                if hasattr(meta, 'total_token_count'):
-                    self.session["in_tokens"] += getattr(meta, 'prompt_token_count', 0)
-                    self.session["out_tokens"] += getattr(meta, 'candidates_token_count', 0)
+                self.session["in_tokens"] += getattr(meta, "prompt_token_count", 0)
+                self.session["out_tokens"] += getattr(meta, "candidates_token_count", 0)
 
             # Yield sentences as they form
             buf = ""

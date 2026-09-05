@@ -3,7 +3,7 @@ uvicorn[standard]
 starlette
 httpx
 websockets
-google-generativeai
+google-genai
 faster-whisper
 sounddevice
 numpy

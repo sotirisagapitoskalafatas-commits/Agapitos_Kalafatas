@@ -163,9 +163,7 @@ async def amain():
                 mouth.say(msg)
                 return True
             if norm in ("clear session", "clear context", "clear"):
-                brain._history = []
-                if brain._chat:
-                    brain._chat = brain._client.start_chat()
+                await brain.reset()
                 mouth.say("Context cleared.")
                 return True
 

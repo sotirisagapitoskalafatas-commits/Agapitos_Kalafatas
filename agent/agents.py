@@ -7,12 +7,12 @@ and updates the CRM exactly like the web Agents — every WRITE is an explicit
 tool call the model chose, and the reply to the human confirms what actually
 happened (nothing is ever assumed).
 """
+import json
 import os
 import time
 
-import google.generativeai as genai
-from google.generativeai import types as gtypes
-from google.generativeai.protos import Content, FunctionResponse, Part
+from google import genai
+from google.genai import types
 
 from agent.crm import function_declarations, dispatch
 from agent.config import CFG
@@ -20,24 +20,30 @@ from agent.vlog import log
 
 MAX_TOOL_ROUNDS = 4
 
-_CONFIGURED_KEY = None
+_CLIENT = None
 _FALLBACK_MODELS = ("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash")
 
 
-def _configured():
-    global _CONFIGURED_KEY
+def _api_key() -> str | None:
+    """Resolve the Gemini API key from env or the local .gemini_key file."""
     key = os.environ.get(CFG["gemini"]["api_key_env"])
     if not key:
         from pathlib import Path
         key_path = Path(__file__).resolve().parent.parent / "config" / ".gemini_key"
         if key_path.exists():
             key = key_path.read_text().strip()
-    if not key:
-        return False
-    if key != _CONFIGURED_KEY:
-        genai.configure(api_key=key)
-        _CONFIGURED_KEY = key
-    return True
+    return key or None
+
+
+def _client_for():
+    """Return a cached google-genai client (new-format AQ… keys supported)."""
+    global _CLIENT
+    if _CLIENT is None:
+        key = _api_key()
+        if not key:
+            return None
+        _CLIENT = genai.Client(api_key=key)
+    return _CLIENT
 
 # ---- Specialist registry (mirrors ALL_AGENTS in lib/agents/core-agents.ts) ---
 SPECIALISTS = {
@@ -187,15 +193,25 @@ def _extract_text(response) -> str:
     return "\n".join(p.text for p in parts if getattr(p, "text", "")).strip()
 
 
+def _jsonable(value) -> dict:
+    """Make a CRM result JSON-safe for the Gemini FunctionResponse payload."""
+    try:
+        return json.loads(json.dumps(value, default=str))
+    except Exception:
+        return {"ok": False, "error": repr(value)[:300]}
+
+
 def _chat_for(specialist_id: str, system_prompt: str):
-    if not _configured():
+    client = _client_for()
+    if client is None:
         raise RuntimeError("GEMINI_API_KEY not set (see config/.gemini_key or env)")
 
     model_name = os.environ.get("SLACK_AGENT_MODEL") or CFG["gemini"]["model"]
-    tools = [gtypes.Tool(function_declarations=function_declarations())]
-    generation = gtypes.GenerationConfig(
+    config = types.GenerateContentConfig(
         temperature=CFG["gemini"].get("temperature", 0.7),
         max_output_tokens=1200,
+        system_instruction=system_prompt,
+        tools=[types.Tool(function_declarations=function_declarations())],
     )
 
     last_err = None
@@ -203,13 +219,7 @@ def _chat_for(specialist_id: str, system_prompt: str):
         m for m in _FALLBACK_MODELS if m != model_name
     ):
         try:
-            model = genai.GenerativeModel(
-                model_name=candidate,
-                system_instruction=system_prompt,
-                tools=tools,
-                generation_config=generation,
-            )
-            return model.start_chat()
+            return client.chats.create(model=candidate, config=config)
         except Exception as e:
             last_err = e
             log(f"[agents] model {candidate} unavailable: {e}")
@@ -237,9 +247,9 @@ def run_with_tools(chat, user_text: str) -> str:
             except Exception as e:
                 result = {"ok": False, "error": str(e)[:300]}
             # Return the declared result type/dict, converting nested maps.
-            result_clean = _deep_dict(result)
+            result_clean = _jsonable(_deep_dict(result))
             function_responses.append(
-                Part(function_response=FunctionResponse(
+                types.Part(function_response=types.FunctionResponse(
                     name=name,
                     response=result_clean,
                 ))
@@ -247,7 +257,7 @@ def run_with_tools(chat, user_text: str) -> str:
 
         try:
             response = _send_with_retry(
-                chat, Content(role="function", parts=function_responses)
+                chat, types.Content(role="function", parts=function_responses)
             )
         except Exception as e:
             log(f"[agents] function response round failed: {e}")
