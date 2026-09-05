@@ -35,6 +35,9 @@ dist/
 build/
 *.egg-info/
 
+# Agent runtime state
+agent/memory/
+
 # Local assets (never meant for the repo)
 Public/Images/Agapitos Kalafatas_CV.pdf
 Public/Images/Agapitos Kalafatas_CV_files/
