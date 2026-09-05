@@ -132,7 +132,6 @@ class Mouth:
     def __init__(self):
         global _worker_thread, _stop_event
 
-        self.speaking = False
         self._queue = queue.Queue()
 
         # Start speaker worker
