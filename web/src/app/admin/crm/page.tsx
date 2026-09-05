@@ -126,6 +126,7 @@ interface Msg {
   content: string;
   result?: AgentResult;
   pending?: boolean;
+  progress?: string;
   error?: boolean;
 }
 
@@ -150,7 +151,14 @@ const COMM_ICONS: Record<string, string> = {
 };
 
 export default function CRMDashboard() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const [tab, setTab] = useState<Tab>(() => {
+    if (typeof window !== "undefined") {
+      const t = new URLSearchParams(window.location.search).get("tab");
+      const valid: Tab[] = ["dashboard", "leads", "pipeline", "calendar", "comms", "invoices", "analytics", "notifications", "ai", "settings"];
+      if (t && (valid as string[]).includes(t)) return t as Tab;
+    }
+    return "dashboard";
+  });
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginUser, setLoginUser] = useState("");
   const [loginPass, setLoginPass] = useState("");
@@ -1249,12 +1257,77 @@ function AgentView() {
         });
         fetchApprovals();
       } else {
-        const result: AgentResult = data;
-        setMessages((m) => {
-          const next = [...m];
-          next[next.length - 1] = { role: "agent", content: result.finalAnswer, result };
-          return next;
+        // Streaming branch: consume NDJSON from /api/agent/stream and update progress live.
+        const res = await fetch("/api/agent/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text }),
         });
+        if (!res.ok || !res.body) {
+          let msg = "Something went wrong. Please try again.";
+          try {
+            const err = await res.json();
+            if (err.error) msg = err.error;
+          } catch {}
+          setMessages((m) => {
+            const next = [...m];
+            next[next.length - 1] = { role: "agent", content: msg, error: true };
+            return next;
+          });
+        } else {
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = "";
+          let finalResult: (AgentResult & { requestId: string }) | null = null;
+          let streamError = "";
+
+          const updateLast = (patch: Partial<Msg>) =>
+            setMessages((m) => {
+              const next = [...m];
+              next[next.length - 1] = { ...next[next.length - 1], ...patch };
+              return next;
+            });
+
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split("\n");
+            buffer = lines.pop() ?? "";
+            for (const line of lines) {
+              if (!line.trim()) continue;
+              let evt: any;
+              try {
+                evt = JSON.parse(line);
+              } catch {
+                continue;
+              }
+              if (evt.type === "progress") {
+                updateLast({ progress: evt.message });
+              } else if (evt.type === "result") {
+                finalResult = evt;
+              } else if (evt.type === "error") {
+                streamError = evt.error || "Agent error";
+              }
+            }
+          }
+
+          if (finalResult) {
+            updateLast({
+              pending: false,
+              progress: undefined,
+              content: finalResult.finalAnswer,
+              result: finalResult as AgentResult,
+            });
+          } else {
+            updateLast({
+              pending: false,
+              progress: undefined,
+              content: streamError || "The agent did not return a response. Please try again.",
+              error: true,
+            });
+          }
+        }
       }
     } catch {
       setMessages((m) => {
@@ -1308,7 +1381,7 @@ function AgentView() {
                 {m.pending ? (
                   <span className="flex items-center gap-2">
                     <span className="inline-block h-3 w-3 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                    Master is dispatching sub-agents…
+                    {m.progress || "Master is dispatching sub-agents…"}
                   </span>
                 ) : (
                   <div className="whitespace-pre-wrap">{m.content}</div>

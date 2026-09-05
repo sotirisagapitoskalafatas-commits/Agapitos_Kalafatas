@@ -20,9 +20,17 @@ RULES:
 - Assistant messages here are always the orchestrator's own briefing.
 `;
 
+export type ProgressEvent =
+  | { stage: "routing"; message: string; agent?: string }
+  | { stage: "running"; message: string; agent: string; tier: Tier }
+  | { stage: "done"; message: string };
+
+export type ProgressReporter = (event: ProgressEvent) => void;
+
 export async function orchestrate(
   context: AgentContext,
-  userInput: string
+  userInput: string,
+  onProgress?: ProgressReporter
 ): Promise<AgentResult> {
   const llm = getModelClient();
   const steps: AgentCall[] = [];
@@ -30,11 +38,19 @@ export async function orchestrate(
 
   try {
     // 1. Route to the right agent (use small model — cheap routing)
+    onProgress?.({ stage: "routing", message: "Analyzing your request and selecting the right specialist…" });
     const routed = await routeToAgent(llm, userInput);
     const agent = findAgent(routed.agent) || ALL_AGENTS[ALL_AGENTS.length - 1];
 
     // 2. Decide tier for quality/cost cascade
     const { tier } = decideTier(userInput);
+
+    onProgress?.({
+      stage: "running",
+      message: `Handing off to ${agent.name} (${tier} model)…`,
+      agent: agent.id,
+      tier,
+    });
 
     // 3. Run the specialist agent at the chosen tier
     const agentCall = await runAgent(context, agent, userInput, { tier });
@@ -65,8 +81,10 @@ export async function orchestrate(
       durationMs,
     });
 
+    onProgress?.({ stage: "done", message: "Done." });
     return result;
   } catch (e: any) {
+    onProgress?.({ stage: "done", message: "Error." });
     return {
       finalAnswer: `Sorry, the agent orchestrator hit an error: ${e.message}`,
       steps,
