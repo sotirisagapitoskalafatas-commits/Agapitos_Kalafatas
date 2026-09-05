@@ -20,6 +20,7 @@ from agent.brain import GeminiBrain
 from agent.config import CFG
 from agent.memory import MemoryVault
 from agent.mouth import Mouth
+from agent.slack import router as slack_router
 from agent.vlog import log
 
 # Security: only allow expected frontend origins to connect. Never use "*".
@@ -49,6 +50,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Conversational Slack bot (Events API) — mounted on the same FastAPI service.
+app.include_router(slack_router)
 
 # Shared state
 brain: GeminiBrain | None = None
