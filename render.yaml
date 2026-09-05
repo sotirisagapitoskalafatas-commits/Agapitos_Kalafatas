@@ -1,0 +1,34 @@
+# Render Blueprint — deploy the conversational Slack agent fast.
+#
+# How to use:
+#   1. Push this file to the repo, then in the Render Dashboard choose
+#      "New → Blueprint" and pick this GitHub repo.
+#   2. Fill the env vars below (Dashboard → your service → Environment):
+#        SUPABASE_URL / SERVICE_ROLE_KEY / GEMINI_API_KEY / SLACK_BOT_TOKEN /
+#        SLACK_SIGNING_SECRET / SLACK_ALLOWED_CHANNELS
+#   3. Slack Events Request URL becomes:  https://<service>.onrender.com/api/slack/events
+services:
+  - type: web
+    name: agapitos-atlas-agent
+    runtime: docker
+    repo: https://github.com/sotirisagapitoskalafatas-commits/Agapitos_Kalafatas.git
+    branch: main
+    plan: starter
+    dockerfilePath: ./agent/Dockerfile
+    healthCheckPath: /health
+    numInstances: 1
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: SLACK_BOT_TOKEN
+        sync: false
+      - key: SLACK_SIGNING_SECRET
+        sync: false
+      - key: SLACK_ALLOWED_CHANNELS
+        sync: false

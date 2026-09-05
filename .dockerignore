@@ -1,0 +1,15 @@
+.git
+node_modules
+web/node_modules
+web/.next
+.next
+logs
+Public
+config
+.env
+.env.local
+web/.env.local
+start.bat
+start.sh
+web-start.bat
+README.md

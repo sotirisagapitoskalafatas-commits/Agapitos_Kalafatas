@@ -1,0 +1,37 @@
+# Slack App Manifest — "Agapitos CRM Bot" (Atlas voice assistant).
+#
+# Reference for the EXISTING "Agapitos CRM Alerts" app (Basic Information →
+# App Manifest → … → View as YAML). You do NOT need a new app: just make sure
+# the scopes + bot events below exist, then go to Event Subscriptions and set
+# the Request URL. That URL must be live before Slack will verify it.
+#
+# event_subscriptions.request_url:  https://<your-host>/api/slack/events
+display_information:
+  name: Agapitos CRM Bot
+  description: Live CRM assistant — ask about leads, deals and the pipeline.
+  background_color: "#1a1d2e"
+features:
+  bot_user:
+    display_name: Atlas
+    always_online: true
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+      - channels:read
+      - groups:read
+      - im:history
+      - im:read
+      - app_mention:read
+settings:
+  event_subscriptions:
+    # request_url: https://<your-host>/api/slack/events
+    bot_events:
+      - app_mention
+      - message.channels
+      - message.im
+  interactivity:
+    is_enabled: false
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  token_rotation_enabled: false
