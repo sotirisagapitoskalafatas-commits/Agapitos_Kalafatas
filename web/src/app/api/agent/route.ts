@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { orchestrate } from "@/lib/agents/orchestrator";
+import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 import type { AgentContext } from "@/lib/agents/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.ok) return unauthorizedResponse();
+
   try {
     const { message, organizationId, userId, role } = await request.json();
 
@@ -15,9 +19,9 @@ export async function POST(request: NextRequest) {
     }
 
     const context: AgentContext = {
-      userId: String(userId || "system"),
+      userId: String(userId || auth.user),
       organizationId: String(organizationId || ""),
-      role: role === "owner" || role === "admin" || role === "member" ? role : "member",
+      role: role === "owner" || role === "admin" || role === "member" ? role : "admin",
       requestId: randomUUID(),
     };
 

@@ -24,9 +24,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (verifyAdminCredentials(username, password)) {
-      const token = await generateSessionToken(username);
-      return NextResponse.json({ success: true, token });
+    if (await verifyAdminCredentials(username, password)) {
+      try {
+        const token = await generateSessionToken(username);
+        return NextResponse.json({ success: true, token });
+      } catch {
+        return NextResponse.json(
+          { error: "Admin auth is not configured (set AUTH_SECRET)" },
+          { status: 503 }
+        );
+      }
     }
 
     return NextResponse.json(

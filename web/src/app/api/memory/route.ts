@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 
 const VAULT_DIR = path.join(
   process.cwd(),
@@ -16,7 +17,10 @@ const ALLOWED_FILES = [
   "Gemini.md",
 ];
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.ok) return unauthorizedResponse();
+
   const { searchParams } = new URL(request.url);
   const file = searchParams.get("file") || "MEMORY.md";
 
@@ -49,7 +53,10 @@ export async function GET(request: Request) {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.ok) return unauthorizedResponse();
+
   const body = await request.json();
   const { file, content } = body;
 

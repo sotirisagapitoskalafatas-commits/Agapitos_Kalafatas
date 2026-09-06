@@ -23,10 +23,13 @@ async function logNotification(type: string, status: string, message: string, de
 export async function POST(req: Request) {
   try {
     const secret = req.headers.get("x-webhook-secret");
-    if (
-      process.env.SUPABASE_WEBHOOK_SECRET &&
-      secret !== process.env.SUPABASE_WEBHOOK_SECRET
-    ) {
+    if (!process.env.SUPABASE_WEBHOOK_SECRET) {
+      return NextResponse.json(
+        { error: "Webhook not configured (set SUPABASE_WEBHOOK_SECRET)" },
+        { status: 501 }
+      );
+    }
+    if (secret !== process.env.SUPABASE_WEBHOOK_SECRET) {
       return NextResponse.json(
         { error: "Unauthorized webhook request" },
         { status: 401 }

@@ -9,21 +9,25 @@ export function getAdminCredentials(): { user: string; pass: string } | null {
 
   if (user && pass) return { user, pass };
 
-  if (process.env.NODE_ENV === "production") {
-    return null;
-  }
-
-  return { user: "agapitos", pass: "atlas2026" };
+  return null;
 }
 
-export function verifyAdminCredentials(username: string, password: string): boolean {
+export async function verifyAdminCredentials(username: string, password: string): Promise<boolean> {
   const creds = getAdminCredentials();
   if (!creds) return false;
-  return username === creds.user && password === creds.pass;
+  const enc = new TextEncoder();
+  const userHash = await crypto.subtle.digest("SHA-256", enc.encode(username));
+  const passHash = await crypto.subtle.digest("SHA-256", enc.encode(password));
+  const expUser = await crypto.subtle.digest("SHA-256", enc.encode(creds.user));
+  const expPass = await crypto.subtle.digest("SHA-256", enc.encode(creds.pass));
+  return (
+    bytesSafeEqual(new Uint8Array(userHash), new Uint8Array(expUser)) &&
+    bytesSafeEqual(new Uint8Array(passHash), new Uint8Array(expPass))
+  );
 }
 
 function signingKey(): string {
-  return process.env.AUTH_SECRET || process.env.ADMIN_PASS || process.env.ADMIN_PASSWORD || "";
+  return process.env.AUTH_SECRET || "";
 }
 
 function bytesToBase64Url(bytes: Uint8Array): string {
@@ -55,6 +59,9 @@ async function hmacBase64Url(data: string, key: string): Promise<string> {
 }
 
 export async function generateSessionToken(username: string): Promise<string> {
+  if (!signingKey()) {
+    throw new Error("AUTH_SECRET not configured; cannot issue session tokens");
+  }
   const expiresAt = Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS;
   const payload = bytesToBase64Url(new TextEncoder().encode(JSON.stringify({ sub: username, exp: expiresAt })));
   const signature = await hmacBase64Url(payload, signingKey());
@@ -63,6 +70,7 @@ export async function generateSessionToken(username: string): Promise<string> {
 
 export async function verifySessionToken(token: string): Promise<{ sub: string } | null> {
   if (!token.startsWith(TOKEN_PREFIX)) return null;
+  if (!signingKey()) return null;
   const [payload, signature] = token.slice(TOKEN_PREFIX.length).split(".");
   if (!payload || !signature) return null;
 

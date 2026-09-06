@@ -111,7 +111,7 @@ def _process_and_reply(event: dict) -> None:
 
     try:
         from agent.agents import handle_slack_message
-        reply = handle_slack_message(text, user_name)
+        reply = handle_slack_message(text, user_name, approval_key=(channel, thread_ts or ""))
     except Exception as e:
         log(f"[slack] background worker error: {e}")
         reply = "⚠️ Something went wrong on my side. If this keeps happening, check the agent logs."
@@ -176,7 +176,10 @@ async def slack_events(request: Request, background_tasks: BackgroundTasks):
             return {"ok": True}
 
         channel = event.get("channel", "")
-        if ALLOWED_CHANNELS and channel not in ALLOWED_CHANNELS:
+        if not ALLOWED_CHANNELS:
+            log("[slack] SLACK_ALLOWED_CHANNELS is EMPTY — ignoring all messages (fail closed)")
+            return {"ok": True}
+        if channel not in ALLOWED_CHANNELS:
             log(f"[slack] ignoring message in unallowed channel {channel}")
             return {"ok": True}
 

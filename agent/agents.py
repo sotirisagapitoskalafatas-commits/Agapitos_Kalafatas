@@ -14,11 +14,14 @@ import time
 from google import genai
 from google.genai import types
 
+from agent import approvals
 from agent.crm import function_declarations, dispatch
 from agent.config import CFG
 from agent.vlog import log
 
 MAX_TOOL_ROUNDS = 4
+YES_PHRASES = {"yes", "yeah", "yep", "sure", "approve", "approved",
+               "go ahead", "do it", "ok", "okay"}
 
 _CLIENT = None
 _FALLBACK_MODELS = ("gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash")
@@ -226,7 +229,7 @@ def _chat_for(specialist_id: str, system_prompt: str):
     raise RuntimeError(f"No usable Gemini model: {last_err}")
 
 
-def run_with_tools(chat, user_text: str) -> str:
+def run_with_tools(chat, user_text: str, approval_key=None, user_name: str = "") -> str:
     """Send the message and execute any CRM tool calls, looping until done."""
     try:
         response = _send_with_retry(chat, user_text)
@@ -243,7 +246,23 @@ def run_with_tools(chat, user_text: str) -> str:
         function_responses = []
         for name, args, part in calls:
             try:
-                result = dispatch(name, args)
+                if (
+                    approvals.needs_approval(CFG["permission_mode"])
+                    and approvals.is_write(name)
+                ):
+                    if approval_key is not None:
+                        approvals.store(approval_key, name, args, user_name)
+                    result = {
+                        "ok": False,
+                        "needs_approval": True,
+                        "message": (
+                            f"Approval required before applying {name}. "
+                            "Explain what you want to do and ask the user to "
+                            "confirm with a plain yes/no in this thread."
+                        ),
+                    }
+                else:
+                    result = dispatch(name, args)
             except Exception as e:
                 result = {"ok": False, "error": str(e)[:300]}
             # Return the declared result type/dict, converting nested maps.
@@ -269,11 +288,26 @@ def run_with_tools(chat, user_text: str) -> str:
 # Public entry point
 # ---------------------------------------------------------------------------
 
-def handle_slack_message(user_text: str, user_name: str = "") -> str:
+def handle_slack_message(user_text: str, user_name: str = "", approval_key=None) -> str:
     t0 = time.time()
     text = _strip_mention(user_text).strip()
     if not text:
         return "Hey! Ask me anything about the CRM — e.g. *“list new leads”* or *“mark Test Lead as contacted”*."
+
+    if approval_key is not None:
+        norm = text.lower().strip()
+        if norm in YES_PHRASES:
+            entry = approvals.pop(approval_key)
+            if entry:
+                try:
+                    result = dispatch(entry["tool"], entry["args"])
+                except Exception as e:
+                    result = {"ok": False, "error": str(e)[:300]}
+                return (f"✅ *Approved — applied* `{entry['tool']}`.\n\n"
+                        f"```{json.dumps(result, ensure_ascii=False)[:1200]}```")
+        if norm in ("no", "nope", "cancel", "decline", "deny", "skip", "never mind"):
+            if approvals.cancel(approval_key):
+                return "🚫 *Cancelled.* Nothing was changed."
 
     if text.startswith("/"):
         return ("Slash commands (like /invoice-chase) live in the web CRM AI tab. "
@@ -285,7 +319,7 @@ def handle_slack_message(user_text: str, user_name: str = "") -> str:
 
     try:
         chat = _chat_for(specialist_id, system)
-        reply = run_with_tools(chat, text)
+        reply = run_with_tools(chat, text, approval_key=approval_key, user_name=user_name)
     except Exception as e:
         log(f"[agents] error: {e}")
         reply = "⚠️ I hit an error. If this keeps happening, check the agent logs."

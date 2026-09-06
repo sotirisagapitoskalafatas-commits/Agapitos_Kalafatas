@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { randomUUID } from "crypto";
 import { orchestrate } from "@/lib/agents/orchestrator";
+import { requireAuth } from "@/lib/admin-auth";
 import type { AgentContext } from "@/lib/agents/types";
 
 export const runtime = "nodejs";
@@ -13,6 +14,14 @@ function writeEvent(controller: ReadableStreamDefaultController, data: unknown) 
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireAuth(request);
+  if (!auth.ok) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }) + "\n", {
+      status: 401,
+      headers: { "Content-Type": "application/x-ndjson" },
+    });
+  }
+
   const { message, organizationId, userId, role } = await request.json();
 
   if (!message || typeof message !== "string" || !message.trim()) {
@@ -23,9 +32,9 @@ export async function POST(request: NextRequest) {
   }
 
   const context: AgentContext = {
-    userId: String(userId || "system"),
+    userId: String(userId || auth.user),
     organizationId: String(organizationId || ""),
-    role: role === "owner" || role === "admin" || role === "member" ? role : "member",
+    role: role === "owner" || role === "admin" || role === "member" ? role : "admin",
     requestId: randomUUID(),
   };
 
@@ -43,7 +52,7 @@ export async function POST(request: NextRequest) {
         writeEvent(controller, {
           type: "error",
           requestId: context.requestId,
-          error: error.message || "Internal server error",
+          error: "Internal server error",
         });
       } finally {
         controller.close();
