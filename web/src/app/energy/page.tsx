@@ -33,6 +33,15 @@ const iconMap: Record<string, React.ElementType> = {
   trending: TrendingDown,
 };
 
+const energyServiceValues = [
+  "Electricity",
+  "Natural Gas",
+  "Solar",
+  "E-Mobility",
+  "Energy Storage",
+  "Energy Savings",
+];
+
 export default function EnergyPage() {
   const { t } = useLocale();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
@@ -283,12 +292,12 @@ export default function EnergyPage() {
                     <h3 className="text-2xl font-light text-slate-50">{srv.title}</h3>
                   </div>
                   <p className="text-sm font-light leading-relaxed text-slate-300/80">{srv.desc}</p>
-                  <a
-                    href="#contact"
+                  <Link
+                    href={`/contact?service=${encodeURIComponent(energyServiceValues[idx] || energyServiceValues[0])}`}
                     className="mt-auto pt-2 inline-flex items-center gap-1.5 text-[11.5px] tracking-[0.16em] uppercase text-amber-400 transition-transform hover:translate-x-1"
                   >
                     {tE.seeMore} <ArrowRight className="w-3.5 h-3.5" />
-                  </a>
+                  </Link>
                 </div>
               );
             })}

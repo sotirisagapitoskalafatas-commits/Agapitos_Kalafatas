@@ -45,9 +45,20 @@ export default function UnifiedContactForm() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const s = new URLSearchParams(window.location.search).get("service");
-    if (s && allServiceValues.includes(s)) {
-      setFormData((prev) => ({ ...prev, serviceCategory: s }));
+    const params = new URLSearchParams(window.location.search);
+    const s = params.get("service");
+    const pkg = params.get("pkg");
+    const price = params.get("price");
+    let next: Partial<typeof formData> = {};
+    if (s && allServiceValues.includes(s)) next.serviceCategory = s;
+    if (pkg) {
+      const pkgNote = price
+        ? `Package: ${pkg} (€${price})`
+        : `Package: ${pkg}`;
+      next.comments = pkgNote;
+    }
+    if (Object.keys(next).length > 0) {
+      setFormData((prev) => ({ ...prev, ...next }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

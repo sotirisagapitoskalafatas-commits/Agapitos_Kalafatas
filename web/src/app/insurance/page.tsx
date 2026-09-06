@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   HeartPulse,
@@ -43,6 +43,15 @@ const categoryIds = ["health", "home", "business", "auto", "liability", "savings
 export default function InsurancePage() {
   const { t } = useLocale();
   const [openId, setOpenId] = useState<string | null>(null);
+  const estimateRef = useRef<HTMLDivElement | null>(null);
+
+  const [branch, setBranch] = useState<string>(categoryIds[0]);
+  const [fullName, setFullName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [consent, setConsent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const tIns = t.insurancePage || {};
   const categories = (tIns.categories || []).map((cat, idx) => ({
@@ -52,6 +61,47 @@ export default function InsurancePage() {
     color: colorMap[categoryIds[idx]]?.color || "text-rose-500",
     bgColor: colorMap[categoryIds[idx]]?.bgColor || "bg-rose-50",
   }));
+
+  const selectedCat = categories.find((c) => c.id === branch);
+
+  const handleEstimate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!consent) return;
+    setSubmitting(true);
+    setError(null);
+
+    const body = new FormData();
+    body.append("first_name", fullName.trim());
+    body.append("phone", phone.trim());
+    body.append("service_category", selectedCat?.title || branch);
+    body.append("comments", "Quick cost estimate");
+    body.append("gdpr_consent", "true");
+
+    try {
+      const res = await fetch("/api/contact", { method: "POST", body });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Error submitting the form");
+      setSent(true);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const selectBranchAndScroll = (id: string) => {
+    setBranch(id);
+    setSent(false);
+    estimateRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const b = new URLSearchParams(window.location.search).get("branch");
+    if (b && categoryIds.includes(b)) {
+      setBranch(b);
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans antialiased">
@@ -80,18 +130,24 @@ export default function InsurancePage() {
             </div>
           </div>
 
-          <div className="lg:col-span-5 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
+          <div ref={estimateRef} className="lg:col-span-5 bg-white p-8 rounded-3xl border border-slate-200 shadow-xl space-y-6">
             <h3 className="text-xl font-bold text-slate-900">{tIns.quickEstimateTitle}</h3>
-            <div className="space-y-4">
+            <form onSubmit={handleEstimate} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-600 uppercase mb-2">{tIns.planLabel}</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {[tIns.planHealth, tIns.planHome, tIns.planAuto].map((plan) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {categories.map((cat) => (
                     <button
-                      key={plan}
-                      className="py-3 px-2 rounded-xl text-xs font-bold border bg-slate-50 border-slate-200 text-slate-600 hover:bg-rose-50 hover:border-rose-500 hover:text-rose-700 transition-all"
+                      type="button"
+                      key={cat.id}
+                      onClick={() => selectBranchAndScroll(cat.id)}
+                      className={`py-3 px-2 rounded-xl text-xs font-bold border transition-all ${
+                        branch === cat.id
+                          ? "bg-rose-500 border-rose-500 text-white shadow-md shadow-rose-500/25"
+                          : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-rose-50 hover:border-rose-500 hover:text-rose-700"
+                      }`}
                     >
-                      {plan}
+                      {cat.title}
                     </button>
                   ))}
                 </div>
@@ -100,6 +156,9 @@ export default function InsurancePage() {
                 <label className="block text-xs font-bold text-slate-600 uppercase mb-2">{tIns.fullNameLabel}</label>
                 <input
                   type="text"
+                  required
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   placeholder={tIns.fullNamePlaceholder}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-rose-500"
                 />
@@ -108,14 +167,39 @@ export default function InsurancePage() {
                 <label className="block text-xs font-bold text-slate-600 uppercase mb-2">{tIns.phoneLabel}</label>
                 <input
                   type="tel"
+                  required
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   placeholder="69XXXXXXXX"
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-rose-500"
                 />
               </div>
-              <button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm">
-                {tIns.requestQuote}
+              <label className="flex items-start gap-2.5 text-xs text-slate-500 leading-relaxed cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  checked={consent}
+                  onChange={(e) => setConsent(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 text-rose-600 rounded border-slate-300 focus:ring-rose-500"
+                />
+                {t.contactPage?.form?.gdpr || "I consent to the processing of my data so you can contact me, in accordance with the GDPR privacy policy."}
+              </label>
+              {error && (
+                <p className="p-3 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl">{error}</p>
+              )}
+              {sent && (
+                <p className="p-3 text-xs text-green-700 bg-green-50 border border-green-200 rounded-xl">
+                  {tIns.estimateSuccess || "Your request was sent successfully! A specialist will call you shortly."}
+                </p>
+              )}
+              <button
+                type="submit"
+                disabled={submitting || !consent}
+                className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {submitting ? "..." : tIns.requestQuote}
               </button>
-            </div>
+            </form>
           </div>
         </div>
       </section>
@@ -192,13 +276,21 @@ export default function InsurancePage() {
                         </ul>
                       </div>
 
-                      <div className="mt-8">
-                        <a
-                          href="tel:+306977691776"
+                      <div className="mt-8 flex flex-wrap items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => selectBranchAndScroll(cat.id)}
                           className="inline-flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
                         >
                           <PhoneCall className="w-4 h-4" />
                           {tIns.requestOffer}
+                        </button>
+                        <a
+                          href="tel:+306977691776"
+                          className="inline-flex items-center gap-2 border border-slate-200 hover:bg-slate-100 text-slate-700 px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+                        >
+                          <Phone className="w-4 h-4" />
+                          +30 697 769 1776
                         </a>
                       </div>
                     </div>

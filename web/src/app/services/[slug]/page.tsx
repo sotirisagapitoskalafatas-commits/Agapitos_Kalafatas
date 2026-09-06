@@ -221,7 +221,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
                     ))}
                   </ul>
                   <Link
-                    href={`/contact?service=${slug}`}
+                    href={`/contact?service=${slug}&pkg=${encodeURIComponent(tier.name)}&price=${encodeURIComponent(tier.price)}`}
                     className={`mt-6 block text-center py-3 px-4 rounded-xl font-bold text-sm transition-all ${
                       tier.highlight
                         ? "bg-white/15 hover:bg-white/25 text-white"
