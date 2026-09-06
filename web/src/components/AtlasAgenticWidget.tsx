@@ -57,6 +57,77 @@ export default function AtlasAgenticWidget() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const { locale } = useLocale();
 
+  const [draggablePos, setDraggablePos] = useState<{ right: number; bottom: number } | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ pointerId: number; x: number; y: number; right: number; bottom: number } | null>(null);
+  const movedRef = useRef(false);
+  const fabRef = useRef<HTMLButtonElement>(null);
+
+  const FAB_SIZE = 105;
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("atlas-widget-pos");
+      if (raw) {
+        const p = JSON.parse(raw);
+        if (typeof p.right === "number" && typeof p.bottom === "number") {
+          setDraggablePos(p);
+        }
+      }
+    } catch {
+      // ignore corrupt storage
+    }
+  }, []);
+
+  const onFabPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const el = fabRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    dragRef.current = {
+      pointerId: e.pointerId,
+      x: e.clientX,
+      y: e.clientY,
+      right: draggablePos ? draggablePos.right : Math.max(0, window.innerWidth - rect.right),
+      bottom: draggablePos ? draggablePos.bottom : Math.max(0, window.innerHeight - rect.bottom),
+    };
+    movedRef.current = false;
+    setDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const onFabPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const s = dragRef.current;
+    if (!s || s.pointerId !== e.pointerId) return;
+    const dx = e.clientX - s.x;
+    const dy = e.clientY - s.y;
+    if (Math.abs(dx) + Math.abs(dy) > 3) movedRef.current = true;
+    const maxRight = Math.max(0, window.innerWidth - FAB_SIZE - 4);
+    const maxBottom = Math.max(0, window.innerHeight - FAB_SIZE - 4);
+    setDraggablePos({
+      right: Math.min(maxRight, Math.max(0, s.right - dx)),
+      bottom: Math.min(maxBottom, Math.max(0, s.bottom - dy)),
+    });
+  };
+
+  const endFabDrag = () => {
+    if (!dragRef.current) return;
+    dragRef.current = null;
+    setDragging(false);
+    const el = fabRef.current;
+    if (!el || !movedRef.current) return;
+    const rect = el.getBoundingClientRect();
+    const p = {
+      right: Math.max(0, window.innerWidth - rect.right),
+      bottom: Math.max(0, window.innerHeight - rect.bottom),
+    };
+    setDraggablePos(p);
+    try {
+      localStorage.setItem("atlas-widget-pos", JSON.stringify(p));
+    } catch {
+      // ignore storage errors
+    }
+  };
+
   const lang = locale || "el";
   const g = greetings[lang] || greetings.el;
 
@@ -277,7 +348,13 @@ export default function AtlasAgenticWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 font-sans">
+    <div
+      className="fixed z-50 font-sans"
+      style={{
+        right: draggablePos ? draggablePos.right : 24,
+        bottom: draggablePos ? draggablePos.bottom : 24,
+      }}
+    >
       {isOpen && (
         <div className="bg-[#121824] border border-gray-800 text-white w-[380px] sm:w-[420px] h-[600px] rounded-2xl shadow-2xl flex flex-col overflow-hidden">
           {/* Header */}
@@ -433,9 +510,23 @@ export default function AtlasAgenticWidget() {
 
       {!isOpen && (
         <button
-          onClick={() => setIsOpen(true)}
+          ref={fabRef}
+          onClick={(e) => {
+            if (movedRef.current) {
+              movedRef.current = false;
+              e.preventDefault();
+              return;
+            }
+            setIsOpen(true);
+          }}
+          onPointerDown={onFabPointerDown}
+          onPointerMove={onFabPointerMove}
+          onPointerUp={endFabDrag}
+          onPointerCancel={endFabDrag}
+          title="Drag to move"
           aria-label="Open Atlas AI"
-          className="atlas-ai"
+          className={`atlas-ai ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+          style={{ touchAction: "none" }}
         >
           <span className="orbit" />
           <div className="atlas-icon">

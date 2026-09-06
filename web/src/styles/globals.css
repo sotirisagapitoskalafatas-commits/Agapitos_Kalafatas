@@ -630,3 +630,36 @@ section {
     top: 50%;
   }
 }
+
+/* ─── CRM 3D raised containers ─── */
+.crm-card-3d {
+  background: linear-gradient(145deg, #ffffff 0%, #f8fafc 50%, #eef2f6 100%);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    6px 10px 28px -8px rgba(30, 41, 59, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+.crm-card-3d:hover {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    10px 16px 36px -10px rgba(30, 41, 59, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* ─── CRM navy liquid-glass sidebar ─── */
+.crm-glass-sidebar {
+  background: linear-gradient(
+    160deg,
+    rgba(23, 37, 84, 0.55) 0%,
+    rgba(15, 23, 42, 0.45) 30%,
+    rgba(30, 58, 138, 0.45) 55%,
+    rgba(15, 23, 42, 0.75) 100%
+  );
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border-right: 1px solid rgba(148, 163, 184, 0.22);
+  box-shadow:
+    8px 0 34px -14px rgba(2, 6, 23, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}

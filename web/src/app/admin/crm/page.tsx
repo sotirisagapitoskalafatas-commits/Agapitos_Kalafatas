@@ -297,7 +297,7 @@ export default function CRMDashboard() {
 
   if (!isLoggedIn) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-100 to-slate-100 flex items-center justify-center p-6">
+      <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
             <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
@@ -306,7 +306,7 @@ export default function CRMDashboard() {
             <h1 className="text-2xl font-bold text-slate-900">CRM Pro</h1>
             <p className="text-sm text-slate-500 mt-1">Agapitos Kalafatas</p>
           </div>
-          <form onSubmit={handleLogin} className="bg-white/70 backdrop-blur-md p-8 rounded-3xl border border-slate-200/80 shadow-2xl space-y-4">
+          <form onSubmit={handleLogin} className="crm-card-3d rounded-3xl p-8 space-y-4">
             {loginError && <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl">{loginError}</div>}
             <div>
               <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Username</label>
@@ -326,17 +326,17 @@ export default function CRMDashboard() {
   }
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-gray-100 to-slate-100 flex">
+    <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex">
       {/* Sidebar */}
-      <aside className={`w-64 bg-white/60 backdrop-blur-xl border-r border-white/50 shadow-xl shadow-slate-200/40 flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:sticky md:top-0`}>
-        <div className="p-6 border-b border-slate-200/60">
+      <aside className={`crm-glass-sidebar w-64 flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:sticky md:top-0`}>
+        <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
               <span className="text-white font-bold text-sm">A</span>
             </div>
             <div>
-              <h1 className="text-sm font-bold text-slate-900">CRM Pro</h1>
-              <p className="text-[10px] text-slate-500">Agapitos Kalafatas</p>
+              <h1 className="text-sm font-bold text-white">CRM Pro</h1>
+              <p className="text-[10px] text-blue-100/70">Agapitos Kalafatas</p>
             </div>
           </div>
         </div>
@@ -360,7 +360,7 @@ export default function CRMDashboard() {
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 tab === item.key
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                  : "text-slate-700 hover:text-slate-900 hover:bg-slate-200/40"
+                  : "text-slate-200/80 hover:text-white hover:bg-white/10"
               }`}
             >
               <span className="text-base">{item.icon}</span>
@@ -369,10 +369,10 @@ export default function CRMDashboard() {
           ))}
         </nav>
 
-        <div className="p-3 border-t border-slate-200/60">
+        <div className="p-3 border-t border-white/10">
           <button
             onClick={() => { setIsLoggedIn(false); localStorage.removeItem("crm_token"); }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-500 hover:text-red-500 hover:bg-red-50 transition-all"
+            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-200/70 hover:text-red-300 hover:bg-white/10 transition-all"
           >
             <span>🚪</span> Logout
           </button>
@@ -457,7 +457,7 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {cards.map((c) => (
-          <div key={c.label} className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-5 hover:border-slate-200 transition-all">
+          <div key={c.label} className="crm-card-3d rounded-2xl p-5 hover:border-slate-200 transition-all">
             <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center text-lg mb-3 shadow-lg`}>
               {c.icon}
             </div>
@@ -469,7 +469,7 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Service Breakdown */}
-        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+        <div className="crm-card-3d rounded-2xl p-6">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Leads by Service</h3>
           {Object.entries(data.serviceBreakdown).length === 0 ? (
             <p className="text-slate-600 text-sm">No data yet</p>
@@ -497,7 +497,7 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
         </div>
 
         {/* Pipeline Stages */}
-        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+        <div className="crm-card-3d rounded-2xl p-6">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Pipeline Stages</h3>
           {Object.entries(data.stageBreakdown).length === 0 ? (
             <p className="text-slate-600 text-sm">No deals yet</p>
@@ -528,7 +528,7 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
       </div>
 
       {/* Recent Activity */}
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+      <div className="crm-card-3d rounded-2xl p-6">
         <h3 className="text-sm font-bold text-slate-900 mb-4">Recent Activity</h3>
         {data.recentActivity.length === 0 ? (
           <p className="text-slate-600 text-sm">No recent activity</p>
@@ -587,7 +587,7 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
         ))}
       </div>
 
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
+      <div className="crm-card-3d rounded-2xl overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-500">No leads found.</div>
         ) : (
@@ -654,7 +654,7 @@ function PipelineView({ deals, onMove, onNewDeal }: { deals: Deal[]; onMove: (id
               </div>
               <div className="space-y-3">
                 {stageDeals.map(deal => (
-                  <div key={deal.id} className="bg-white rounded-xl p-4 shadow-sm border border-slate-200/50">
+                  <div key={deal.id} className="crm-card-3d rounded-xl p-4">
                     <p className="font-semibold text-sm text-slate-900">{deal.title}</p>
                     {deal.leads && <p className="text-xs text-slate-500 mt-1">{deal.leads.first_name} {deal.leads.last_name}</p>}
                     <div className="flex justify-between items-center mt-3">
@@ -721,7 +721,7 @@ function CalendarView({ events, onToggle, onNew }: { events: CalendarEvent[]; on
         <button onClick={onNew} className="text-sm bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl">+ New Event</button>
       </div>
 
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
+      <div className="crm-card-3d rounded-2xl overflow-hidden">
         <div className="grid grid-cols-8 border-b border-slate-200/60">
           <div className="p-3 text-[10px] text-slate-600 uppercase font-bold">Time</div>
           {days.map((d, i) => (
@@ -770,7 +770,7 @@ function CommsView({ comms, onNew }: { comms: CommRecord[]; onNew: () => void })
       <div className="flex justify-end">
         <button onClick={onNew} className="text-sm bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl">+ Log Communication</button>
       </div>
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
+      <div className="crm-card-3d rounded-2xl overflow-hidden">
         {comms.length === 0 ? (
           <div className="p-12 text-center text-slate-500">No communications logged yet.</div>
         ) : (
@@ -834,7 +834,7 @@ function InvoicesView({ invoices, onNew }: { invoices: Invoice[]; onNew: () => v
         <button onClick={onNew} className="text-sm bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl">+ New Quote/Invoice</button>
       </div>
 
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
+      <div className="crm-card-3d rounded-2xl overflow-hidden">
         {filtered.length === 0 ? (
           <div className="p-12 text-center text-slate-500">No invoices or quotes yet.</div>
         ) : (
@@ -906,7 +906,7 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
         </a>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+        <div className="crm-card-3d rounded-2xl p-6">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Lead Sources by Service</h3>
           <div className="space-y-3">
             {Object.entries(dashboard.serviceBreakdown).map(([s, c]) => (
@@ -918,7 +918,7 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
           </div>
         </div>
 
-        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+        <div className="crm-card-3d rounded-2xl p-6">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Deal Win Rate</h3>
           <div className="text-center py-4">
             <p className="text-5xl font-bold text-indigo-600">{winRate}%</p>
@@ -926,7 +926,7 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
           </div>
         </div>
 
-        <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+        <div className="crm-card-3d rounded-2xl p-6">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Revenue Summary</h3>
           <div className="space-y-4">
             <div>
@@ -950,7 +950,7 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
       </div>
 
       {/* Monthly Leads Chart */}
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+      <div className="crm-card-3d rounded-2xl p-6">
         <h3 className="text-sm font-bold text-slate-900 mb-4">Monthly Leads</h3>
         <div className="flex items-end gap-3 h-48">
           {Object.entries(monthlyLeads).slice(-12).map(([month, count]) => (
@@ -1343,7 +1343,7 @@ function AgentView() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Chat panel */}
-      <div className="lg:col-span-2 bg-white/60 backdrop-blur-xl border border-slate-200/70 rounded-2xl shadow-xl overflow-hidden flex flex-col" style={{ height: "calc(100vh - 9rem)" }}>
+      <div className="lg:col-span-2 crm-card-3d rounded-2xl overflow-hidden flex flex-col" style={{ height: "calc(100vh - 9rem)" }}>
         {/* Suggestions */}
         <div className="px-4 pt-3 flex gap-2 overflow-x-auto pb-1 border-b border-slate-200/60 bg-white/40">
           {["How many leads are in the CRM?", "What's my sales pipeline value?", "Tell me about e-shop pricing", "What is the win rate?"].map((s) => (
@@ -1433,7 +1433,7 @@ function AgentView() {
       </div>
 
       {/* Activity / Registry panel */}
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200/70 rounded-2xl shadow-xl overflow-y-auto p-5" style={{ height: "calc(100vh - 9rem)" }}>
+      <div className="crm-card-3d rounded-2xl overflow-y-auto p-5" style={{ height: "calc(100vh - 9rem)" }}>
         <h2 className="text-xs font-bold uppercase tracking-wide text-slate-500 mb-3">
           Pending Approvals{" "}
           {approvals.length > 0 && (
@@ -1531,7 +1531,7 @@ function NewDealModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="crm-card-3d rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-6">New Deal</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -1579,7 +1579,7 @@ function NewEventModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: ()
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="crm-card-3d rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-6">New Event</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -1639,7 +1639,7 @@ function NewCommModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: () 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="crm-card-3d rounded-2xl p-8 w-full max-w-[min(95vw,32rem)] shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-6">Log Communication</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -1710,7 +1710,7 @@ function NewInvoiceModal({ leads, onClose, onSaved }: { leads: Lead[]; onClose: 
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,42rem)] max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+      <div className="crm-card-3d rounded-2xl p-8 w-full max-w-[min(95vw,42rem)] max-h-[90vh] overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
         <h2 className="text-xl font-bold text-slate-900 mb-6">New Quote / Invoice</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -1784,7 +1784,7 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
   return (
     <div className="space-y-6">
       {/* Config Panel */}
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl p-6">
+      <div className="crm-card-3d rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900">Webhook Configuration</h3>
@@ -1830,7 +1830,7 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
       </div>
 
       {/* Notification Feed */}
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/60 rounded-2xl overflow-hidden">
+      <div className="crm-card-3d rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-slate-200/60">
           <h3 className="text-sm font-bold text-slate-900">Recent Notifications</h3>
           <button onClick={onRefresh} className="text-xs text-indigo-600 hover:text-indigo-800 font-medium px-3 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 transition-all">
@@ -1935,7 +1935,7 @@ function SettingsView() {
         ))}
       </div>
 
-      <div className="bg-white/70 backdrop-blur-md border border-slate-200/80 rounded-2xl p-6 space-y-4">
+      <div className="crm-card-3d rounded-2xl p-6 space-y-4">
         {settingsTab === "profile" && (
           <>
             <h3 className="text-lg font-bold text-slate-900">Προφίλ & Ασφάλεια</h3>
