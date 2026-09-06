@@ -314,7 +314,20 @@
     "footerServices": "Services",
     "footerServicesList": "Electricity · Gas · Solar · E-Mobility",
     "footerHome": "Home",
-    "footerContactLink": "Contact"
+    "footerContactLink": "Contact",
+    "hub1Key": "Athens Innovation Hub",
+    "hub1Title": "Your advisor, face to face",
+    "hub2Key": "Energy Operations",
+    "hub2Title": "We watch the market for you",
+    "aboutImgCaption": "Expertise meets technology",
+    "trust1Title": "100% Free",
+    "trust1Desc": "Our service is completely free, with no hidden charges.",
+    "trust2Title": "Immediate Service",
+    "trust2Desc": "Contact within hours from your personal advisor.",
+    "trust3Title": "Tailored Solution",
+    "trust3Desc": "A proposal built specifically for your consumption needs.",
+    "formThanks": "Thank you — a consultant will call you shortly.",
+    "scrollHint": "Six regions · swipe to explore"
   },
   "insurancePage": {
     "badge": "Advanced Insurance Solutions",
