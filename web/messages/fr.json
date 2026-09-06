@@ -169,7 +169,9 @@
     "learnMore": "En savoir plus",
     "notFinding": "Vous ne trouvez pas ce que vous cherchez ?",
     "consultingDesc": "Demandez une consultation gratuite — discutons de vos besoins.",
-    "contactUs": "Contactez-nous"
+    "contactUs": "Contactez-nous",
+    "prev": "Services précédents",
+    "next": "Services suivants"
   },
   "energyPage": {
     "badge": "Conseillers Énergie Spécialisés",

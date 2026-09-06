@@ -169,7 +169,9 @@
     "learnMore": "Learn more",
     "notFinding": "Can't find what you're looking for?",
     "consultingDesc": "Request free consulting — let's discuss your needs.",
-    "contactUs": "Contact Us"
+    "contactUs": "Contact Us",
+    "prev": "Previous services",
+    "next": "Next services"
   },
   "energyPage": {
     "badge": "Specialized Energy Consultants",
