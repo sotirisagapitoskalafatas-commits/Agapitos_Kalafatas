@@ -348,9 +348,11 @@ export default function InsurancePage() {
       <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800 text-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-rose-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
-            </div>
+            <img
+              src="/images/logo-footer.png"
+              alt="A"
+              className="w-8 h-8 rounded-lg object-cover"
+            />
             <span className="font-semibold text-white">{tIns.advisorName}</span>
           </div>
           <div className="flex items-center gap-6 text-xs text-slate-400">

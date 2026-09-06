@@ -170,8 +170,13 @@ export default function Home() {
                   href="https://linkedin.com/in/agapitos-kalafatas-red-ai"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-medium text-white/85 backdrop-blur transition-all hover:bg-white/10"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-medium text-white/85 backdrop-blur transition-all hover:bg-white/10"
                 >
+                  <img
+                    src="/images/linkedin-logo.jpg"
+                    alt="LinkedIn"
+                    className="h-5 w-5 rounded object-cover"
+                  />
                   {t.about.linkedin}
                 </a>
               </div>
@@ -357,7 +362,11 @@ export default function Home() {
                   className="group flex items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-4 backdrop-blur transition-all hover:bg-white/10"
                 >
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500 shadow-lg">
-                    <span className="text-lg text-black">in</span>
+                    <img
+                      src="/images/linkedin-logo.jpg"
+                      alt="LinkedIn"
+                      className="h-8 w-8 rounded-md object-cover"
+                    />
                   </div>
                   <div>
                     <p className="font-semibold text-white transition-colors group-hover:text-amber-200">
@@ -403,9 +412,11 @@ export default function Home() {
       <footer className="border-t border-white/10 py-12">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 md:flex-row">
           <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500">
-              <span className="text-sm font-bold text-black">A</span>
-            </div>
+            <img
+              src="/images/logo-footer.png"
+              alt="A"
+              className="h-8 w-8 rounded-lg object-cover"
+            />
             <span className="font-semibold text-white/85">
               Agapitos Kalafatas
             </span>

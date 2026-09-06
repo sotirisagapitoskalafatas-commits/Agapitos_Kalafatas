@@ -537,9 +537,11 @@ export default function EnergyPage() {
         <div className="max-w-6xl mx-auto px-5 sm:px-10 lg:px-20 grid md:grid-cols-3 gap-8 mb-10">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-amber-400 rounded-lg grid place-items-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
+              <img
+                src="/images/logo-footer.png"
+                alt="A"
+                className="w-8 h-8 rounded-lg object-cover"
+              />
               <span className="font-bold text-white">Agapitos Kalafatas</span>
             </div>
             <p className="text-xs text-slate-400 leading-relaxed">{tE.footerDesc}</p>
