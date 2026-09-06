@@ -12,12 +12,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/energy`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.8 },
     { url: `${BASE_URL}/insurance`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.8 },
     { url: `${BASE_URL}/chat`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.7 },
+    { url: `${BASE_URL}/marketing`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.5 },
   ];
 
   const serviceSlugs = [
     "web-development",
     "eshop-development",
     "ux-ui-branding",
+    "seo-performance",
     "digital-marketing",
     "web-mobile-apps",
     "hosting-support",

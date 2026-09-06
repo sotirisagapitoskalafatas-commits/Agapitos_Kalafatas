@@ -845,6 +845,110 @@
       "ctaTitle": "Want a brand that stands out?",
       "ctaDesc": "Request a free estimate for UX/UI design and branding."
     },
+    "seo-performance": {
+      "slug": "seo-performance",
+      "icon": "📈",
+      "heroTitle": "SEO & Web Performance Optimization",
+      "heroSubtitle": "Climb the search results and load in the blink of an eye. Technical SEO, content strategy and core web vitals that turn traffic into customers.",
+      "heroTagline": "Rank higher. Load faster. Convert more.",
+      "whyTitle": "Why SEO and speed decide your growth",
+      "whyText": "93% of online experiences start with a search engine, and visitors abandon pages that take more than 3 seconds to load. We build your technical foundation, optimize every page and improve the metrics search engines reward.",
+      "benefits": [
+        {
+          "title": "Technical SEO Audit",
+          "desc": "Full crawl of your site with prioritized fixes for indexation and internal linking."
+        },
+        {
+          "title": "Core Web Vitals Optimization",
+          "desc": "We get your LCP under 2.5s and your CLS near zero for better rankings and UX."
+        },
+        {
+          "title": "Keyword & Content Strategy",
+          "desc": "Research that finds the terms your customers actually search for, mapped to pages that rank."
+        },
+        {
+          "title": "On-Page Structure",
+          "desc": "Meta tags, schema.org markup, headings and internal links optimized page by page."
+        },
+        {
+          "title": "Local SEO & Greek Search",
+          "desc": "Google Business Profile, local citations and Greek-language search optimization."
+        },
+        {
+          "title": "Performance Monitoring",
+          "desc": "Ranking and speed dashboards so you always know what's working."
+        }
+      ],
+      "offerings": [
+        {
+          "title": "What's included",
+          "items": [
+            "Free SEO consultation call",
+            "Technical + content audit report",
+            "Keyword research & roadmap",
+            "On-page optimization",
+            "Core Web Vitals fixes",
+            "Monthly performance report",
+            "Search Console & Analytics setup"
+          ]
+        }
+      ],
+      "pricing": [
+        {
+          "name": "SEO Starter",
+          "price": "350",
+          "period": "one-time",
+          "description": "Audit and on-page base for a single site",
+          "features": [
+            "Technical SEO audit",
+            "Top 10 quick wins fixed",
+            "Meta & structure optimization",
+            "Search Console setup",
+            "30 days support"
+          ]
+        },
+        {
+          "name": "Growth Retainer",
+          "price": "450",
+          "period": "/month",
+          "description": "Continuous optimization that compounds",
+          "features": [
+            "Monthly audit & reporting",
+            "Content & keyword strategy",
+            "Link building (10/month)",
+            "Speed & CWV monitoring",
+            "Priority support"
+          ],
+          "highlight": true
+        }
+      ],
+      "audience": [
+        "Businesses that want more organic leads",
+        "E-shops that need to rank for product searches",
+        "Local services in Greece & Cyprus",
+        "Growers tired of paying for every click"
+      ],
+      "faqs": [
+        {
+          "q": "How long until I see results?",
+          "a": "Technical fixes improve crawls in 2-4 weeks; competitive keywords typically take 3-6 months to rank."
+        },
+        {
+          "q": "Do you work with existing sites?",
+          "a": "Yes. Most of our SEO work is on sites we didn't build - we audit first, then fix."
+        },
+        {
+          "q": "Is content writing included?",
+          "a": "Strategy is included on every plan. Writing can be added as a monthly add-on."
+        },
+        {
+          "q": "How do you measure success?",
+          "a": "Rankings, organic traffic, clicks and conversions - reported monthly in plain language."
+        }
+      ],
+      "ctaTitle": "Ready to be found on Google?",
+      "ctaDesc": "Request a free SEO audit and see where you stand today."
+    },
     "digital-marketing": {
       "slug": "digital-marketing",
       "icon": "📈",

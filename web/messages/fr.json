@@ -845,6 +845,110 @@
       "ctaTitle": "Vous voulez une marque qui se démarque ?",
       "ctaDesc": "Demandez une estimation gratuite pour le design UX/UI et le branding."
     },
+    "seo-performance": {
+      "slug": "seo-performance",
+      "icon": "📈",
+      "heroTitle": "Optimisation SEO & Performance Web",
+      "heroSubtitle": "Montez dans les résultats de recherche et chargez en un clin d'œil. SEO technique, stratégie de contenu et core web vitals qui transforment le trafic en clients.",
+      "heroTagline": "Meilleur classement. Plus rapide. Plus de clients.",
+      "whyTitle": "Pourquoi le SEO et la vitesse décident de votre croissance",
+      "whyText": "93 % des expériences en ligne commencent par un moteur de recherche, et les visiteurs abandonnent les pages qui mettent plus de 3 secondes à charger. Nous construisons vos fondations techniques, optimisons chaque page et améliorons les métriques récompensées par les moteurs de recherche.",
+      "benefits": [
+        {
+          "title": "Audit SEO technique",
+          "desc": "Analyse complète de votre site avec corrections priorisées pour l'indexation et le maillage interne."
+        },
+        {
+          "title": "Core Web Vitals",
+          "desc": "Nous ramenons le LCP sous 2,5 s et le CLS proche de zéro pour un meilleur classement et une meilleure expérience."
+        },
+        {
+          "title": "Stratégie de mots-clés",
+          "desc": "Une recherche qui trouve les termes de vos clients, mappés sur des pages qui se classent."
+        },
+        {
+          "title": "Structure On-Page",
+          "desc": "Balises meta, schema.org, titres et liens internes optimisés page par page."
+        },
+        {
+          "title": "SEO local",
+          "desc": "Fiche Google Business, citations locales et optimisation pour les recherches en français."
+        },
+        {
+          "title": "Suivi de performance",
+          "desc": "Tableaux de bord de classement et de vitesse pour savoir ce qui fonctionne."
+        }
+      ],
+      "offerings": [
+        {
+          "title": "Ce qui est inclus",
+          "items": [
+            "Appel conseil SEO gratuit",
+            "Rapport technique & contenu",
+            "Recherche de mots-clés & feuille de route",
+            "Optimisation on-page",
+            "Corrections Core Web Vitals",
+            "Rapport mensuel de performance",
+            "Configuration Search Console & Analytics"
+          ]
+        }
+      ],
+      "pricing": [
+        {
+          "name": "SEO Starter",
+          "price": "350",
+          "period": "une fois",
+          "description": "Audit et base on-page pour un site",
+          "features": [
+            "Audit SEO technique",
+            "Correction des 10 gains rapides",
+            "Optimisation meta & structure",
+            "Configuration Search Console",
+            "30 jours de support"
+          ]
+        },
+        {
+          "name": "Growth Retainer",
+          "price": "450",
+          "period": "/mois",
+          "description": "Une optimisation continue qui compose",
+          "features": [
+            "Audit & rapport mensuels",
+            "Stratégie de contenu & mots-clés",
+            "Backlinks (10/mois)",
+            "Suivi vitesse & CWV",
+            "Support prioritaire"
+          ],
+          "highlight": true
+        }
+      ],
+      "audience": [
+        "Entreprises qui veulent plus de leads organiques",
+        "E-shops qui veulent se classer pour leurs produits",
+        "Services locaux en Grèce & Chypre",
+        "Entreprises fatiguées de payer chaque clic"
+      ],
+      "faqs": [
+        {
+          "q": "Quand verrai-je des résultats ?",
+          "a": "Les corrections techniques améliorent l'indexation en 2-4 semaines. Les mots-clés concurrentiels prennent 3-6 mois."
+        },
+        {
+          "q": "Travaillez-vous avec des sites existants ?",
+          "a": "Oui. L'essentiel de notre travail SEO porte sur des sites que nous n'avons pas construits - nous auditons d'abord, puis corrigeons."
+        },
+        {
+          "q": "La rédaction de contenu est-elle incluse ?",
+          "a": "La stratégie est incluse dans chaque formule. La rédaction peut s'ajouter en option mensuelle."
+        },
+        {
+          "q": "Comment mesurez-vous le succès ?",
+          "a": "Classements, trafic organique, clics et conversions - rapportés chaque mois en langage clair."
+        }
+      ],
+      "ctaTitle": "Prêt à être trouvé sur Google ?",
+      "ctaDesc": "Demandez un audit SEO gratuit et voyez où vous en êtes aujourd'hui."
+    },
     "digital-marketing": {
       "slug": "digital-marketing",
       "icon": "📈",

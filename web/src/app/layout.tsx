@@ -25,6 +25,10 @@ export const metadata: Metadata = {
     "ERP integration",
     "CRM automation",
   ],
+  metadataBase: new URL("https://agapitoskalafatas.vercel.app"),
+  alternates: {
+    canonical: "/",
+  },
   authors: [{ name: "Agapitos Kalafatas" }],
   creator: "Agapitos Kalafatas",
   manifest: "/manifest.json",
@@ -72,8 +76,6 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
   themeColor: "#6366f1",
 };
 

@@ -29,6 +29,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem("locale") as Locale;
     if (saved && translations[saved]) {
       setLocaleState(saved);
+      document.documentElement.lang = saved;
     }
   }, []);
 
