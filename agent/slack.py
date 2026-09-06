@@ -72,12 +72,16 @@ def should_handle(event: dict) -> bool:
     text = (event.get("text") or "").strip()
     if not text:
         return False
+    # app_mention always warrants handling — it fires only on @-mention, and
+    # Slack omits channel_type on this event shape.
+    if etype == "app_mention":
+        return True
     channel_type = event.get("channel_type")
     if channel_type == "im":
         return True
     if channel_type in ("channel", "group"):
         # Channel/group messages only trigger when the bot is @-mentioned.
-        return "<@U" in text or etype == "app_mention"
+        return "<@U" in text
     return False
 
 
