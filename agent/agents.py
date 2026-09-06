@@ -256,9 +256,7 @@ def run_with_tools(chat, user_text: str) -> str:
             )
 
         try:
-            response = _send_with_retry(
-                chat, types.Content(role="function", parts=function_responses)
-            )
+            response = _send_with_retry(chat, function_responses)
         except Exception as e:
             log(f"[agents] function response round failed: {e}")
             return "⚠️ I hit an error while applying that action. Nothing was changed."
