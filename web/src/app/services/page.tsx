@@ -1,5 +1,12 @@
 "use client";
 
+/**
+ * Replaces web/src/app/services/page.tsx
+ * Same data source (getServicesList + useLocale), same routes, same i18n keys.
+ * Changed: the white page becomes a night flight — CinematicSkyBackground sits
+ * behind the content, cards become glass, hero pins at the bottom of the frame.
+ */
+
 import Link from "next/link";
 import {
   ArrowRight,
@@ -15,6 +22,7 @@ import {
 } from "lucide-react";
 import { getServicesList } from "@/lib/servicesData";
 import Navbar from "@/components/Navbar";
+import CinematicSkyBackground from "@/components/CinematicSkyBackground";
 import { useLocale } from "@/contexts/LanguageContext";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -27,135 +35,101 @@ const iconMap: Record<string, React.ElementType> = {
   "custom-integrations": Code2,
 };
 
-const colorMap: Record<string, { bg: string; text: string; border: string }> = {
-  "web-development": {
-    bg: "bg-blue-50",
-    text: "text-blue-600",
-    border: "border-blue-200",
-  },
-  "eshop-development": {
-    bg: "bg-purple-50",
-    text: "text-purple-600",
-    border: "border-purple-200",
-  },
-  "ux-ui-branding": {
-    bg: "bg-indigo-50",
-    text: "text-indigo-600",
-    border: "border-indigo-200",
-  },
-  "digital-marketing": {
-    bg: "bg-amber-50",
-    text: "text-amber-600",
-    border: "border-amber-200",
-  },
-  "web-mobile-apps": {
-    bg: "bg-cyan-50",
-    text: "text-cyan-600",
-    border: "border-cyan-200",
-  },
-  "hosting-support": {
-    bg: "bg-rose-50",
-    text: "text-rose-600",
-    border: "border-rose-200",
-  },
-  "custom-integrations": {
-    bg: "bg-slate-100",
-    text: "text-slate-700",
-    border: "border-slate-300",
-  },
-};
-
 export default function ServicesHubPage() {
   const { t, locale } = useLocale();
   const servicesList = getServicesList(locale);
+
   return (
     <>
+      <CinematicSkyBackground pushScreens={1.75} mistIntensity={0.65} />
       <Navbar />
-      <main className="min-h-screen bg-white">
-      {/* Hero */}
-      <section className="bg-slate-900 text-white pt-28 pb-20">
-        <div className="max-w-6xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-500/10 text-blue-400 text-xs font-semibold px-4 py-2 rounded-full mb-6 border border-blue-500/20">
-            <Zap className="w-3.5 h-3.5" />
-            {t.servicesPage?.badge || "Agapitos Kalafatas"}
+
+      <main className="relative z-10 min-h-screen text-slate-100">
+        {/* Hero — reads over the cabin window */}
+        <section className="min-h-screen flex flex-col justify-end px-5 sm:px-10 lg:px-20 pb-20">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 mb-6 text-[11px] font-semibold tracking-[0.28em] uppercase text-[#c9d4e8]">
+              <Zap className="w-3.5 h-3.5" />
+              {t.servicesPage?.badge || "Agapitos Kalafatas"}
+            </div>
+            <h1 className="text-5xl md:text-7xl font-light leading-[0.98] tracking-tight text-white">
+              {t.servicesPage?.title || "Digital Solutions"}
+            </h1>
+            <p className="mt-6 max-w-xl text-base md:text-lg font-light leading-relaxed text-slate-300/85">
+              {t.servicesPage?.subtitle ||
+                "From website development to custom software and AI integrations — comprehensive digital solutions for every need."}
+            </p>
           </div>
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
-            {t.servicesPage?.title || "Digital Solutions"}
-          </h1>
-          <p className="text-slate-300 text-lg max-w-2xl mx-auto leading-relaxed">
-            {t.servicesPage?.subtitle || "From website development to custom software and AI integrations — comprehensive digital solutions for every need."}
-          </p>
-        </div>
-      </section>
+          <div className="mt-12 flex items-center gap-3 text-[11px] tracking-[0.26em] uppercase text-[#c9d4e8]/70">
+            <span className="block w-px h-8 bg-gradient-to-b from-[#c9d4e8]/70 to-transparent" />
+            Scroll
+          </div>
+        </section>
 
-      {/* Services Grid */}
-      <section className="py-16 max-w-6xl mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {servicesList.map((service) => {
-            const Icon = iconMap[service.slug] || Globe;
-            const colors = colorMap[service.slug] || {
-              bg: "bg-blue-50",
-              text: "text-blue-600",
-              border: "border-blue-200",
-            };
-            return (
-              <Link
-                key={service.slug}
-                href={`/services/${service.slug}`}
-                className={`group bg-white p-8 rounded-2xl border ${colors.border} shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex flex-col justify-between`}
-              >
-                <div>
-                  <div
-                    className={`w-14 h-14 rounded-xl ${colors.bg} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
+        {/* Pass-through beat — pure animation, no content */}
+        <section className="h-[120vh]" aria-hidden="true" />
+
+        {/* Services grid — lands as Athens rises out of the clouds */}
+        <section className="px-5 sm:px-10 lg:px-20 pt-24 pb-32 bg-gradient-to-b from-transparent via-[#030711]/75 to-[#030711]/95">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              {servicesList.map((service) => {
+                const Icon = iconMap[service.slug] || Globe;
+                return (
+                  <Link
+                    key={service.slug}
+                    href={`/services/${service.slug}`}
+                    className="group flex flex-col gap-4 p-7 border border-slate-300/15 bg-[#070e1c]/50 backdrop-blur-md transition-colors duration-300 hover:border-[#c9d4e8]/40 hover:bg-[#091222]/65"
                   >
-                    <Icon className={`w-7 h-7 ${colors.text}`} />
-                  </div>
-                  <h2 className="text-xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
-                    {service.heroTitle.split(" ").slice(0, 4).join(" ")}
-                  </h2>
-                  <p className="text-slate-600 text-sm leading-relaxed mb-4">
-                    {service.heroSubtitle}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {service.benefits.slice(0, 2).map((b, i) => (
-                      <span
-                        key={i}
-                        className="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full"
-                      >
-                        {b.title}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="flex items-center text-sm font-semibold text-blue-600 group-hover:translate-x-1 transition-transform">
-                  {t.servicesPage?.learnMore || "Learn more"}
-                  <ArrowRight className="w-4 h-4 ml-1" />
-                </div>
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+                    <Icon className="w-6 h-6 text-[#c9d4e8]" />
+                    <h2 className="text-xl font-medium leading-snug text-white">
+                      {service.heroTitle}
+                    </h2>
+                    <p className="text-sm font-light leading-relaxed text-slate-300/80">
+                      {service.heroSubtitle}
+                    </p>
+                    <ul className="grid gap-2 text-[13px] text-slate-300/75">
+                      {service.benefits.slice(0, 2).map((b, i) => (
+                        <li key={i} className="flex gap-2.5">
+                          <span className="text-[#c9d4e8]">—</span>
+                          {b.title}
+                        </li>
+                      ))}
+                    </ul>
+                    <span className="mt-auto pt-2 inline-flex items-center gap-1.5 text-[11px] tracking-[0.16em] uppercase text-[#c9d4e8] transition-transform group-hover:translate-x-1">
+                      {t.servicesPage?.learnMore || "Learn more"}
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </section>
 
-      {/* CTA */}
-      <section className="py-16 bg-slate-50">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold text-slate-900 mb-4">
-            {t.servicesPage?.notFinding || "Can't find what you're looking for?"}
-          </h2>
-          <p className="text-slate-500 mb-8">
-            {t.servicesPage?.consultingDesc || "Request free consulting — let's discuss your needs."}
-          </p>
-          <Link
-            href="/contact"
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg shadow-blue-600/25 text-sm"
-          >
-            {t.servicesPage?.contactUs || "Contact Us"}
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-      </section>
-    </main>
+        {/* CTA */}
+        <section className="px-5 sm:px-10 lg:px-20 pb-28 bg-[#030711]/95">
+          <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-8 p-10 border border-slate-300/15 bg-gradient-to-br from-[#091222]/75 to-[#060c18]/50">
+            <div className="max-w-xl">
+              <h2 className="text-3xl md:text-4xl font-light leading-tight text-white">
+                {t.servicesPage?.notFinding ||
+                  "Can't find what you're looking for?"}
+              </h2>
+              <p className="mt-4 font-light text-slate-300/80">
+                {t.servicesPage?.consultingDesc ||
+                  "Request free consulting — let's discuss your needs."}
+              </p>
+            </div>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-2 px-8 py-4 border border-[#c9d4e8]/50 text-[12px] tracking-[0.2em] uppercase text-[#c9d4e8] transition-colors hover:bg-[#c9d4e8]/10"
+            >
+              {t.servicesPage?.contactUs || "Contact Us"}
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </section>
+      </main>
     </>
   );
 }
