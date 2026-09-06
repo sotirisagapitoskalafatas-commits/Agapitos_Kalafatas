@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     "ERP integration",
     "CRM automation",
   ],
-  metadataBase: new URL("https://agapitoskalafatas.vercel.app"),
+  metadataBase: new URL("https://www.agapitoskalafatas.com"),
   alternates: {
     canonical: "/",
   },
@@ -39,14 +39,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "el_GR",
-    url: "https://agapitoskalafatas.vercel.app",
+    url: "https://www.agapitoskalafatas.com",
     siteName: "Agapitos Kalafatas - AI Innovation Hub",
     title: "Agapitos Kalafatas | AI & Innovation Hub",
     description:
       "Full-Stack SaaS Architect & Digital Operations Strategist. AI-powered software engineering, intelligent systems, and predictive analytics.",
     images: [
       {
-        url: "https://agapitoskalafatas.vercel.app/og-image.png",
+        url: "https://www.agapitoskalafatas.com/og-image.png",
         width: 1200,
         height: 630,
         alt: "Agapitos Kalafatas - AI Innovation Hub",
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
     title: "Agapitos Kalafatas | AI & Innovation Hub",
     description:
       "Full-Stack SaaS Architect & Digital Operations Strategist.",
-    images: ["https://agapitoskalafatas.vercel.app/og-image.png"],
+    images: ["https://www.agapitoskalafatas.com/og-image.png"],
   },
   robots: {
     index: true,

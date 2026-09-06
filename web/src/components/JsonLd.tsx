@@ -3,8 +3,8 @@ export default function JsonLd() {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "Agapitos Kalafatas - AI Innovation Hub",
-    url: "https://agapitoskalafatas.vercel.app",
-    logo: "https://agapitoskalafatas.vercel.app/logo.png",
+    url: "https://www.agapitoskalafatas.com",
+    logo: "https://www.agapitoskalafatas.com/logo.png",
     description:
       "Full-Stack SaaS Architect & Digital Operations Strategist. AI-powered software engineering, intelligent systems, and predictive analytics.",
     founder: {
@@ -45,8 +45,8 @@ export default function JsonLd() {
     "@context": "https://schema.org",
     "@type": "ProfessionalService",
     name: "Agapitos Kalafatas - Digital Solutions",
-    image: "https://agapitoskalafatas.vercel.app/og-image.png",
-    url: "https://agapitoskalafatas.vercel.app",
+    image: "https://www.agapitoskalafatas.com/og-image.png",
+    url: "https://www.agapitoskalafatas.com",
     telephone: "+30-697-769-1776",
     email: "kalafatasagapitos@gmail.com",
     priceRange: "€€",

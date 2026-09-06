@@ -1821,7 +1821,7 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
               <ol className="text-xs text-slate-500 space-y-1.5 list-decimal list-inside">
                 <li>Go to <span className="text-slate-600">Supabase Dashboard → Integrations → Webhooks</span></li>
                 <li>Create webhook: Table <span className="text-slate-600">public.leads</span>, Event <span className="text-slate-600">INSERT</span></li>
-                <li>URL: <span className="text-slate-600">https://agapitoskalafatas.vercel.app/api/webhooks/lead-notification</span></li>
+                <li>URL: <span className="text-slate-600">https://www.agapitoskalafatas.com/api/webhooks/lead-notification</span></li>
                 <li>Header: <span className="text-slate-600">x-webhook-secret</span> = <span className="text-slate-600">xir6PAcW7OxlD80pN8N-Ohh6D8TDYJIpti8QsbH70lo</span></li>
               </ol>
             </div>
