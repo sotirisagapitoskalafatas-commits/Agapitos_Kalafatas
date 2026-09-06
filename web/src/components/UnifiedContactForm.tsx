@@ -1,11 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocale } from "@/contexts/LanguageContext";
 
 export default function UnifiedContactForm() {
   const { t } = useLocale();
   const tF = (t as any).contactPage?.form ?? {};
+  const serviceGrid = (t as any).serviceGrid ?? [];
+
+  const genericServiceValues = [
+    "Website",
+    "E-shop",
+    "Website Management",
+    "Software Development",
+    "AI Agents",
+    "Electricity",
+    "Natural Gas",
+    "Solar",
+    "E-Mobility",
+    "Energy Storage",
+    "Energy Savings",
+    "Life Insurance",
+    "Health Insurance",
+    "Car Insurance",
+  ];
+  const serviceGridValues = serviceGrid.map((s: any) => s.slug);
+  const allServiceValues = [...genericServiceValues, ...serviceGridValues];
 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -22,6 +42,15 @@ export default function UnifiedContactForm() {
     comments: "",
     gdprConsent: false,
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const s = new URLSearchParams(window.location.search).get("service");
+    if (s && allServiceValues.includes(s)) {
+      setFormData((prev) => ({ ...prev, serviceCategory: s }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
@@ -145,6 +174,11 @@ export default function UnifiedContactForm() {
           onChange={(e) => setFormData({ ...formData, serviceCategory: e.target.value })}
         >
           <optgroup label={tF.groupSaaS || "SaaS, Web & Software Engineering"}>
+            {serviceGrid.map((s: any) => (
+              <option key={s.slug} value={s.slug}>
+                {s.title}
+              </option>
+            ))}
             <option value="Website">{tF.optWebsite || "Website Development"}</option>
             <option value="E-shop">{tF.optEshop || "E-shop Development (from €1400)"}</option>
             <option value="Website Management">{tF.optWebsiteMgmt || "Website Management & Security"}</option>

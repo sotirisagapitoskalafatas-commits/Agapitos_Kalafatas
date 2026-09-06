@@ -81,7 +81,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/contact"
+                href={`/contact?service=${slug}`}
                 className="inline-flex items-center gap-2 text-white font-bold px-8 py-4 rounded-xl transition-all shadow-lg text-sm bg-white/10 border border-white/20 hover:bg-white/20"
               >
                 {tD.requestFreeEstimate}
@@ -221,7 +221,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
                     ))}
                   </ul>
                   <Link
-                    href="/contact"
+                    href={`/contact?service=${slug}`}
                     className={`mt-6 block text-center py-3 px-4 rounded-xl font-bold text-sm transition-all ${
                       tier.highlight
                         ? "bg-white/15 hover:bg-white/25 text-white"
@@ -322,7 +322,7 @@ export default function ServiceDetailPage({ params }: PageProps) {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
-                href="/contact"
+                href={`/contact?service=${slug}`}
                 className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white font-bold px-8 py-4 rounded-xl transition-all border border-white/20"
               >
                 <Mail className="w-4 h-4" />
