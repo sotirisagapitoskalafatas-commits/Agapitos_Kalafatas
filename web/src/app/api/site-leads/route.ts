@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -133,24 +134,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const adminUser = process.env.ADMIN_USERNAME || "agapitos";
-    const adminPass = process.env.ADMIN_PASSWORD || "atlas2026";
-
-    try {
-      const decoded = atob(token);
-      const [user, pass] = decoded.split(":");
-      if (user !== adminUser || pass !== adminPass) {
-        return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
-      }
-    } catch {
-      return NextResponse.json({ error: "Invalid token" }, { status: 401 });
-    }
+    // Gate behind the shared HMAC session-token auth. No hardcoded fallback:
+    // requireAuth fails closed when AUTH_SECRET is unset or the token is bad.
+    const auth = await requireAuth(request);
+    if (!auth.ok) return unauthorizedResponse();
 
     const supabase = getSupabase();
     if (!supabase) {
