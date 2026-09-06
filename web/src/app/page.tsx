@@ -13,8 +13,7 @@ import { useEffect, useRef } from "react";
 import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import HeroCinematic from "@/components/HeroCinematic";
-import RoomWalkthrough from "@/components/RoomWalkthrough";
+import LumenScrollHero from "@/components/LumenScrollHero";
 import Scene3D from "@/components/Scene3D";
 import Navbar from "@/components/Navbar";
 import { ServiceGrid } from "@/components/ServiceGrid";
@@ -132,8 +131,8 @@ export default function Home() {
       {/* Navigation */}
       <Navbar />
 
-      {/* LUMEN-style pinned scroll hero */}
-      <HeroCinematic />
+      {/* LUMEN pinned scroll-scrub hero — scrubs 123 frames from /public/frames/hero-sequence/ */}
+      <LumenScrollHero />
 
       {/* About — dark, pinned image reveal */}
       <section
@@ -195,9 +194,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* Glass · Timber · Fire — R3F pinned walkthrough (world → city → house → room) */}
-      <RoomWalkthrough />
 
       {/* Services */}
       <div id="services" className="relative z-10">
