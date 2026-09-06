@@ -426,9 +426,14 @@ export default function AtlasAgenticWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-105 text-white p-4 rounded-full shadow-2xl flex items-center justify-center transition-transform border border-blue-400/30"
+          aria-label="Open Atlas AI"
+          className="ai-chat relative w-[82px] h-[82px] rounded-full shadow-2xl transition-transform"
         >
-          <span className="text-2xl">⚡</span>
+          <img
+            src="/images/ai-chat-icon.png"
+            alt="Atlas AI"
+            className="ai-icon"
+          />
         </button>
       )}
     </div>

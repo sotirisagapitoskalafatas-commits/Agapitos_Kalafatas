@@ -351,7 +351,7 @@ export default function InsurancePage() {
             <img
               src="/images/logo-footer.png"
               alt="A"
-              className="w-8 h-8 rounded-lg object-cover"
+              className="w-12 h-12 rounded-xl object-cover"
             />
             <span className="font-semibold text-white">{tIns.advisorName}</span>
           </div>
