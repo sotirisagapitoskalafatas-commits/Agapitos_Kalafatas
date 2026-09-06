@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
+import { rateLimit } from "@/lib/rate-limit";
+import { escapeHtml } from "@/lib/html";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,31 +11,11 @@ function getSupabase() {
   return createClient(url, key);
 }
 
-// Create site_leads table if it doesn't exist
-async function ensureTable(supabase: any) {
-  await supabase.rpc("exec_sql", {
-    query: `
-      create table if not exists site_leads (
-        id uuid default gen_random_uuid() primary key,
-        created_at timestamp with time zone default timezone('utc'::text, now()) not null,
-        site_id text not null,
-        site_name text default '',
-        client_name text not null,
-        client_email text not null,
-        client_phone text default '',
-        message text default '',
-        status text default 'New'
-      );
-      alter table site_leads enable row level security;
-      drop policy if exists "Allow public insert on site_leads" on site_leads;
-      create policy "Allow public insert on site_leads" on site_leads for insert with check (true);
-      drop policy if exists "Allow read on site_leads" on site_leads;
-      create policy "Allow read on site_leads" on site_leads for select using (true);
-    `,
-  }).catch(() => {});
-}
-
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 submissions / minute / IP.
+  const limited = rateLimit(request, "site-leads", 5, 60_000);
+  if (limited) return limited;
+
   try {
     const { siteId, siteName, name, email, phone, message } = await request.json();
 
@@ -52,7 +34,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Try to insert (table might not exist yet)
+    // The site_leads table is provisioned via web/config/schema.sql (site_leads
+    // migration). If the insert fails because the table is missing, that is an
+    // operator setup error — surface it rather than trying to CREATE TABLE at
+    // request time (the old exec_sql path never worked and recreated open RLS).
     const { error: dbError } = await supabase.from("site_leads").insert([
       {
         site_id: siteId,
@@ -66,29 +51,14 @@ export async function POST(request: NextRequest) {
     ]);
 
     if (dbError) {
-      // Table might not exist, try to create it
-      if (dbError.message?.includes("does not exist") || dbError.code === "42P01") {
-        await ensureTable(supabase);
-        // Retry insert
-        const { error: retryError } = await supabase.from("site_leads").insert([
-          {
-            site_id: siteId,
-            site_name: siteName || "",
-            client_name: name,
-            client_email: email,
-            client_phone: phone || "",
-            message: message || "",
-            status: "New",
-          },
-        ]);
-        if (retryError) {
-          console.error("Retry insert error:", retryError);
-          return NextResponse.json({ error: retryError.message }, { status: 500 });
-        }
-      } else {
-        console.error("Supabase error:", dbError);
-        return NextResponse.json({ error: dbError.message }, { status: 500 });
+      console.error("Supabase error:", dbError);
+      if (dbError.code === "42P01") {
+        return NextResponse.json(
+          { error: "site_leads table is missing — apply web/config/2026-09-06-site_leads.sql" },
+          { status: 503 }
+        );
       }
+      return NextResponse.json({ error: dbError.message }, { status: 500 });
     }
 
     // Send email notification
@@ -109,11 +79,11 @@ export async function POST(request: NextRequest) {
               <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
                 <h2 style="color:#3b82f6;">New Website Lead</h2>
                 <div style="background:#f8fafc;border-radius:8px;padding:16px;margin:16px 0;">
-                  <p><strong>Site:</strong> ${siteName || siteId}</p>
-                  <p><strong>Name:</strong> ${name}</p>
-                  <p><strong>Email:</strong> ${email}</p>
-                  <p><strong>Phone:</strong> ${phone || "N/A"}</p>
-                  <p><strong>Message:</strong> ${message || "N/A"}</p>
+                  <p><strong>Site:</strong> ${escapeHtml(siteName || siteId)}</p>
+                  <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+                  <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+                  <p><strong>Phone:</strong> ${escapeHtml(phone || "N/A")}</p>
+                  <p><strong>Message:</strong> ${escapeHtml(message || "N/A")}</p>
                 </div>
                 <p style="color:#64748b;font-size:12px;">Atlas Builder CRM • Agapitos Kalafatas</p>
               </div>

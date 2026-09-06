@@ -69,17 +69,18 @@ CREATE INDEX IF NOT EXISTS idx_leads_created ON leads(created_at DESC);
 
 
 -- --------------------------------------------------------- site_leads table --
--- Captures leads from the Atlas Builder / marketing landing page.
+-- Captures leads from the Atlas Builder generated sites.
+-- Columns mirror exactly what /api/site-leads POST inserts.
 CREATE TABLE IF NOT EXISTS site_leads (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
-  name TEXT,
-  email TEXT,
-  phone TEXT,
-  message TEXT,
-  source TEXT DEFAULT 'atlas-builder',
-  status TEXT DEFAULT 'new' CHECK (status IN ('new', 'contacted', 'converted', 'archived')),
-  metadata JSONB DEFAULT '{}'::jsonb
+  site_id TEXT NOT NULL,
+  site_name TEXT DEFAULT '',
+  client_name TEXT NOT NULL,
+  client_email TEXT NOT NULL,
+  client_phone TEXT DEFAULT '',
+  message TEXT DEFAULT '',
+  status TEXT DEFAULT 'New'
 );
 ALTER TABLE site_leads ENABLE ROW LEVEL SECURITY;
 

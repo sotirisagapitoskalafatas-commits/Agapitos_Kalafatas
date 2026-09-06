@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { retrieveKnowledge } from "@/lib/rag";
 import { getMarketingSystemPrompt } from "@/lib/marketingInjector";
 import { Resend } from "resend";
+import { rateLimit } from "@/lib/rate-limit";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL =
@@ -197,6 +198,10 @@ RULES:
 // ── Main API Handler ──────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 12 messages / minute / IP (protects the Gemini quota).
+  const limited = rateLimit(request, "chat", 12, 60_000);
+  if (limited) return limited;
+
   try {
     const { message, history, locale, page } = await request.json();
 

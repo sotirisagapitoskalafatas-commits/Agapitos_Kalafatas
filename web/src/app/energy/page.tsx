@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Zap,
@@ -46,6 +46,30 @@ export default function EnergyPage() {
   const { t } = useLocale();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [formSent, setFormSent] = useState(false);
+  const [formSending, setFormSending] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  async function handleEnergySubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (formSending) return;
+    setFormError(null);
+    setFormSending(true);
+    try {
+      const form = e.currentTarget;
+      const data = new FormData(form);
+      const res = await fetch("/api/contact", { method: "POST", body: data });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j.error || `Request failed (${res.status})`);
+      }
+      setFormSent(true);
+      form.reset();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setFormSending(false);
+    }
+  }
   const railRef = useRef<HTMLDivElement | null>(null);
 
   const faqs = t.energyPage?.faqs || [];
@@ -416,10 +440,7 @@ export default function EnergyPage() {
 
             <form
               data-reveal
-              onSubmit={(e) => {
-                e.preventDefault();
-                setFormSent(true);
-              }}
+              onSubmit={handleEnergySubmit}
               className="lg:col-span-7 grid gap-5 p-6 sm:p-9 rounded-3xl border border-slate-400/18 bg-[#060d1a]/75"
             >
               <div className="grid sm:grid-cols-2 gap-5">
@@ -429,6 +450,7 @@ export default function EnergyPage() {
                   </label>
                   <input
                     type="text"
+                    name="first_name"
                     required
                     className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
                   />
@@ -439,6 +461,7 @@ export default function EnergyPage() {
                   </label>
                   <input
                     type="text"
+                    name="last_name"
                     required
                     className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
                   />
@@ -451,6 +474,7 @@ export default function EnergyPage() {
                   </label>
                   <input
                     type="email"
+                    name="email"
                     className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
                   />
                 </div>
@@ -460,6 +484,7 @@ export default function EnergyPage() {
                   </label>
                   <input
                     type="tel"
+                    name="phone"
                     required
                     className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
                   />
@@ -470,7 +495,7 @@ export default function EnergyPage() {
                   <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
                     {tE.formPropertyType}
                   </label>
-                  <select className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
+                  <select name="property_type" className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
                     <option className="bg-[#0a1120]">{tE.formHome}</option>
                     <option className="bg-[#0a1120]">{tE.formBusiness}</option>
                   </select>
@@ -479,7 +504,7 @@ export default function EnergyPage() {
                   <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
                     {tE.formRegion}
                   </label>
-                  <select className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
+                  <select name="region" className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
                     <option className="bg-[#0a1120]">{regions[0]?.title || "Attica"}</option>
                     <option className="bg-[#0a1120]">{regions[2]?.title || "Northern Greece"}</option>
                     <option className="bg-[#0a1120]">{regions[5]?.title || "Crete"}</option>
@@ -490,7 +515,7 @@ export default function EnergyPage() {
                   <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
                     {tE.formService}
                   </label>
-                  <select className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
+                  <select name="service_category" className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
                     {services.map((s, i) => (
                       <option key={i} className="bg-[#0a1120]">
                         {s.title}
@@ -503,14 +528,17 @@ export default function EnergyPage() {
                 <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
                   {tE.formUpload}
                 </label>
-                <div className="border-2 border-dashed border-slate-400/28 rounded-2xl p-6 text-center bg-[#02060f]/45">
+                <label className="block border-2 border-dashed border-slate-400/28 rounded-2xl p-6 text-center bg-[#02060f]/45 cursor-pointer hover:border-amber-400/50 transition-colors">
                   <Upload className="w-8 h-8 text-amber-400 mx-auto mb-2" />
                   <p className="text-xs font-medium text-slate-400">{tE.formUploadHint}</p>
-                </div>
+                  <input type="file" name="files" multiple className="hidden" />
+                </label>
               </div>
               <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
+                  name="gdpr_consent"
+                  value="true"
                   required
                   className="mt-1 w-4 h-4 accent-amber-400 rounded border-slate-400/40"
                 />
@@ -521,11 +549,17 @@ export default function EnergyPage() {
                   <Check className="w-4 h-4" /> {tE.formThanks}
                 </p>
               )}
+              {formError && (
+                <p className="px-4 py-3 rounded-xl border border-red-400/40 bg-red-400/10 text-sm text-red-200">
+                  {formError}
+                </p>
+              )}
               <button
                 type="submit"
-                className="w-full rounded-full bg-amber-400 hover:bg-amber-300 text-[#0b1220] font-semibold py-4 text-[13px] tracking-[0.16em] uppercase transition-colors"
+                disabled={formSending}
+                className="w-full rounded-full bg-amber-400 hover:bg-amber-300 disabled:opacity-60 disabled:cursor-not-allowed text-[#0b1220] font-semibold py-4 text-[13px] tracking-[0.16em] uppercase transition-colors"
               >
-                {tE.formSubmit}
+                {formSending ? "..." : tE.formSubmit}
               </button>
             </form>
           </div>

@@ -1,9 +1,14 @@
 import { NextRequest } from "next/server";
+import { rateLimit } from "@/lib/rate-limit";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 site generations / minute / IP (heaviest Gemini call).
+  const limited = rateLimit(request, "generate-site", 5, 60_000);
+  if (limited) return limited;
+
   try {
     const { prompt } = await request.json();
 

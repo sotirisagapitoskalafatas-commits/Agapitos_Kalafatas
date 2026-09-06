@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit } from "@/lib/rate-limit";
+import { escapeHtml, safeUrl } from "@/lib/html";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -9,6 +11,10 @@ function getSupabase() {
 }
 
 export async function POST(req: Request) {
+  // Rate limit: 5 submissions / minute / IP.
+  const limited = rateLimit(req, "contact", 5, 60_000);
+  if (limited) return limited;
+
   try {
     const supabase = getSupabase();
     if (!supabase) {
@@ -146,16 +152,16 @@ export async function POST(req: Request) {
               <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
                 <h2 style="color:#3b82f6;">Νέο Αίτημα Επικοινωνίας</h2>
                 <div style="background:#f8fafc;border-radius:8px;padding:16px;margin:16px 0;">
-                  <p><strong>Όνομα:</strong> ${fullName}</p>
-                  <p><strong>Τηλέφωνο:</strong> ${phone}</p>
-                  <p><strong>Email:</strong> ${email || "Δεν δηλώθηκε"}</p>
-                  <p><strong>Υπηρεσία:</strong> ${serviceCategory}</p>
-                  <p><strong>Τύπος Ακινήτου:</strong> ${propertyType || "N/A"}</p>
-                  <p><strong>Περιοχή:</strong> ${region || "N/A"}</p>
-                  <p><strong>Σχόλια:</strong> ${comments || "Κανένα"}</p>
+                  <p><strong>Όνομα:</strong> ${escapeHtml(fullName)}</p>
+                  <p><strong>Τηλέφωνο:</strong> ${escapeHtml(phone)}</p>
+                  <p><strong>Email:</strong> ${escapeHtml(email || "Δεν δηλώθηκε")}</p>
+                  <p><strong>Υπηρεσία:</strong> ${escapeHtml(serviceCategory)}</p>
+                  <p><strong>Τύπος Ακινήτου:</strong> ${escapeHtml(propertyType || "N/A")}</p>
+                  <p><strong>Περιοχή:</strong> ${escapeHtml(region || "N/A")}</p>
+                  <p><strong>Σχόλια:</strong> ${escapeHtml(comments || "Κανένα")}</p>
                   <p><strong>Αρχεία (${uploadedFiles.length}):</strong></p>
                   <ul>
-                    ${uploadedFiles.map((f) => `<li><a href="${f.url}">${f.name}</a></li>`).join("")}
+                    ${uploadedFiles.map((f) => `<li><a href="${safeUrl(f.url)}">${escapeHtml(f.name)}</a></li>`).join("")}
                   </ul>
                 </div>
                 <p style="color:#64748b;font-size:12px;">CRM System • Agapitos Kalafatas</p>
