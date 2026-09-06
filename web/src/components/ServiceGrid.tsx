@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   ShoppingBag,
   Globe,
@@ -10,6 +10,8 @@ import {
   Smartphone,
   Server,
   Code2,
+  ArrowLeft,
+  ArrowRight,
 } from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useLocale } from "@/contexts/LanguageContext";
@@ -111,6 +113,43 @@ export const ServiceGrid: React.FC = () => {
   const services = t.serviceGrid || [];
   const tPage = t.servicesPage || {};
 
+  const railRef = useRef<HTMLDivElement | null>(null);
+  const hoveringRef = useRef(false);
+  const pausedUntilRef = useRef(0);
+  const autoScrollRef = useRef(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      autoScrollRef.current = false;
+    }
+    let raf = 0;
+    const step = () => {
+      const rail = railRef.current;
+      if (rail && autoScrollRef.current) {
+        const now = Date.now();
+        const wide = rail.scrollWidth > rail.clientWidth;
+        if (wide && !hoveringRef.current && now >= pausedUntilRef.current) {
+          const loopAt = Math.floor(rail.scrollWidth / 2);
+          let next = rail.scrollLeft + 1.1;
+          if (next >= loopAt) next = 0;
+          rail.scrollLeft = next;
+        }
+      }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const nudge = (dir: number) => {
+    const rail = railRef.current;
+    if (!rail) return;
+    const first = rail.querySelector("a");
+    const step = first ? first.getBoundingClientRect().width + 24 : 360;
+    pausedUntilRef.current = Date.now() + 2600;
+    rail.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
   return (
     <section className="py-20 relative overflow-hidden bg-transparent">
       <div className="ambient-glow w-[500px] h-[500px] bg-sky-500/10 -top-40 -left-40" />
@@ -126,11 +165,40 @@ export const ServiceGrid: React.FC = () => {
           </h2>
           <p className="text-white/60 mt-4">{tPage.subtitle}</p>
         </div>
+
+        <div className="mb-6 flex items-center justify-center gap-4">
+          <button
+            type="button"
+            onClick={() => nudge(-1)}
+            aria-label={tPage.prev || "Previous"}
+            className="w-11 h-11 rounded-full border border-white/15 bg-white/5 backdrop-blur text-white grid place-items-center transition-all hover:bg-white/10 hover:border-white/30"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => nudge(1)}
+            aria-label={tPage.next || "Next"}
+            className="w-11 h-11 rounded-full border border-white/15 bg-white/5 backdrop-blur text-white grid place-items-center transition-all hover:bg-white/10 hover:border-white/30"
+          >
+            <ArrowRight className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
-      {/* Infinite live marquee */}
-      <div className="card-space relative z-10 marquee-mask overflow-hidden py-4">
-        <div className="marquee-track gap-6 px-6">
+      {/* Infinite auto-scroll rail with manual left/right controls */}
+      <div className="card-space relative z-10 marquee-mask py-4 select-none">
+        <div
+          ref={railRef}
+          onMouseEnter={() => (hoveringRef.current = true)}
+          onMouseLeave={() => (hoveringRef.current = false)}
+          className="flex gap-6 px-6 overflow-x-auto cursor-grab active:cursor-grabbing"
+          style={{
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+            overscrollBehaviorX: "contain",
+          }}
+        >
           {[...services, ...services].map((service, idx) => (
             <TiltCard
               key={`${service.slug}-${idx}`}
