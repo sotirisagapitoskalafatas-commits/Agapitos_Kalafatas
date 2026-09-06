@@ -17,13 +17,15 @@
 
 html {
   scroll-behavior: auto;
+  overflow-anchor: none;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: "Inter", system-ui, sans-serif;
-  overflow-x: hidden;
+  overflow-x: clip;
+  overflow-anchor: none;
 }
 
 /* Glassmorphism card */

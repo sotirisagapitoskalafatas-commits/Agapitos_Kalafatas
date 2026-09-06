@@ -99,7 +99,7 @@ export default function EnergyPage() {
   ];
 
   return (
-    <div className="bg-[#02060f] text-slate-100 min-h-screen font-sans antialiased overflow-x-hidden">
+    <div className="bg-[#02060f] text-slate-100 min-h-screen font-sans antialiased overflow-x-clip">
       <style>{`@keyframes flowPulse{0%,100%{opacity:.35}50%{opacity:.9}} .reveal-init{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.2,.7,.2,1),transform .85s cubic-bezier(.2,.7,.2,1)} .revealed{opacity:1;transform:none}`}</style>
 
       <EnergyCinematicBackground flowCyan={true} />

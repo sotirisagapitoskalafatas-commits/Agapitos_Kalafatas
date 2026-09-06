@@ -23,6 +23,7 @@ import { StackedProjects } from "@/components/StackedProjects";
 import { useLocale } from "@/contexts/LanguageContext";
 
 gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.config({ ignoreMobileResize: true });
 
 export default function Home() {
   const { t } = useLocale();
