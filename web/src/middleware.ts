@@ -4,6 +4,20 @@ import { getAdminCredentials } from "./lib/admin-auth";
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const isPrefetch =
+    request.headers.get("next-router-prefetch") === "1" ||
+    request.headers.get("purpose") === "prefetch";
+
+  // For prefetch requests we never send the Basic challenge, otherwise
+  // Next.js auto-prefetching a protected link from a public page would pop
+  // the browser's native sign-in dialog (and leave scroll broken on cancel).
+  const authHeaders = (): Headers => {
+    const headers = new Headers();
+    if (!isPrefetch) {
+      headers.set("WWW-Authenticate", 'Basic realm="Admin Dashboard"');
+    }
+    return headers;
+  };
 
   if (pathname.startsWith("/admin")) {
     // Fail closed: if no admin credentials are configured (production), block all access.
@@ -16,9 +30,7 @@ export function middleware(request: NextRequest) {
     if (!authHeader || !authHeader.startsWith("Basic ")) {
       return new NextResponse("Authentication required", {
         status: 401,
-        headers: {
-          "WWW-Authenticate": 'Basic realm="Admin Dashboard"',
-        },
+        headers: authHeaders(),
       });
     }
 
@@ -34,9 +46,7 @@ export function middleware(request: NextRequest) {
     if (username !== creds.user || password !== creds.pass) {
       return new NextResponse("Invalid credentials", {
         status: 401,
-        headers: {
-          "WWW-Authenticate": 'Basic realm="Admin Dashboard"',
-        },
+        headers: authHeaders(),
       });
     }
   }

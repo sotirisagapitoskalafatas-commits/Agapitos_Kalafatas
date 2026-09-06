@@ -434,6 +434,7 @@ export default function Home() {
             </Link>
             <Link
               href="/admin/crm"
+              prefetch={false}
               className="transition-colors hover:text-white"
             >
               CRM
