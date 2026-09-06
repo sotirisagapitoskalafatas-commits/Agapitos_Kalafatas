@@ -8,7 +8,7 @@
  */
 
 import Link from "next/link";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Zap, Globe, ShieldCheck } from "lucide-react";
 import { getServicesList } from "@/lib/servicesData";
 import Navbar from "@/components/Navbar";
 import CinematicSkyBackground from "@/components/CinematicSkyBackground";
@@ -18,6 +18,39 @@ import { useLocale } from "@/contexts/LanguageContext";
 export default function ServicesHubPage() {
   const { t, locale } = useLocale();
   const servicesList = getServicesList(locale);
+
+  const sectors = [
+    {
+      id: "digital-solutions",
+      href: "#digital-solutions",
+      label: t.sectors?.digitalSolutions || "Digital Solutions",
+      desc: t.sectors?.digitalSolutionsDesc || "E-shop, Sites, Custom Apps & SEO",
+      icon: Globe,
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-sky-400",
+      hoverBorder: "hover:border-sky-400/60",
+    },
+    {
+      id: "energy",
+      href: "/energy",
+      label: t.sectors?.energy || "Energy",
+      desc: t.sectors?.energyDesc || "Electricity, Gas, Solar & EV",
+      icon: Zap,
+      iconBg: "bg-amber-500/10",
+      iconColor: "text-amber-400",
+      hoverBorder: "hover:border-amber-400/60",
+    },
+    {
+      id: "insurance",
+      href: "/insurance",
+      label: t.sectors?.insurance || "Insurance",
+      desc: t.sectors?.insuranceDesc || "Health BEWELL, Home, Auto",
+      icon: ShieldCheck,
+      iconBg: "bg-rose-500/10",
+      iconColor: "text-rose-400",
+      hoverBorder: "hover:border-rose-400/60",
+    },
+  ];
 
   return (
     <>
@@ -33,7 +66,7 @@ export default function ServicesHubPage() {
               {t.servicesPage?.badge || "Agapitos Kalafatas"}
             </div>
             <h1 className="text-5xl md:text-7xl font-light leading-[0.98] tracking-tight text-white">
-              {t.servicesPage?.title || "Digital Solutions"}
+              {t.nav?.services || "Services"}
             </h1>
             <p className="mt-6 max-w-xl text-base md:text-lg font-light leading-relaxed text-slate-300/85">
               {t.servicesPage?.subtitle ||
@@ -49,10 +82,45 @@ export default function ServicesHubPage() {
         {/* Pass-through beat — pure animation, no content */}
         <section className="h-[120vh]" aria-hidden="true" />
 
-        {/* Services grid — lands as Athens rises out of the clouds */}
+        {/* Sector hub + Digital Solutions grid — lands as Athens rises out of the clouds */}
         <section className="px-5 sm:px-10 lg:px-20 pt-24 pb-32 bg-gradient-to-b from-transparent via-[#030711]/75 to-[#030711]/95">
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <h2 className="text-2xl md:text-3xl font-light text-white">
+              {t.servicesPage?.exploreSectors || "Explore the Sectors"}
+            </h2>
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+              {sectors.map((sector) => {
+                const Icon = sector.icon;
+                return (
+                  <Link
+                    key={sector.id}
+                    href={sector.href}
+                    className={`group flex flex-col gap-6 rounded-3xl border border-slate-300/15 bg-gradient-to-br from-[#091222]/75 to-[#060c18]/50 p-8 transition-colors ${sector.hoverBorder}`}
+                  >
+                    <div
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl ${sector.iconBg} ${sector.iconColor}`}
+                    >
+                      <Icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-light text-white">{sector.label}</h3>
+                      <p className="mt-2 text-sm font-light leading-relaxed text-slate-300/80">
+                        {sector.desc}
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center gap-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-[#c9d4e8]/80 transition-colors group-hover:text-white">
+                      {t.servicesPage?.learnMore || "Learn more"}
+                      <ArrowRight className="w-4 h-4 transition-transform duration-200 group-hover:translate-x-1" />
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div
+              id="digital-solutions"
+              className="mt-24 scroll-mt-28 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
               {servicesList.map((service) => (
                 <Service3DCard
                   key={service.slug}
