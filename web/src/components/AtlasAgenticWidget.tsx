@@ -279,8 +279,12 @@ export default function AtlasAgenticWidget() {
           {/* Header */}
           <div className="bg-[#1A2234] p-4 border-b border-gray-800 flex justify-between items-center">
             <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-sm">
-                ⚡
+              <div className="ai-chat ai-chat-sm relative w-9 h-9 rounded-full">
+                <img
+                  src="/images/ai-chat-icon.png"
+                  alt="Atlas AI"
+                  className="ai-icon"
+                />
               </div>
               <div>
                 <h3 className="font-bold text-sm tracking-wide">

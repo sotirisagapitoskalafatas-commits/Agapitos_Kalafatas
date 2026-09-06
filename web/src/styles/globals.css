@@ -355,6 +355,19 @@ section {
   transform: scale(1.08);
 }
 
+/* Small avatar variant (open-panel header): thinner ring, no breathing */
+.ai-chat-sm {
+  animation: none;
+}
+
+.ai-chat-sm::after {
+  inset: 3px;
+}
+
+.ai-chat-sm:hover {
+  transform: none;
+}
+
 @keyframes rainbow-spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
