@@ -408,7 +408,7 @@ section {
 .atlas-ai::before {
   content: "";
   position: absolute;
-  inset: -3px;
+  inset: -2px;
   border-radius: 50%;
   background: conic-gradient(
     from 0deg,
@@ -450,7 +450,7 @@ section {
 
 .atlas-icon {
   position: absolute;
-  inset: 5px;
+  inset: 2px;
   border-radius: 50%;
   overflow: hidden;
   background: #07132f;
