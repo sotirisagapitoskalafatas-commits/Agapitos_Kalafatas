@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef } from "react";
 import {
   ShoppingBag,
   Globe,
@@ -10,10 +10,8 @@ import {
   Smartphone,
   Server,
   Code2,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
-import { animate, motion, useMotionValue } from "framer-motion";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useLocale } from "@/contexts/LanguageContext";
 
 const iconBySlug: Record<string, React.ElementType> = {
@@ -38,38 +36,53 @@ const colorBySlug: Record<string, string> = {
   "custom-integrations": "text-slate-200",
 };
 
-interface ServiceCardProps {
+interface TiltCardProps {
   slug: string;
   title: string;
   description: string;
   learnMore: string;
-  suppressClickRef: React.MutableRefObject<boolean>;
 }
 
-function ServiceCard({ slug, title, description, learnMore, suppressClickRef }: ServiceCardProps) {
+function TiltCard({ slug, title, description, learnMore }: TiltCardProps) {
+  const ref = useRef<HTMLAnchorElement>(null);
+  const mx = useMotionValue(0.5);
+  const my = useMotionValue(0.5);
+  const rotateX = useSpring(useTransform(my, [0, 1], [12, -12]), { stiffness: 200, damping: 20 });
+  const rotateY = useSpring(useTransform(mx, [0, 1], [-12, 12]), { stiffness: 200, damping: 20 });
+
   const Icon = iconBySlug[slug] || Globe;
   const color = colorBySlug[slug] || "text-sky-300";
 
+  const onMouseMove = (e: React.MouseEvent) => {
+    const el = ref.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    mx.set((e.clientX - rect.left) / rect.width);
+    my.set((e.clientY - rect.top) / rect.height);
+  };
+
+  const onMouseLeave = () => {
+    mx.set(0.5);
+    my.set(0.5);
+  };
+
   return (
-    <a
+    <motion.a
+      ref={ref}
       href={`/services/${slug}`}
-      onClick={(e) => {
-        if (suppressClickRef.current) {
-          e.preventDefault();
-          e.stopPropagation();
-          suppressClickRef.current = false;
-        }
-      }}
-      className="group relative flex h-[20rem] w-80 flex-col justify-between rounded-2xl border border-white/10 bg-white/5 p-7 shadow-lg shadow-black/40 backdrop-blur-xl cursor-pointer [transform-style:preserve-3d] transition-all duration-300 hover:-translate-y-2 hover:border-white/20 hover:bg-white/[0.08] hover:shadow-2xl hover:shadow-black/60"
+      onMouseMove={onMouseMove}
+      onMouseLeave={onMouseLeave}
+      style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+      whileHover={{ y: -6 }}
+      className="group card-space relative flex flex-col justify-between w-80 p-7 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/40 hover:shadow-2xl hover:shadow-black/60 hover:border-white/20 transition-all duration-300 flex-shrink-0 cursor-pointer"
     >
       <div>
         <div
           style={{ transform: "translateZ(40px)" }}
-          className={`mb-5 flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/10 transition-transform duration-300 group-hover:scale-110`}
+          className={`w-12 h-12 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
         >
-          <Icon className={`h-6 w-6 ${color}`} />
+          <Icon className={`w-6 h-6 ${color}`} />
         </div>
-        <div className="pointer-events-none w-56 h-56 rounded-3xl bg-sky-500/10 blur-3xl absolute -top-8 -right-8 group-hover:opacity-100 opacity-0 transition-opacity duration-500" />
         <h3
           style={{ transform: "translateZ(30px)" }}
           className="text-xl font-bold text-white mb-2 group-hover:text-sky-200 transition-colors"
@@ -89,7 +102,7 @@ function ServiceCard({ slug, title, description, learnMore, suppressClickRef }: 
       >
         {learnMore} &rarr;
       </div>
-    </a>
+    </motion.a>
   );
 }
 
@@ -97,78 +110,6 @@ export const ServiceGrid: React.FC = () => {
   const { t } = useLocale();
   const services = t.serviceGrid || [];
   const tPage = t.servicesPage || {};
-
-  const count = services.length;
-  const step = count > 0 ? 360 / count : 0;
-
-  const stageRef = useRef<HTMLDivElement | null>(null);
-  const dragRef = useRef<{ startX: number; startAngle: number } | null>(null);
-  const suppressClickRef = useRef(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [radius, setRadius] = useState(460);
-  const angle = useMotionValue(0);
-
-  useEffect(() => {
-    const measure = () => {
-      const el = stageRef.current;
-      if (!el) return;
-      const w = el.clientWidth;
-      setRadius(Math.round(Math.min(460, Math.max(280, w * 0.42))));
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, []);
-
-  const snapTo = (target: number) => {
-    const t = ((target % count) + count) % count;
-    animate(angle, -t * step, {
-      type: "spring",
-      stiffness: 140,
-      damping: 22,
-      mass: 0.7,
-    });
-  };
-
-  const goTo = (dir: number) => {
-    const current = Math.round(-angle.get() / step);
-    snapTo(current + dir);
-  };
-
-  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest("button")) return;
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    dragRef.current = { startX: e.clientX, startAngle: angle.get() };
-    setIsDragging(true);
-    e.currentTarget.setPointerCapture(e.pointerId);
-  };
-
-  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const delta = e.clientX - drag.startX;
-    const clamped = Math.max(-24, Math.min(24, delta));
-    angle.set(drag.startAngle + clamped * 0.15);
-  };
-
-  const onPointerEnd = () => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const moved = Math.abs(angle.get() - drag.startAngle);
-    dragRef.current = null;
-    setIsDragging(false);
-    if (moved > 6) {
-      suppressClickRef.current = true;
-      window.setTimeout(() => {
-        suppressClickRef.current = false;
-      }, 0);
-    }
-    const raw = Math.round(-angle.get() / step);
-    const target = ((raw % count) + count) % count;
-    snapTo(target);
-  };
-
-  if (count === 0) return null;
 
   return (
     <section className="py-20 relative overflow-hidden bg-transparent">
@@ -187,62 +128,18 @@ export const ServiceGrid: React.FC = () => {
         </div>
       </div>
 
-      <div className="relative z-10">
-        <div
-          ref={stageRef}
-          className="relative h-[26rem] select-none"
-          style={{
-            perspective: "1600px",
-            touchAction: "pan-y",
-            cursor: isDragging ? "grabbing" : "grab",
-          }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerEnd}
-          onPointerCancel={onPointerEnd}
-        >
-          <motion.div
-            className="absolute inset-0 h-full w-full [transform-style:preserve-3d]"
-            style={{ rotateY: angle }}
-          >
-            {services.map((service, i) => (
-              <div
-                key={service.slug}
-                className="absolute left-1/2 top-1/2 [backface-visibility:hidden]"
-                style={{
-                  transform: `translate(-50%,-50%) rotateY(${(i * step).toFixed(2)}deg) translateZ(${radius}px)`,
-                }}
-              >
-                <ServiceCard
-                  slug={service.slug}
-                  title={service.title}
-                  description={service.description}
-                  learnMore={tPage.learnMore}
-                  suppressClickRef={suppressClickRef}
-                />
-              </div>
-            ))}
-          </motion.div>
-
-          <button
-            type="button"
-            aria-label={tPage.prev}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => goTo(-1)}
-            className="absolute top-1/2 -translate-y-1/2 left-3 sm:left-8 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-all duration-300 hover:bg-white/20 hover:scale-110 active:scale-95 shadow-lg shadow-black/30"
-          >
-            <ChevronLeft className="h-6 w-6" aria-hidden />
-          </button>
-
-          <button
-            type="button"
-            aria-label={tPage.next}
-            onPointerDown={(e) => e.stopPropagation()}
-            onClick={() => goTo(1)}
-            className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-8 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-white/10 text-white backdrop-blur transition-all duration-300 hover:bg-white/20 hover:scale-110 active:scale-95 shadow-lg shadow-black/30"
-          >
-            <ChevronRight className="h-6 w-6" aria-hidden />
-          </button>
+      {/* Infinite live marquee */}
+      <div className="card-space relative z-10 marquee-mask overflow-hidden py-4">
+        <div className="marquee-track gap-6 px-6">
+          {[...services, ...services].map((service, idx) => (
+            <TiltCard
+              key={`${service.slug}-${idx}`}
+              slug={service.slug}
+              title={service.title}
+              description={service.description}
+              learnMore={tPage.learnMore}
+            />
+          ))}
         </div>
       </div>
     </section>

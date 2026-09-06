@@ -8,32 +8,12 @@
  */
 
 import Link from "next/link";
-import {
-  ArrowRight,
-  Globe,
-  ShoppingBag,
-  Palette,
-  TrendingUp,
-  Megaphone,
-  Smartphone,
-  Server,
-  Code2,
-  Zap,
-} from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import { getServicesList } from "@/lib/servicesData";
 import Navbar from "@/components/Navbar";
 import CinematicSkyBackground from "@/components/CinematicSkyBackground";
+import Service3DCard from "@/components/Service3DCard";
 import { useLocale } from "@/contexts/LanguageContext";
-
-const iconMap: Record<string, React.ElementType> = {
-  "web-development": Globe,
-  "eshop-development": ShoppingBag,
-  "ux-ui-branding": Palette,
-  "digital-marketing": TrendingUp,
-  "web-mobile-apps": Smartphone,
-  "hosting-support": Server,
-  "custom-integrations": Code2,
-};
 
 export default function ServicesHubPage() {
   const { t, locale } = useLocale();
@@ -72,37 +52,17 @@ export default function ServicesHubPage() {
         {/* Services grid — lands as Athens rises out of the clouds */}
         <section className="px-5 sm:px-10 lg:px-20 pt-24 pb-32 bg-gradient-to-b from-transparent via-[#030711]/75 to-[#030711]/95">
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {servicesList.map((service) => {
-                const Icon = iconMap[service.slug] || Globe;
-                return (
-                  <Link
-                    key={service.slug}
-                    href={`/services/${service.slug}`}
-                    className="group flex flex-col gap-4 p-7 border border-slate-300/15 bg-[#070e1c]/50 backdrop-blur-md transition-colors duration-300 hover:border-[#c9d4e8]/40 hover:bg-[#091222]/65"
-                  >
-                    <Icon className="w-6 h-6 text-[#c9d4e8]" />
-                    <h2 className="text-xl font-medium leading-snug text-white">
-                      {service.heroTitle}
-                    </h2>
-                    <p className="text-sm font-light leading-relaxed text-slate-300/80">
-                      {service.heroSubtitle}
-                    </p>
-                    <ul className="grid gap-2 text-[13px] text-slate-300/75">
-                      {service.benefits.slice(0, 2).map((b, i) => (
-                        <li key={i} className="flex gap-2.5">
-                          <span className="text-[#c9d4e8]">—</span>
-                          {b.title}
-                        </li>
-                      ))}
-                    </ul>
-                    <span className="mt-auto pt-2 inline-flex items-center gap-1.5 text-[11px] tracking-[0.16em] uppercase text-[#c9d4e8] transition-transform group-hover:translate-x-1">
-                      {t.servicesPage?.learnMore || "Learn more"}
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </span>
-                  </Link>
-                );
-              })}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {servicesList.map((service) => (
+                <Service3DCard
+                  key={service.slug}
+                  slug={service.slug}
+                  title={service.heroTitle}
+                  description={service.heroSubtitle}
+                  learnMore={t.servicesPage?.learnMore || "Learn more"}
+                  benefitLabels={service.benefits.slice(0, 2).map((b) => b.title)}
+                />
+              ))}
             </div>
           </div>
         </section>
