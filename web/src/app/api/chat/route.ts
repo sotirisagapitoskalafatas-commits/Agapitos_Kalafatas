@@ -272,7 +272,22 @@ export async function POST(request: NextRequest) {
       );
 
       if (!response.ok) {
-        console.error("Gemini API error:", await response.json());
+        const errBody = await response.json().catch(() => null);
+        console.error("Gemini API error:", errBody);
+
+        if (
+          response.status === 429 ||
+          errBody?.error?.status === "RESOURCE_EXHAUSTED"
+        ) {
+          const quotaMsg =
+            langMap[locale] === "Greek"
+              ? "Το ημερήσιο όριο αιτημάτων του AI έχει εξαντληθεί (δωρεάν plan, 20/ημέρα). Δοκιμάστε ξανά σε λίγα λεπτά."
+              : langMap[locale] === "French"
+              ? "La limite quotidienne de requêtes IA est atteinte (gratuit, 20/jour). Réessayez dans quelques minutes."
+              : "The AI daily request limit has been reached (free tier, 20/day). Please try again in a few minutes.";
+          return NextResponse.json({ response: quotaMsg, lead: null });
+        }
+
         return NextResponse.json(
           { error: "Failed to get response from Gemini" },
           { status: 500 }

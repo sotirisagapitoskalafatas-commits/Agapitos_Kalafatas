@@ -178,6 +178,10 @@ export default function AtlasAgenticWidget() {
 
       const data = await res.json();
 
+      if (!res.ok && data.error) {
+        throw new Error(data.error);
+      }
+
       const toolCalls: { name: string; agent: string }[] = [];
       if (data.response?.includes("Agent 1"))
         toolCalls.push({ name: "webDevSubAgent", agent: "Web & Software" });
