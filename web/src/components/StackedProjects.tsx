@@ -28,17 +28,17 @@ function StackCard({ i, range, targetScale, progress, title, desc, tag, img }: S
     >
       <motion.div
         style={{ scale, opacity }}
-        className="relative w-full max-w-7xl mx-4 rounded-3xl overflow-hidden bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl shadow-slate-900/10 p-2"
+        className="relative w-full max-w-7xl mx-4 rounded-3xl overflow-hidden bg-white/[0.04] backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/60 p-2"
       >
         <div className="relative overflow-hidden rounded-2xl">
           <img src={img} alt={title} className="w-full h-[60vh] min-h-[420px] object-cover bg-slate-900" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/75 via-slate-900/10 to-transparent" />
-          <span className="absolute top-5 left-5 glass-strong px-3.5 py-1.5 rounded-full text-sm font-semibold text-slate-700">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
+          <span className="absolute top-5 left-5 px-3.5 py-1.5 rounded-full text-sm font-semibold text-white/85 bg-black/50 border border-white/15 backdrop-blur">
             {tag}
           </span>
           <div className="absolute bottom-6 left-6 right-6">
             <h3 className="text-3xl md:text-4xl font-bold text-white drop-shadow">{title}</h3>
-            <p className="text-slate-200 text-base md:text-lg mt-2 max-w-2xl drop-shadow">{desc}</p>
+            <p className="text-white/75 text-base md:text-lg mt-2 max-w-2xl drop-shadow">{desc}</p>
           </div>
         </div>
       </motion.div>
@@ -56,16 +56,18 @@ export const StackedProjects: React.FC = () => {
   });
 
   return (
-    <section id="projects" className="bg-white relative">
+    <section id="projects" className="bg-transparent relative">
       <div className="max-w-7xl mx-auto px-6 pt-24 pb-8 text-center">
-        <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold text-purple-600 bg-purple-50 border border-purple-100 mb-6">
+        <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold text-purple-200 bg-purple-500/10 border border-purple-400/25 mb-6">
           {t.projects.badge}
         </span>
-        <h2 className="text-5xl md:text-6xl font-black text-slate-900 mb-6">
+        <h2 className="text-5xl md:text-6xl font-black text-white mb-6">
           {t.projects.title.split(" ")[0]}{" "}
-          <span className="gradient-text">{t.projects.title.split(" ").slice(1).join(" ")}</span>
+          <span className="bg-gradient-to-br from-purple-200 via-violet-300 to-amber-300 bg-clip-text text-transparent">
+            {t.projects.title.split(" ").slice(1).join(" ")}
+          </span>
         </h2>
-        <p className="text-lg text-slate-500 max-w-2xl mx-auto">{t.projects.subtitle}</p>
+        <p className="text-lg text-white/55 max-w-2xl mx-auto">{t.projects.subtitle}</p>
       </div>
 
       <div ref={container} className="relative" style={{ height: `${items.length * 130 + 40}vh` }}>

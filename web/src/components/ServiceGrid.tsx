@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef } from "react";
-import Link from "next/link";
 import {
   ShoppingBag,
   Globe,
@@ -26,15 +25,15 @@ const iconBySlug: Record<string, React.ElementType> = {
   "custom-integrations": Code2,
 };
 
-const colorBySlug: Record<string, { bg: string; color: string }> = {
-  "web-development": { bg: "bg-blue-50", color: "text-blue-600" },
-  "eshop-development": { bg: "bg-purple-50", color: "text-purple-600" },
-  "ux-ui-branding": { bg: "bg-indigo-50", color: "text-indigo-600" },
-  "seo-performance": { bg: "bg-emerald-50", color: "text-emerald-600" },
-  "digital-marketing": { bg: "bg-amber-50", color: "text-amber-600" },
-  "web-mobile-apps": { bg: "bg-cyan-50", color: "text-cyan-600" },
-  "hosting-support": { bg: "bg-rose-50", color: "text-rose-600" },
-  "custom-integrations": { bg: "bg-slate-100", color: "text-slate-700" },
+const colorBySlug: Record<string, string> = {
+  "web-development": "text-sky-300",
+  "eshop-development": "text-purple-300",
+  "ux-ui-branding": "text-indigo-300",
+  "seo-performance": "text-emerald-300",
+  "digital-marketing": "text-amber-300",
+  "web-mobile-apps": "text-cyan-300",
+  "hosting-support": "text-rose-300",
+  "custom-integrations": "text-slate-200",
 };
 
 interface TiltCardProps {
@@ -52,7 +51,7 @@ function TiltCard({ slug, title, description, learnMore }: TiltCardProps) {
   const rotateY = useSpring(useTransform(mx, [0, 1], [-12, 12]), { stiffness: 200, damping: 20 });
 
   const Icon = iconBySlug[slug] || Globe;
-  const colors = colorBySlug[slug] || { bg: "bg-blue-50", color: "text-blue-600" };
+  const color = colorBySlug[slug] || "text-sky-300";
 
   const onMouseMove = (e: React.MouseEvent) => {
     const el = ref.current;
@@ -75,31 +74,31 @@ function TiltCard({ slug, title, description, learnMore }: TiltCardProps) {
       onMouseLeave={onMouseLeave}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
       whileHover={{ y: -6 }}
-      className="group card-space relative flex flex-col justify-between w-80 p-7 rounded-2xl bg-white/70 backdrop-blur-xl border border-white/50 shadow-lg hover:shadow-2xl transition-shadow duration-300 flex-shrink-0 cursor-pointer"
+      className="group card-space relative flex flex-col justify-between w-80 p-7 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/40 hover:shadow-2xl hover:shadow-black/60 hover:border-white/20 transition-all duration-300 flex-shrink-0 cursor-pointer"
     >
       <div>
         <div
           style={{ transform: "translateZ(40px)" }}
-          className={`w-12 h-12 rounded-xl ${colors.bg} flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
+          className={`w-12 h-12 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
         >
-          <Icon className={`w-6 h-6 ${colors.color}`} />
+          <Icon className={`w-6 h-6 ${color}`} />
         </div>
         <h3
           style={{ transform: "translateZ(30px)" }}
-          className="text-xl font-bold text-slate-900 mb-2 group-hover:text-blue-600 transition-colors"
+          className="text-xl font-bold text-white mb-2 group-hover:text-sky-200 transition-colors"
         >
           {title}
         </h3>
         <p
           style={{ transform: "translateZ(20px)" }}
-          className="text-slate-600 text-sm leading-relaxed mb-6"
+          className="text-white/55 text-sm leading-relaxed mb-6"
         >
           {description}
         </p>
       </div>
       <div
         style={{ transform: "translateZ(24px)" }}
-        className="flex items-center text-sm font-semibold text-blue-600 group-hover:translate-x-1 transition-transform"
+        className="flex items-center text-sm font-semibold text-sky-300 group-hover:translate-x-1 transition-transform"
       >
         {learnMore} &rarr;
       </div>
@@ -113,19 +112,19 @@ export const ServiceGrid: React.FC = () => {
   const tPage = t.servicesPage || {};
 
   return (
-    <section className="py-20 bg-slate-50/50 relative overflow-hidden">
-      <div className="ambient-glow w-[500px] h-[500px] bg-blue-500/10 -top-40 -left-40" />
-      <div className="ambient-glow w-[400px] h-[400px] bg-purple-500/10 -bottom-40 -right-40" />
+    <section className="py-20 relative overflow-hidden bg-transparent">
+      <div className="ambient-glow w-[500px] h-[500px] bg-sky-500/10 -top-40 -left-40" />
+      <div className="ambient-glow w-[400px] h-[400px] bg-violet-500/10 -bottom-40 -right-40" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <p className="text-sm font-semibold tracking-wider text-blue-600 uppercase">
+          <p className="inline-block text-sm font-semibold tracking-[0.24em] text-sky-200 uppercase px-4 py-1.5 rounded-full border border-sky-400/25 bg-sky-500/10">
             {tPage.badge}
           </p>
-          <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl mt-2">
+          <h2 className="text-3xl font-extrabold text-white sm:text-4xl mt-4">
             {tPage.title}
           </h2>
-          <p className="text-slate-600 mt-4">{tPage.subtitle}</p>
+          <p className="text-white/60 mt-4">{tPage.subtitle}</p>
         </div>
       </div>
 

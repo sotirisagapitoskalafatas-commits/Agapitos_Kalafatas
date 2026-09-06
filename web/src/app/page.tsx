@@ -14,6 +14,7 @@ import Link from "next/link";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import HeroCinematic from "@/components/HeroCinematic";
+import RoomWalkthrough from "@/components/RoomWalkthrough";
 import Scene3D from "@/components/Scene3D";
 import Navbar from "@/components/Navbar";
 import { ServiceGrid } from "@/components/ServiceGrid";
@@ -194,6 +195,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Glass · Timber · Fire — R3F pinned walkthrough (world → city → house → room) */}
+      <RoomWalkthrough />
 
       {/* Services */}
       <div id="services" className="relative z-10">
