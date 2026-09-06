@@ -415,7 +415,7 @@ export default function Home() {
             <img
               src="/images/logo-footer.png"
               alt="A"
-              className="h-24 w-60 rounded-2xl object-cover"
+              className="h-32 w-80 rounded-2xl object-cover"
             />
             <span className="font-semibold text-white/85">
               Agapitos Kalafatas

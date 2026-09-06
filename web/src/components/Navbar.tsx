@@ -142,9 +142,9 @@ export default function Navbar() {
 
           <Link
             href="/chat"
-            className="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-brand-500/25 text-sm"
+            className="atlas-start-btn text-sm"
           >
-            {t.nav.launchAtlas}
+            <span>{t.nav.launchAtlas}</span>
           </Link>
         </div>
 
@@ -191,9 +191,9 @@ export default function Navbar() {
               <Link
                 href="/chat"
                 onClick={() => setMobileOpen(false)}
-                className="bg-brand-500 hover:bg-brand-600 text-white px-5 py-2.5 rounded-xl font-medium transition-all shadow-lg shadow-brand-500/25 text-sm"
+                className="atlas-start-btn"
               >
-                {t.nav.launchAtlas}
+                <span>{t.nav.launchAtlas}</span>
               </Link>
             </div>
           </div>

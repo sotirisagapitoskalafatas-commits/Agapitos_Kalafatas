@@ -281,7 +281,7 @@ export default function AtlasAgenticWidget() {
             <div className="flex items-center space-x-3">
               <div className="ai-chat ai-chat-sm relative w-9 h-9 rounded-full">
                 <img
-                  src="/images/ai-chat-icon.png"
+                  src="/images/atlas-ai.png"
                   alt="Atlas AI"
                   className="ai-icon"
                 />
@@ -431,13 +431,15 @@ export default function AtlasAgenticWidget() {
         <button
           onClick={() => setIsOpen(true)}
           aria-label="Open Atlas AI"
-          className="ai-chat relative w-[82px] h-[82px] rounded-full shadow-2xl transition-transform"
+          className="atlas-ai"
         >
-          <img
-            src="/images/ai-chat-icon.png"
-            alt="Atlas AI"
-            className="ai-icon"
-          />
+          <span className="orbit" />
+          <div className="atlas-icon">
+            <img
+              src="/images/atlas-ai.png"
+              alt="Atlas AI"
+            />
+          </div>
         </button>
       )}
     </div>

@@ -390,3 +390,241 @@ section {
   100% { transform: scale(1); }
   50%  { transform: scale(1.045); }
 }
+
+/* ─── Atlas AI floating button (double rainbow ring) ─────────────── */
+.atlas-ai {
+  position: relative;
+  width: 105px;
+  height: 105px;
+  border: none;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  animation: atlasBreath 3s ease-in-out infinite;
+}
+
+.atlas-ai::before {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #00e5ff,
+    #3b5bff,
+    #8a2be2,
+    #ff00c8,
+    #ff3b30,
+    #ffb000,
+    #00e676,
+    #00e5ff
+  );
+  animation: rainbowSpin 3s linear infinite;
+  filter: blur(1px)
+    drop-shadow(0 0 8px rgba(0, 200, 255, 0.6))
+    drop-shadow(0 0 18px rgba(150, 0, 255, 0.45));
+  z-index: 0;
+}
+
+.atlas-ai .orbit {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 180deg,
+    transparent 0deg,
+    #00e5ff 45deg,
+    #7c4dff 100deg,
+    #ff00c8 160deg,
+    transparent 220deg,
+    #00e676 280deg,
+    #00e5ff 360deg
+  );
+  animation: rainbowSpinReverse 7s linear infinite;
+  filter: blur(4px);
+  opacity: 0.75;
+  z-index: -1;
+}
+
+.atlas-icon {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #07132f;
+  z-index: 2;
+  box-shadow:
+    0 0 15px rgba(0, 150, 255, 0.35),
+    inset 0 0 15px rgba(255, 255, 255, 0.08);
+  transition:
+    transform 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+.atlas-icon img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  border-radius: 50%;
+  animation: robotFloat 3.5s ease-in-out infinite;
+}
+
+.atlas-ai:hover {
+  animation-play-state: paused;
+}
+
+.atlas-ai:hover .atlas-icon {
+  transform: scale(1.08);
+  box-shadow:
+    0 0 20px rgba(0, 220, 255, 0.65),
+    0 0 45px rgba(130, 50, 255, 0.45),
+    inset 0 0 20px rgba(255, 255, 255, 0.12);
+}
+
+.atlas-ai:hover::before {
+  animation-duration: 1.2s;
+  filter: blur(1px)
+    drop-shadow(0 0 12px rgba(0, 230, 255, 0.9))
+    drop-shadow(0 0 30px rgba(255, 0, 200, 0.7));
+}
+
+.atlas-ai:hover .orbit {
+  animation-duration: 3s;
+}
+
+.atlas-ai:active .atlas-icon {
+  transform: scale(0.94);
+}
+
+@keyframes rainbowSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes rainbowSpinReverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+@keyframes atlasBreath {
+  0%,
+  100% { transform: scale(1); }
+  50%  { transform: scale(1.035); }
+}
+
+@keyframes robotFloat {
+  0%,
+  100% { transform: translateY(0); }
+  50%  { transform: translateY(-2px); }
+}
+
+/* ─── "Launch Atlas AI" elegant button (thin moving rainbow border) ─── */
+.atlas-start-btn {
+  position: relative;
+  padding: 14px 28px;
+  border: 0;
+  border-radius: 14px;
+  background: #0c1426;
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  isolation: isolate;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.atlas-start-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: conic-gradient(
+    from 0deg,
+    #00d9ff,
+    #4267ff,
+    #9b4dff,
+    #ff4fd8,
+    #ff8a00,
+    #ffe600,
+    #00e676,
+    #00d9ff
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: atlasBorder 5s linear infinite;
+  opacity: 0.85;
+}
+
+.atlas-start-btn::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 13px;
+  background: #0c1426;
+  z-index: -1;
+}
+
+.atlas-start-btn span {
+  position: relative;
+  z-index: 2;
+}
+
+.atlas-start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 35px rgba(70, 120, 255, 0.22),
+    0 0 25px rgba(140, 80, 255, 0.12);
+}
+
+.atlas-start-btn:hover::before {
+  animation-duration: 2.2s;
+  opacity: 1;
+}
+
+.atlas-start-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.atlas-start-btn span::after {
+  content: "";
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: white;
+  box-shadow:
+    0 0 8px #fff,
+    0 0 16px #7c4dff;
+  opacity: 0.8;
+  animation: smartDot 3.5s linear infinite;
+}
+
+@keyframes atlasBorder {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes smartDot {
+  0% {
+    left: -10px;
+    top: 50%;
+  }
+  50% {
+    left: calc(100% + 10px);
+    top: 50%;
+  }
+  100% {
+    left: -10px;
+    top: 50%;
+  }
+}
