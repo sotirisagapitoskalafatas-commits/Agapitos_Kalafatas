@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useLocale } from "@/contexts/LanguageContext";
+import { appendSpineFields, clearContactIdempotencyKey } from "@/lib/attribution-client";
 
 const iconMap: Record<string, React.ElementType> = {
   health: HeartPulse,
@@ -42,7 +43,7 @@ const colorMap: Record<string, { color: string; bgColor: string }> = {
 const categoryIds = ["health", "home", "business", "auto", "liability", "savings", "travel"];
 
 export default function InsurancePage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [openId, setOpenId] = useState<string | null>(null);
   const estimateRef = useRef<HTMLDivElement | null>(null);
 
@@ -78,10 +79,13 @@ export default function InsurancePage() {
     body.append("comments", "Quick cost estimate");
     body.append("gdpr_consent", "true");
 
+    appendSpineFields(body, locale);
+
     try {
       const res = await fetch("/api/contact", { method: "POST", body });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error submitting the form");
+      clearContactIdempotencyKey();
       setSent(true);
     } catch (err: any) {
       setError(err.message);

@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useLocale } from "@/contexts/LanguageContext";
+import { appendSpineFields, clearContactIdempotencyKey } from "@/lib/attribution-client";
 
 export default function UnifiedContactForm() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const tF = (t as any).contactPage?.form ?? {};
   const serviceGrid = (t as any).serviceGrid ?? [];
 
@@ -93,10 +94,13 @@ export default function UnifiedContactForm() {
       body.append("files", file);
     });
 
+    appendSpineFields(body, locale);
+
     try {
       const res = await fetch("/api/contact", { method: "POST", body });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Error submitting the form");
+      clearContactIdempotencyKey();
       setSuccess(true);
     } catch (err: any) {
       setErrorMsg(err.message);

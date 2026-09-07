@@ -2,12 +2,29 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/lib/rate-limit";
 import { escapeHtml, safeUrl } from "@/lib/html";
+import type { Attribution } from "@/lib/spine/attribution";
+import { buildConsentRecord } from "@/lib/spine/consent";
+import { isValidIdempotencyKey, newIdempotencyKey } from "@/lib/spine/idempotency";
+import { recordConsentRow, sendLeadAck, setLeadAttribution } from "@/lib/spine/server";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key);
+}
+
+function clientIp(req: Request): string | null {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim().slice(0, 64) || null;
+  return req.headers.get("x-real-ip");
+}
+
+function str(v: FormDataEntryValue | null, max = 512): string | null {
+  if (!v || typeof v !== "string") return null;
+  const s = v.trim();
+  if (!s) return null;
+  return s.slice(0, max);
 }
 
 export async function POST(req: Request) {
@@ -38,6 +55,41 @@ export async function POST(req: Request) {
     }
 
     const fullName = lastName ? `${firstName} ${lastName}` : firstName;
+
+    // ── Foundation spine: idempotency, consent version, source/UTM attribution ──
+    const idempotencyKey =
+      (formData.get("idempotency_key") as string) || newIdempotencyKey();
+    const consentVersion = str(formData.get("consent_version"), 32) || "v1";
+    const consentSource = str(formData.get("consent_source"), 256) || "website_form";
+    const locale = str(formData.get("locale"), 8) || "el";
+
+    const attribution: Attribution = {
+      utm_source: str(formData.get("utm_source")),
+      utm_medium: str(formData.get("utm_medium")),
+      utm_campaign: str(formData.get("utm_campaign")),
+      utm_term: str(formData.get("utm_term")),
+      utm_content: str(formData.get("utm_content")),
+      referrer: str(formData.get("referrer"), 1024),
+      landing_path: str(formData.get("landing_path")),
+    };
+
+    // Idempotent resubmissions: return the existing lead instead of inserting a duplicate.
+    let existing: { id: string; client_name: string; created_at: string } | null = null;
+    if (isValidIdempotencyKey(idempotencyKey)) {
+      try {
+        const { data } = await supabase
+          .from("leads")
+          .select("id, client_name, created_at")
+          .eq("idempotency_key", idempotencyKey)
+          .maybeSingle();
+        if (data) existing = data;
+      } catch {
+        // idempotency_key column not migrated yet — fall through to insert.
+      }
+    }
+    if (existing) {
+      return NextResponse.json({ success: true, lead: existing, duplicate: true });
+    }
 
     // Extract and upload files
     const files = formData.getAll("files") as File[];
@@ -88,13 +140,12 @@ export async function POST(req: Request) {
     if (propertyType) notesParts.push(`Τύπος Ακινήτου: ${propertyType}`);
     if (region) notesParts.push(`Περιοχή: ${region}`);
     if (comments) notesParts.push(`Σχόλια: ${comments}`);
-    if (gdprConsent) notesParts.push(`GDPR: Συναίνεση`);
+    if (gdprConsent) notesParts.push(`GDPR: Συναίνεση (έκδοση ${consentVersion})`);
     if (uploadedFiles.length > 0) notesParts.push(`Αρχεία: ${uploadedFiles.map(f => f.name).join(", ")}`);
 
     const notes = notesParts.join("\n") || null;
 
-    // Insert lead record — map to the existing leads table schema
-    // attached_files is patched separately so the form never breaks if the column is missing
+    // Insert lead record — base columns only so the form still works pre-migration.
     const { data: leadData, error: dbError } = await supabase
       .from("leads")
       .insert([
@@ -121,6 +172,15 @@ export async function POST(req: Request) {
       .single();
 
     if (dbError) {
+      // A concurrent duplicate hit the unique constraint first — return the existing row.
+      if (isValidIdempotencyKey(idempotencyKey) && /idempotency_key/i.test(dbError.message || "")) {
+        const { data: dup } = await supabase
+          .from("leads")
+          .select("id, client_name, created_at")
+          .eq("idempotency_key", idempotencyKey)
+          .maybeSingle();
+        if (dup) return NextResponse.json({ success: true, lead: dup, duplicate: true });
+      }
       console.error("Database error:", dbError);
       return NextResponse.json({ error: `Αποτυχία αποθήκευσης: ${dbError.message}` }, { status: 500 });
     }
@@ -131,6 +191,41 @@ export async function POST(req: Request) {
         .from("leads")
         .update({ attached_files: uploadedFiles })
         .eq("id", leadData.id);
+    }
+
+    // ── Foundation spine: persist attribution + consent columns (best-effort) ──
+    const consentGrantedAt = gdprConsent ? new Date().toISOString() : null;
+    await setLeadAttribution(supabase, leadData.id, {
+      idempotency_key: idempotencyKey,
+      consent_version: consentVersion,
+      consent_granted_at: consentGrantedAt,
+      consent_source: consentSource,
+      ...attribution,
+    });
+
+    // ── Foundation spine: append-only consent audit trail ──
+    await recordConsentRow(
+      supabase,
+      buildConsentRecord({
+        entityId: leadData.id,
+        email,
+        granted: gdprConsent,
+        consentVersion,
+        source: consentSource,
+        ip: clientIp(req),
+        userAgent: req.headers.get("user-agent"),
+        details: { service_category: serviceCategory, attribution },
+      })
+    );
+
+    // ── Foundation spine: auto-acknowledgement email (idempotent) ──
+    const ack = await sendLeadAck(
+      supabase,
+      { id: leadData.id, email, full_name: fullName, ack_sent_at: null },
+      locale
+    );
+    if (!ack.ok && ack.reason !== "ineligible" && ack.reason !== "already-acked") {
+      console.warn("auto-ack skipped:", ack.reason);
     }
 
     // Send email notification via Resend

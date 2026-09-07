@@ -21,6 +21,7 @@ import Navbar from "@/components/Navbar";
 import EnergyCinematicBackground from "@/components/EnergyCinematicBackground";
 import AtmosSphere from "@/components/AtmosSphere";
 import { useLocale } from "@/contexts/LanguageContext";
+import { appendSpineFields } from "@/lib/attribution-client";
 
 const iconMap: Record<string, React.ElementType> = {
   zap: Zap,
@@ -32,7 +33,7 @@ const iconMap: Record<string, React.ElementType> = {
 };
 
 export default function EnergyPage() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const tE = t.energyPage || {};
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [formSent, setFormSent] = useState(false);
@@ -47,6 +48,7 @@ export default function EnergyPage() {
     try {
       const form = e.currentTarget;
       const data = new FormData(form);
+      appendSpineFields(data, locale);
       const res = await fetch("/api/contact", { method: "POST", body: data });
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
