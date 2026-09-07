@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   Phone,
   PhoneCall,
+  Mail,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { useLocale } from "@/contexts/LanguageContext";
@@ -359,6 +360,27 @@ export default function InsurancePage() {
             <Link href="/" className="hover:text-white transition-colors">{tIns.footerHome}</Link>
             <Link href="/energy" className="hover:text-white transition-colors">{tIns.footerEnergy}</Link>
             <Link href="/contact" className="hover:text-white transition-colors">{tIns.footerContact}</Link>
+            <Link href="/privacy-policy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms-of-use" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/gdpr" className="hover:text-white transition-colors">GDPR</Link>
+            <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+            <Link href="/policy" className="hover:text-white transition-colors">Policy</Link>
+          </div>
+          <div className="flex items-center gap-6 text-xs text-slate-400">
+            <a
+              href="tel:+306977691776"
+              className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            >
+              <Phone className="h-4 w-4 text-amber-400" />
+              +30 697 769 1776
+            </a>
+            <a
+              href="mailto:kalafatasagapitos@gmail.com"
+              className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+            >
+              <Mail className="h-4 w-4 text-amber-400" />
+              kalafatasagapitos@gmail.com
+            </a>
           </div>
           <p className="text-xs text-slate-500">© 2026 Agapitos Kalafatas. All rights reserved.</p>
         </div>

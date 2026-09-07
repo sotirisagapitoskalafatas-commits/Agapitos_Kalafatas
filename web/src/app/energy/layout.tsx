@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Personal Energy Advisor",
+  title: "Athens Innovation Hub — Personal Energy Advisor",
   description:
-    "Compare and find the cheapest energy provider in Greece - free. Complete energy solutions for home and business, all over Greece.",
+    "Your personal energy advisor, face to face. Free energy comparison for home and business — Electricity, Gas, Solar, E-Mobility, Storage and Savings, all over Greece.",
   alternates: { canonical: "/energy" },
 };
 

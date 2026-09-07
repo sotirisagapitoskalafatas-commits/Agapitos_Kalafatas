@@ -1,9 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { Phone, Mail } from "lucide-react";
 import { useLocale } from "@/contexts/LanguageContext";
 
-export default function SiteFooter() {
+export default function SiteFooter({
+  hideBrand = false,
+}: {
+  hideBrand?: boolean;
+}) {
   const { t } = useLocale();
 
   return (
@@ -15,7 +20,11 @@ export default function SiteFooter() {
             alt="A"
             className="h-16 w-40 rounded-2xl object-cover"
           />
-          <span className="font-semibold text-slate-900">Agapitos Kalafatas</span>
+          {!hideBrand && (
+            <span className="font-semibold text-slate-900">
+              Agapitos Kalafatas
+            </span>
+          )}
         </div>
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-500">
           <Link href="/chat" className="transition-colors hover:text-slate-900">
@@ -48,6 +57,24 @@ export default function SiteFooter() {
           <Link href="/policy" className="transition-colors hover:text-slate-900">
             Policy
           </Link>
+        </div>
+      </div>
+      <div className="mx-auto mt-10 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-slate-100 px-6 pt-6 md:flex-row">
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+          <a
+            href="tel:+306977691776"
+            className="inline-flex items-center gap-2 text-slate-500 transition-colors hover:text-slate-900"
+          >
+            <Phone className="h-4 w-4 text-amber-600" />
+            +30 697 769 1776
+          </a>
+          <a
+            href="mailto:kalafatasagapitos@gmail.com"
+            className="inline-flex items-center gap-2 text-slate-500 transition-colors hover:text-slate-900"
+          >
+            <Mail className="h-4 w-4 text-amber-600" />
+            kalafatasagapitos@gmail.com
+          </a>
         </div>
         <p className="text-xs text-slate-400">{t.footer?.rights}</p>
       </div>

@@ -8,7 +8,7 @@
  */
 
 import Link from "next/link";
-import { ArrowRight, Zap, Globe, ShieldCheck } from "lucide-react";
+import { ArrowRight, Zap, Globe, ShieldCheck, Phone, Mail } from "lucide-react";
 import { getServicesList } from "@/lib/servicesData";
 import Navbar from "@/components/Navbar";
 import CinematicSkyBackground from "@/components/CinematicSkyBackground";
@@ -157,6 +157,76 @@ export default function ServicesHubPage() {
             </Link>
           </div>
         </section>
+
+        {/* Footer */}
+        <footer className="border-t border-slate-300/15 bg-[#030711] py-12">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 px-6 md:flex-row">
+            <div className="flex items-center gap-3">
+              <img
+                src="/images/logo-footer.png"
+                alt="A"
+                className="h-16 w-40 rounded-2xl object-cover"
+              />
+              <span className="font-semibold text-white">Agapitos Kalafatas</span>
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-slate-400">
+              <Link href="/chat" className="transition-colors hover:text-white">
+                Atlas AI
+              </Link>
+              <Link href="/about" className="transition-colors hover:text-white">
+                About
+              </Link>
+              <Link
+                href="/privacy-policy"
+                className="transition-colors hover:text-white"
+              >
+                Privacy
+              </Link>
+              <Link
+                href="/terms-of-use"
+                className="transition-colors hover:text-white"
+              >
+                Terms
+              </Link>
+              <Link href="/gdpr" className="transition-colors hover:text-white">
+                GDPR
+              </Link>
+              <Link
+                href="/cookies"
+                className="transition-colors hover:text-white"
+              >
+                Cookies
+              </Link>
+              <Link
+                href="/policy"
+                className="transition-colors hover:text-white"
+              >
+                Policy
+              </Link>
+            </div>
+          </div>
+          <div className="mx-auto mt-10 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-slate-300/10 px-6 pt-6 md:flex-row">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm">
+              <a
+                href="tel:+306977691776"
+                className="inline-flex items-center gap-2 text-slate-400 transition-colors hover:text-white"
+              >
+                <Phone className="h-4 w-4 text-amber-400" />
+                +30 697 769 1776
+              </a>
+              <a
+                href="mailto:kalafatasagapitos@gmail.com"
+                className="inline-flex items-center gap-2 text-slate-400 transition-colors hover:text-white"
+              >
+                <Mail className="h-4 w-4 text-amber-400" />
+                kalafatasagapitos@gmail.com
+              </a>
+            </div>
+            <p className="text-xs text-slate-500">
+              © 2026 Agapitos Kalafatas. All rights reserved.
+            </p>
+          </div>
+        </footer>
       </main>
     </>
   );

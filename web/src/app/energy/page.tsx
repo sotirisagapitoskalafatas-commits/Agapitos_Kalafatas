@@ -9,41 +9,92 @@ import {
   Car,
   BatteryCharging,
   TrendingDown,
-  ShieldCheck,
   Phone,
   Mail,
-  MapPin,
   ChevronDown,
   ChevronUp,
   Upload,
   ArrowRight,
-  ArrowLeft,
   Check,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import EnergyCinematicBackground from "@/components/EnergyCinematicBackground";
-import { useLocale } from "@/contexts/LanguageContext";
+import SiteFooter from "@/components/SiteFooter";
 
 const iconMap: Record<string, React.ElementType> = {
-  zap: Zap,
-  flame: Flame,
-  sun: Sun,
-  car: Car,
-  battery: BatteryCharging,
-  trending: TrendingDown,
+  Electricity: Zap,
+  Gas: Flame,
+  Solar: Sun,
+  "E-Mobility": Car,
+  "Energy Storage": BatteryCharging,
+  "Energy Savings": TrendingDown,
 };
 
-const energyServiceValues = [
-  "Electricity",
-  "Natural Gas",
-  "Solar",
-  "E-Mobility",
-  "Energy Storage",
-  "Energy Savings",
+const services = [
+  {
+    title: "Electricity",
+    desc: "Cheap energy plans made for you. We compare providers and find the most cost-effective solution.",
+  },
+  {
+    title: "Gas",
+    desc: "Tailored natural gas solutions for home and business with the best pricing plans.",
+  },
+  {
+    title: "Solar (Photovoltaic)",
+    desc: "Innovation and sustainable development for your space. Invest in green energy safely.",
+  },
+  {
+    title: "E-Mobility",
+    desc: "We drive ecologically, we move electrically. Charging and EV solutions for every need.",
+  },
+  {
+    title: "Energy Storage",
+    desc: "Battery storage solutions for autonomy and savings.",
+  },
+  {
+    title: "Energy Savings",
+    desc: "Consumption analysis and strategies to reduce your electricity bill.",
+  },
+];
+
+const faqs = [
+  {
+    q: "Is the service free?",
+    a: "Yes, our service is completely free, with no hidden charges. We are compensated by the providers, not by you.",
+  },
+  {
+    q: "How does switching provider work?",
+    a: "You sign the new contract with your chosen provider — online or in person. They take care of the notification, the meter reading and the transfer, while we guide you at every step.",
+  },
+  {
+    q: "Do I have to pay to switch?",
+    a: "No. Switching is completely free of charge and without penalties — you only pay the new provider according to your new plan.",
+  },
+  {
+    q: "How long does it take?",
+    a: "Typically 1 to 2 weeks from the moment your new contract is activated, depending on the provider and the time of year.",
+  },
+  {
+    q: "Can the power be cut off?",
+    a: "No. The transition is seamless — supply is never interrupted between the old and the new provider.",
+  },
+];
+
+const trust = [
+  {
+    value: "100% Free",
+    desc: "Our service is completely free, with no hidden charges.",
+  },
+  {
+    value: "Immediate Service",
+    desc: "Contact within hours from your personal advisor.",
+  },
+  {
+    value: "Tailored Solution",
+    desc: "A proposal built specifically for your consumption needs.",
+  },
 ];
 
 export default function EnergyPage() {
-  const { t } = useLocale();
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [formSent, setFormSent] = useState(false);
   const [formSending, setFormSending] = useState(false);
@@ -70,25 +121,7 @@ export default function EnergyPage() {
       setFormSending(false);
     }
   }
-  const railRef = useRef<HTMLDivElement | null>(null);
 
-  const faqs = t.energyPage?.faqs || [];
-  const services = t.energyPage?.services || [];
-  const regions = t.energyPage?.regions || [];
-
-  const tE = t.energyPage || {};
-
-  const scrollRail = (dir: number) => {
-    const rail = railRef.current;
-    if (!rail) return;
-    const card = rail.querySelector("article");
-    const step = card
-      ? card.getBoundingClientRect().width + 18
-      : rail.clientWidth * 0.8;
-    rail.scrollBy({ left: dir * step, behavior: "smooth" });
-  };
-
-  // Scroll-driven reveal for cards/sections
   useEffect(() => {
     const els = document.querySelectorAll("[data-reveal]");
     if (!("IntersectionObserver" in window)) {
@@ -113,214 +146,121 @@ export default function EnergyPage() {
     return () => io.disconnect();
   }, []);
 
-  const regionImgs = [
-    "/energy/region-attica.jpg",
-    "/energy/region-central.jpg",
-    "/energy/region-north.jpg",
-    "/energy/region-ionian.jpg",
-    "/energy/region-aegean.jpg",
-    "/energy/region-crete.jpg",
-  ];
-
   return (
-    <div className="bg-[#02060f] text-slate-100 min-h-screen font-sans antialiased overflow-x-clip">
-      <style>{`@keyframes flowPulse{0%,100%{opacity:.35}50%{opacity:.9}} .reveal-init{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.2,.7,.2,1),transform .85s cubic-bezier(.2,.7,.2,1)} .revealed{opacity:1;transform:none}`}</style>
-
-      <EnergyCinematicBackground flowCyan={true} />
+    <main className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased overflow-x-clip">
+      <style>{`@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.35}} .reveal-init{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.2,.7,.2,1),transform .85s cubic-bezier(.2,.7,.2,1)} .revealed{opacity:1;transform:none}`}</style>
 
       <Navbar />
 
-      {/* HERO — reads over the orbit */}
-      <section
-        className="relative z-10 min-h-screen flex flex-col justify-end px-5 sm:px-10 lg:px-20 pb-16 md:pb-24"
-        style={{ background: "linear-gradient(to top, rgba(2,6,15,.72), rgba(2,6,15,0) 46%)" }}
-      >
-        <div className="max-w-4xl">
-          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#02060f]/80 border border-amber-400/40 text-[11px] font-medium tracking-[0.2em] uppercase text-amber-400">
-            <span className="block w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_10px_2px_rgba(34,211,238,.8)]" />
-            {tE.badge}
+      {/* HERO — bright */}
+      <section className="relative overflow-hidden pt-40 pb-20">
+        <div className="pointer-events-none absolute -top-24 right-0 h-[460px] w-[460px] rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="pointer-events-none absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full bg-sky-500/10 blur-3xl" />
+        <div className="relative z-10 mx-auto max-w-6xl px-6">
+          <div className="mb-5 inline-flex items-center gap-2.5 rounded-full border border-amber-200 bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-amber-700 shadow-sm">
+            <span
+              className="block h-1.5 w-1.5 rounded-full bg-amber-500"
+              style={{ animation: "pulseDot 2s ease-in-out infinite" }}
+            />
+            Athens Innovation Hub
           </div>
-          <h1 className="mt-6 text-[40px] sm:text-6xl lg:text-7xl font-light leading-[1.02] tracking-tight text-slate-50">
-            {tE.title1} <span className="text-amber-400">{tE.titleHighlight}</span>
+          <h1 className="max-w-4xl text-4xl font-black leading-[1.05] tracking-tight text-slate-900 sm:text-6xl lg:text-7xl">
+            Your advisor, face to face
+            <br />
+            <span className="bg-gradient-to-br from-amber-600 via-amber-500 to-amber-400 bg-clip-text text-transparent">
+              Energy Operations
+            </span>
           </h1>
-          <p className="mt-6 max-w-2xl text-base md:text-lg font-light leading-relaxed text-slate-300/85">
-            {tE.title2}
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-600">
+            We watch the market for you.
           </p>
-          <div className="flex flex-wrap gap-4 mt-9">
+          <div className="mt-10 flex flex-wrap gap-4">
             <a
-              href="#contact"
-              className="inline-flex items-center gap-2 rounded-full bg-amber-400 hover:bg-amber-300 text-[#0b1220] font-semibold px-8 py-4 text-[13px] tracking-[0.14em] uppercase transition-colors"
+              href="#services"
+              className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-8 py-4 text-sm font-semibold text-white shadow-lg shadow-amber-200 transition-colors hover:bg-amber-600"
             >
-              {tE.ctaViewSolutions}
-              <ArrowRight className="w-4 h-4" />
+              See our services
+              <ArrowRight className="h-4 w-4" />
             </a>
             <a
               href="tel:+306977691776"
-              className="inline-flex items-center gap-2.5 rounded-full border border-slate-400/30 px-8 py-4 text-sm text-slate-100 transition-colors hover:border-cyan-400/60"
+              className="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-8 py-4 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50"
             >
-              <Phone className="w-4 h-4 text-cyan-400" /> +30 697 769 1776
+              <Phone className="h-4 w-4 text-amber-600" /> +30 697 769 1776
             </a>
           </div>
         </div>
-
-        <div className="mt-14 flex items-center gap-3 text-[10.5px] tracking-[0.26em] uppercase text-cyan-400/85">
-          <span className="block w-px h-8 bg-gradient-to-b from-cyan-400/80 to-transparent" />
-          Scroll
-        </div>
       </section>
 
-      {/* STATS */}
-      <section className="relative z-10 px-5 sm:px-10 lg:px-20 pb-20 lg:pb-36">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div data-reveal className="p-6 lg:p-8 bg-[#040a16]/60 backdrop-blur-md border border-slate-400/12 rounded-2xl">
-            <div className="text-4xl lg:text-5xl font-light text-amber-400">100%</div>
-            <div className="mt-2.5 text-[11px] tracking-[0.2em] uppercase text-slate-400/80">{tE.statFree}</div>
-          </div>
-          <div data-reveal className="p-6 lg:p-8 bg-[#040a16]/60 backdrop-blur-md border border-slate-400/12 rounded-2xl">
-            <div className="text-4xl lg:text-5xl font-light text-slate-50">7</div>
-            <div className="mt-2.5 text-[11px] tracking-[0.2em] uppercase text-slate-400/80">{tE.statDays}</div>
-          </div>
-          <div data-reveal className="p-6 lg:p-8 bg-[#040a16]/60 backdrop-blur-md border border-slate-400/12 rounded-2xl">
-            <div className="text-4xl lg:text-5xl font-light text-slate-50">24/7</div>
-            <div className="mt-2.5 text-[11px] tracking-[0.2em] uppercase text-slate-400/80">{tE.statSupport}</div>
-          </div>
-          <div data-reveal className="p-6 lg:p-8 bg-[#040a16]/60 backdrop-blur-md border border-slate-400/12 rounded-2xl">
-            <div className="text-4xl lg:text-5xl font-light text-amber-400">12.000+</div>
-            <div className="mt-2.5 text-[11px] tracking-[0.2em] uppercase text-slate-400/80">{tE.statSatisfied}</div>
-          </div>
-        </div>
-      </section>
-
-      {/* GREECE COVERAGE — scroll rail */}
-      <section
-        id="greece"
-        className="relative z-10 py-20 lg:py-28"
-        style={{ background: "linear-gradient(to bottom, rgba(2,6,15,0), rgba(2,6,15,.5) 40%, rgba(2,6,15,.85) 88%)" }}
-      >
-        <div className="max-w-6xl mx-auto px-5 sm:px-10 lg:px-20">
-          <p data-reveal className="text-[11px] tracking-[0.26em] uppercase text-cyan-400">{tE.greeceBadge}</p>
-          <h2 data-reveal className="mt-3.5 text-3xl sm:text-4xl lg:text-5xl font-light text-slate-50 leading-tight">
-            {tE.greeceTitle}
-          </h2>
-          <p data-reveal className="mt-4 max-w-xl font-light text-slate-300/80 leading-relaxed">
-            {tE.greeceDesc}
-          </p>
-
-          <div className="mt-10 flex items-center justify-between gap-4">
-            <span className="text-[10.5px] tracking-[0.24em] uppercase text-slate-400/60">
-              {tE.scrollHint || "Six regions · swipe to explore"}
-            </span>
-            <div className="flex gap-2.5">
-              <button
-                type="button"
-                onClick={() => scrollRail(-1)}
-                aria-label="Previous"
-                className="w-11 h-11 rounded-full border border-slate-400/28 bg-[#040a16]/60 grid place-items-center text-slate-100 transition-colors hover:border-amber-400/60"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollRail(1)}
-                aria-label="Next"
-                className="w-11 h-11 rounded-full border border-slate-400/28 bg-[#040a16]/60 grid place-items-center text-slate-100 transition-colors hover:border-amber-400/60"
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div
-          ref={railRef}
-          className="mt-6 px-5 sm:px-10 lg:px-20 flex gap-[18px] overflow-x-auto scroll-smooth"
-          style={{ scrollSnapType: "x mandatory", scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {regions.map((reg, idx) => (
-            <article
-              key={idx}
-              data-reveal
-              className="relative flex-none w-[78vw] sm:w-[340px] lg:w-[360px] aspect-[4/5] overflow-hidden border border-slate-400/18 rounded-3xl group"
-              style={{ scrollSnapAlign: "start" }}
-            >
+      {/* TRUST VALUES */}
+      <section className="relative z-10 pb-16">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid gap-4 sm:grid-cols-3">
+            {trust.map((item, idx) => (
               <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-[800ms] group-hover:scale-[1.06]"
-                style={{
-                  backgroundImage: `url('${regionImgs[idx % regionImgs.length]}')`,
-                  filter: "saturate(.72) brightness(.62) contrast(1.05) hue-rotate(-8deg)",
-                }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#02060f]/95 via-[#02060f]/45 to-[#02060f]/10" />
-              <div className="absolute inset-x-0 bottom-0 p-6">
-                <span className="text-4xl font-light text-amber-400">0{idx + 1}</span>
-                <h3 className="mt-1.5 text-xl font-medium text-slate-50">{reg.title}</h3>
-                <p className="mt-2.5 text-[13.5px] font-light leading-relaxed text-slate-300/85">{reg.desc}</p>
-                <p className="mt-3.5 text-[11px] tracking-[0.18em] uppercase text-cyan-400">◈ {reg.location}</p>
+                key={item.value}
+                data-reveal
+                className={`rounded-2xl border border-slate-200 bg-white p-6 shadow-sm ${
+                  idx === 2 ? "sm:col-span-1" : ""
+                }`}
+              >
+                <div className="text-2xl font-black text-amber-600">
+                  {item.value}
+                </div>
+                <div className="mt-2 text-sm text-slate-600">{item.desc}</div>
               </div>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      {/* HUB BAND */}
-      <section className="relative z-10 px-5 sm:px-10 lg:px-20 py-10 lg:py-14 bg-[#02060f]">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-4">
-          <figure data-reveal className="relative aspect-[16/10] overflow-hidden border border-slate-400/16 rounded-3xl">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "url('/energy/hub-interior2.jpg')", filter: "saturate(.72) brightness(.62) contrast(1.05)" }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#02060f]/92 via-[#02060f]/30 to-transparent" />
-            <figcaption className="absolute inset-x-0 bottom-0 p-6">
-              <p className="text-[10.5px] tracking-[0.22em] uppercase text-cyan-400">{tE.hub1Key}</p>
-              <h3 className="mt-2 text-2xl lg:text-3xl font-light text-slate-50">{tE.hub1Title}</h3>
-            </figcaption>
-          </figure>
-          <figure data-reveal className="relative aspect-[16/10] overflow-hidden border border-slate-400/16 rounded-3xl">
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: "url('/energy/ops-room.jpg')", filter: "saturate(.72) brightness(.62) contrast(1.05)" }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#02060f]/92 via-[#02060f]/30 to-transparent" />
-            <figcaption className="absolute inset-x-0 bottom-0 p-6">
-              <p className="text-[10.5px] tracking-[0.22em] uppercase text-cyan-400">{tE.hub2Key}</p>
-              <h3 className="mt-2 text-2xl lg:text-3xl font-light text-slate-50">{tE.hub2Title}</h3>
-            </figcaption>
-          </figure>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* SERVICES */}
-      <section id="services" className="relative z-10 py-20 lg:py-28 px-5 sm:px-10 lg:px-20 bg-[#02060f]">
-        <div className="max-w-6xl mx-auto">
-          <p data-reveal className="text-[11px] tracking-[0.26em] uppercase text-cyan-400">{tE.servicesBadge}</p>
-          <h2 data-reveal className="mt-3.5 text-3xl sm:text-4xl lg:text-5xl font-light text-slate-50 leading-tight">
-            {tE.servicesTitle}
+      <section id="services" className="relative z-10 py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <p
+            data-reveal
+            className="text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-600"
+          >
+            Services
+          </p>
+          <h2
+            data-reveal
+            className="mt-3.5 text-3xl font-black leading-tight text-slate-900 sm:text-4xl lg:text-5xl"
+          >
+            For home and business!
           </h2>
-          <p data-reveal className="mt-4 max-w-xl font-light text-slate-300/80 leading-relaxed">
-            {tE.servicesDesc}
+          <p data-reveal className="mt-4 max-w-xl text-slate-600">
+            Complete energy solutions tailored to your needs.
           </p>
 
-          <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {services.map((srv, idx) => {
-              const Icon = iconMap[srv.icon] || Zap;
+              const Icon = iconMap[srv.title] || Zap;
               return (
                 <div
-                  key={idx}
+                  key={srv.title}
                   data-reveal
-                  className="flex flex-col gap-3.5 p-7 lg:p-8 bg-[#040a16]/72 border border-slate-400/14 rounded-2xl transition-colors hover:bg-[#091222]/85 hover:border-amber-400/35"
+                  className="flex flex-col rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/60"
                 >
-                  <span className="text-[11px] tracking-[0.2em] text-cyan-400/75">0{idx + 1}</span>
-                  <div className="flex items-center gap-3">
-                    <Icon className={`w-6 h-6 ${srv.iconColor || "text-amber-400"}`} />
-                    <h3 className="text-2xl font-light text-slate-50">{srv.title}</h3>
+                  <span className="text-xs font-black tracking-[0.2em] text-slate-300">
+                    0{idx + 1}
+                  </span>
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-amber-100 bg-amber-50">
+                      <Icon className="h-6 w-6 text-amber-600" />
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900">
+                      {srv.title}
+                    </h3>
                   </div>
-                  <p className="text-sm font-light leading-relaxed text-slate-300/80">{srv.desc}</p>
+                  <p className="mt-4 text-sm leading-relaxed text-slate-600">
+                    {srv.desc}
+                  </p>
                   <Link
-                    href={`/contact?service=${encodeURIComponent(energyServiceValues[idx] || energyServiceValues[0])}`}
-                    className="mt-auto pt-2 inline-flex items-center gap-1.5 text-[11.5px] tracking-[0.16em] uppercase text-amber-400 transition-transform hover:translate-x-1"
+                    href={`/contact?service=${encodeURIComponent(srv.title)}`}
+                    className="mt-auto inline-flex items-center gap-1.5 pt-6 text-sm font-semibold text-amber-700 transition-transform hover:translate-x-1"
                   >
-                    {tE.seeMore} <ArrowRight className="w-3.5 h-3.5" />
+                    See more <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               );
@@ -329,71 +269,100 @@ export default function EnergyPage() {
         </div>
       </section>
 
-      {/* ABOUT & GDPR */}
-      <section id="about" className="relative z-10 py-20 lg:py-28 px-5 sm:px-10 lg:px-20 bg-[#02060f]">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-10 lg:gap-14 items-start">
-          <div data-reveal>
-            <p className="text-[11px] tracking-[0.26em] uppercase text-cyan-400">{tE.whoWeAre}</p>
-            <h2 className="mt-3.5 text-3xl sm:text-4xl lg:text-5xl font-light text-slate-50 leading-tight">
-              {tE.aboutTitle}
-            </h2>
-            <p className="mt-5 font-light text-slate-300/82 leading-relaxed">{tE.aboutText}</p>
-            <div className="mt-7 p-6 rounded-2xl bg-[#091222]/50 border-l-[3px] border-amber-400/40 border border-slate-400/12">
-              <h3 className="text-[13px] font-semibold tracking-[0.1em] uppercase text-amber-400">{tE.visionTitle}</h3>
-              <p className="mt-2.5 font-light text-slate-300/82 leading-relaxed">{tE.visionText}</p>
+      {/* WHO WE ARE */}
+      <section id="about" className="relative z-10 py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-14">
+            <div data-reveal>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-sky-600">
+                Who We Are
+              </p>
+              <h2 className="mt-3.5 text-3xl font-black leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
+                Your personal energy advisor!
+              </h2>
+              <p className="mt-5 leading-relaxed text-slate-600">
+                We are a team of specialized energy consultants, dedicated to
+                creating value and safety for our clients. Our goal is to
+                provide complete energy solutions that fully satisfy your needs
+                and expectations.
+              </p>
+              <div className="mt-7 rounded-2xl border-l-[3px] border-amber-400 bg-amber-50/60 p-6">
+                <h3 className="text-[13px] font-semibold uppercase tracking-[0.1em] text-amber-700">
+                  Our vision
+                </h3>
+                <p className="mt-2.5 leading-relaxed text-slate-600">
+                  We ensure that every client has their own personal energy
+                  advisor, providing customized services throughout the
+                  partnership.
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="grid gap-4">
-            <div data-reveal className="relative aspect-[3/2] overflow-hidden border border-slate-400/16 rounded-3xl">
+            <div className="grid gap-4">
               <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: "url('/energy/home-energy.jpg')", filter: "saturate(.72) brightness(.62) contrast(1.05)" }}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#02060f]/80 to-transparent" />
-              <p className="absolute left-6 bottom-5 text-[11px] tracking-[0.18em] uppercase text-slate-300/80">
-                {tE.aboutImgCaption}
-              </p>
-            </div>
-            <div data-reveal className="p-7 lg:p-9 rounded-3xl border border-slate-400/18 bg-gradient-to-br from-[#091222]/80 to-[#040a16]/50">
-              <p className="flex items-center gap-2.5 text-[12px] tracking-[0.14em] uppercase text-cyan-400">
-                <span className="block w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_10px_2px_rgba(34,211,238,.7)]" />
-                {tE.privacyTitle}
-              </p>
-              <h3 className="mt-4 text-2xl lg:text-[28px] font-light leading-snug text-slate-50">
-                {tE.privacyHeading}
-              </h3>
-              <p className="mt-3.5 font-light text-slate-300/80 leading-relaxed">{tE.privacyText}</p>
+                data-reveal
+                className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm lg:p-10"
+              >
+                <p className="flex items-center gap-2.5 text-[12px] font-semibold uppercase tracking-[0.14em] text-sky-700">
+                  <span className="block h-1.5 w-1.5 rounded-full bg-sky-500" />
+                  Expertise meets technology
+                </p>
+                <h3 className="mt-4 text-2xl font-bold leading-snug text-slate-900 lg:text-[28px]">
+                  Privacy-First Architecture
+                </h3>
+                <p className="mt-3.5 leading-relaxed text-slate-600">
+                  GDPR is not a checkbox. It is the architecture.
+                </p>
+                <p className="mt-3.5 leading-relaxed text-slate-600">
+                  Our system is built privacy-first. We never scrape third-party
+                  sites or social platforms. Every contact has a documented
+                  lawful basis and can exercise their rights from a self-service
+                  panel.
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="relative z-10 py-20 lg:py-28 px-5 sm:px-10 lg:px-20 bg-[#02060f]">
-        <div className="max-w-3xl mx-auto">
-          <p data-reveal className="text-[11px] tracking-[0.26em] uppercase text-cyan-400">{tE.faqBadge}</p>
-          <h2 data-reveal className="mt-3.5 text-3xl sm:text-4xl lg:text-5xl font-light text-slate-50 leading-tight">
-            {tE.faqTitle}
+      <section id="faq" className="relative z-10 py-20">
+        <div className="mx-auto max-w-3xl px-6">
+          <p
+            data-reveal
+            className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-600"
+          >
+            Frequently Asked Questions
+          </p>
+          <h2
+            data-reveal
+            className="mt-3.5 text-center text-3xl font-black leading-tight text-slate-900 sm:text-4xl lg:text-5xl"
+          >
+            Everything you need to know
           </h2>
-          <p data-reveal className="mt-4 font-light text-slate-300/80">{tE.faqDesc}</p>
+          <p data-reveal className="mt-4 text-center text-slate-500">
+            Everything you need to know about switching energy provider.
+          </p>
 
-          <div data-reveal className="mt-10 grid gap-2.5">
+          <div data-reveal className="mt-10 grid gap-3">
             {faqs.map((faq, idx) => (
-              <div key={idx} className="bg-[#040a16]/72 border border-slate-400/14 rounded-2xl overflow-hidden">
+              <div
+                key={idx}
+                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+              >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                  className="w-full flex items-center justify-between gap-4 p-5 text-left font-medium text-slate-50 hover:text-amber-300 transition-colors"
+                  className="flex w-full items-center justify-between gap-4 p-5 text-left font-semibold text-slate-900 transition-colors hover:text-amber-700"
                 >
                   <span>{faq.q}</span>
                   {openFaq === idx ? (
-                    <ChevronUp className="w-5 h-5 text-amber-400 shrink-0" />
+                    <ChevronUp className="h-5 w-5 shrink-0 text-amber-600" />
                   ) : (
-                    <ChevronDown className="w-5 h-5 text-slate-400 shrink-0" />
+                    <ChevronDown className="h-5 w-5 shrink-0 text-slate-400" />
                   )}
                 </button>
                 {openFaq === idx && (
-                  <p className="px-5 pb-5 text-sm font-light text-slate-300/80 leading-relaxed border-t border-slate-400/8 pt-4">
+                  <p className="border-t border-slate-100 px-5 pb-5 pt-4 text-sm leading-relaxed text-slate-600">
                     {faq.a}
                   </p>
                 )}
@@ -403,37 +372,60 @@ export default function EnergyPage() {
         </div>
       </section>
 
-      {/* CONTACT */}
-      <section id="contact" className="relative z-10 py-20 lg:py-28 px-5 sm:px-10 lg:px-20 bg-[#02060f]">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-5 mb-12 lg:mb-16">
-            <div data-reveal className="p-7 rounded-2xl bg-[#040a16]/60 border border-slate-400/14">
-              <h3 className="text-lg font-semibold text-amber-400">{tE.trust1Title}</h3>
-              <p className="mt-2.5 text-sm font-light text-slate-300/80">{tE.trust1Desc}</p>
-            </div>
-            <div data-reveal className="p-7 rounded-2xl bg-[#040a16]/60 border border-slate-400/14">
-              <h3 className="text-lg font-semibold text-amber-400">{tE.trust2Title}</h3>
-              <p className="mt-2.5 text-sm font-light text-slate-300/80">{tE.trust2Desc}</p>
-            </div>
-            <div data-reveal className="p-7 rounded-2xl bg-[#040a16]/60 border border-slate-400/14 md:col-span-2">
-              <h3 className="text-lg font-semibold text-amber-400">{tE.trust3Title}</h3>
-              <p className="mt-2.5 text-sm font-light text-slate-300/80">{tE.trust3Desc}</p>
-            </div>
+      {/* CONTACT / REQUEST A CALL */}
+      <section
+        id="contact"
+        className="relative z-10 overflow-hidden py-24"
+      >
+        <div className="pointer-events-none absolute top-0 left-1/2 h-[400px] w-[800px] -translate-x-1/2 rounded-full bg-amber-500/10 blur-3xl" />
+        <div className="relative z-10 mx-auto max-w-6xl px-6">
+          <div data-reveal className="text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-600">
+              Request a call back!
+            </p>
+            <h2 className="mt-3.5 text-3xl font-black leading-tight text-slate-900 sm:text-4xl lg:text-5xl">
+              Ready to save money?
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-slate-600">
+              Fill in the form and a specialized consultant will contact you
+              immediately to propose the right plan — FREE!
+            </p>
           </div>
 
-          <div className="grid lg:grid-cols-12 gap-10 lg:gap-14 items-start">
-            <div data-reveal className="lg:col-span-5">
-              <p className="text-[11px] tracking-[0.26em] uppercase text-cyan-400">{tE.contactBadge}</p>
-              <h2 className="mt-3.5 text-3xl sm:text-4xl lg:text-5xl font-light text-slate-50 leading-tight">
-                {tE.contactTitle}
-              </h2>
-              <p className="mt-5 font-light text-slate-300/82 leading-relaxed">{tE.contactDesc}</p>
-              <div className="mt-8 grid gap-4">
-                <a href="tel:+306977691776" className="flex items-center gap-3 text-slate-100 font-medium">
-                  <Phone className="w-5 h-5 text-amber-400" /> +30 697 769 1776
+          <div className="mt-12 grid gap-10 lg:grid-cols-12 lg:gap-14">
+            <div data-reveal className="lg:col-span-4">
+              <div className="grid gap-4">
+                <a
+                  href="tel:+306977691776"
+                  className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50">
+                    <Phone className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-slate-400">
+                      Call us
+                    </p>
+                    <p className="font-semibold text-slate-900">
+                      +30 697 769 1776
+                    </p>
+                  </div>
                 </a>
-                <a href="mailto:kalafatasagapitos@gmail.com" className="flex items-center gap-3 text-slate-100 font-medium">
-                  <Mail className="w-5 h-5 text-amber-400" /> kalafatasagapitos@gmail.com
+                <a
+                  href="mailto:kalafatasagapitos@gmail.com"
+                  className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:bg-slate-50"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50">
+                    <Mail className="h-5 w-5 text-sky-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-widest text-slate-400">
+                      Email
+                    </p>
+                    <p className="font-semibold text-slate-900">
+                      kalafatasagapitos@gmail.com
+                    </p>
+                  </div>
                 </a>
               </div>
             </div>
@@ -441,83 +433,94 @@ export default function EnergyPage() {
             <form
               data-reveal
               onSubmit={handleEnergySubmit}
-              className="lg:col-span-7 grid gap-5 p-6 sm:p-9 rounded-3xl border border-slate-400/18 bg-[#060d1a]/75"
+              className="grid gap-5 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:col-span-8 sm:p-9"
             >
-              <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
-                    {tE.formFirstName}
+                  <label className="mb-2 block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    First Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     name="first_name"
                     required
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-amber-400 focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
-                    {tE.formLastName}
+                  <label className="mb-2 block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Last Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     name="last_name"
                     required
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-amber-400 focus:bg-white"
                   />
                 </div>
               </div>
-              <div className="grid sm:grid-cols-2 gap-5">
+              <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
-                    {tE.formEmail}
+                  <label className="mb-2 block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Email (optional)
                   </label>
                   <input
                     type="email"
                     name="email"
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-amber-400 focus:bg-white"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
-                    {tE.formPhone}
+                  <label className="mb-2 block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Phone <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
                     name="phone"
                     required
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-amber-400 focus:bg-white"
                   />
                 </div>
               </div>
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div>
-                  <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
-                    {tE.formPropertyType}
+                  <label className="mb-2 block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Property Type <span className="text-red-500">*</span>
                   </label>
-                  <select name="property_type" className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
-                    <option className="bg-[#0a1120]">{tE.formHome}</option>
-                    <option className="bg-[#0a1120]">{tE.formBusiness}</option>
+                  <select
+                    name="property_type"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-amber-400"
+                  >
+                    <option>Home</option>
+                    <option>Business</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
-                    {tE.formRegion}
+                  <label className="mb-2 block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Region <span className="text-red-500">*</span>
                   </label>
-                  <select name="region" className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
-                    <option className="bg-[#0a1120]">{regions[0]?.title || "Attica"}</option>
-                    <option className="bg-[#0a1120]">{regions[2]?.title || "Northern Greece"}</option>
-                    <option className="bg-[#0a1120]">{regions[5]?.title || "Crete"}</option>
-                    <option className="bg-[#0a1120]">{tE.formOtherRegion}</option>
+                  <select
+                    name="region"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-amber-400"
+                  >
+                    <option>Attica</option>
+                    <option>Central Greece</option>
+                    <option>Northern Greece</option>
+                    <option>Aegean Islands</option>
+                    <option>Crete</option>
+                    <option>Other</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
-                    {tE.formService}
+                  <label className="mb-2 block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                    Service <span className="text-red-500">*</span>
                   </label>
-                  <select name="service_category" className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none">
+                  <select
+                    name="service_category"
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none transition-colors focus:border-amber-400"
+                  >
                     {services.map((s, i) => (
-                      <option key={i} className="bg-[#0a1120]">
+                      <option key={i}>
                         {s.title}
                       </option>
                     ))}
@@ -525,12 +528,14 @@ export default function EnergyPage() {
                 </div>
               </div>
               <div>
-                <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
-                  {tE.formUpload}
+                <label className="mb-2 block text-[10.5px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Upload bills / files (optional)
                 </label>
-                <label className="block border-2 border-dashed border-slate-400/28 rounded-2xl p-6 text-center bg-[#02060f]/45 cursor-pointer hover:border-amber-400/50 transition-colors">
-                  <Upload className="w-8 h-8 text-amber-400 mx-auto mb-2" />
-                  <p className="text-xs font-medium text-slate-400">{tE.formUploadHint}</p>
+                <label className="block cursor-pointer rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 text-center transition-colors hover:border-amber-400/60">
+                  <Upload className="mx-auto mb-2 h-8 w-8 text-amber-600" />
+                  <p className="text-xs font-medium text-slate-500">
+                    PDF, JPG or PNG up to 25MB — multiple files
+                  </p>
                   <input type="file" name="files" multiple className="hidden" />
                 </label>
               </div>
@@ -540,26 +545,37 @@ export default function EnergyPage() {
                   name="gdpr_consent"
                   value="true"
                   required
-                  className="mt-1 w-4 h-4 accent-amber-400 rounded border-slate-400/40"
+                  className="mt-1 h-4 w-4 rounded border-slate-200 accent-amber-500"
                 />
-                <label className="text-xs font-light text-slate-400 leading-relaxed">{tE.formConsent}</label>
+                <label className="text-xs leading-relaxed text-slate-500">
+                  I consent to the processing of my data so you can contact me,
+                  in accordance with the{" "}
+                  <Link
+                    href="/privacy-policy"
+                    className="text-amber-700 underline"
+                  >
+                    GDPR privacy policy
+                  </Link>
+                  .
+                </label>
               </div>
               {formSent && (
-                <p className="flex items-center gap-2 px-4 py-3 rounded-xl border border-cyan-400/40 bg-cyan-400/10 text-sm text-cyan-200">
-                  <Check className="w-4 h-4" /> {tE.formThanks}
+                <p className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  <Check className="h-4 w-4" /> Thank you! A specialist will
+                  contact you shortly.
                 </p>
               )}
               {formError && (
-                <p className="px-4 py-3 rounded-xl border border-red-400/40 bg-red-400/10 text-sm text-red-200">
+                <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                   {formError}
                 </p>
               )}
               <button
                 type="submit"
                 disabled={formSending}
-                className="w-full rounded-full bg-amber-400 hover:bg-amber-300 disabled:opacity-60 disabled:cursor-not-allowed text-[#0b1220] font-semibold py-4 text-[13px] tracking-[0.16em] uppercase transition-colors"
+                className="w-full rounded-full bg-amber-500 py-4 text-[13px] font-semibold uppercase tracking-[0.16em] text-white shadow-lg shadow-amber-200 transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {formSending ? "..." : tE.formSubmit}
+                {formSending ? "..." : "Request a call"}
               </button>
             </form>
           </div>
@@ -567,41 +583,7 @@ export default function EnergyPage() {
       </section>
 
       {/* FOOTER */}
-      <footer className="relative z-10 bg-[#02060f] text-slate-400 py-14 border-t border-slate-400/14 text-sm">
-        <div className="max-w-6xl mx-auto px-5 sm:px-10 lg:px-20 grid md:grid-cols-3 gap-8 mb-10">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <img
-                src="/images/logo-footer.png"
-                alt="A"
-                className="w-80 h-32 rounded-2xl object-cover"
-              />
-              <span className="font-bold text-white">Agapitos Kalafatas</span>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">{tE.footerDesc}</p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-slate-50 font-semibold text-xs uppercase tracking-wider">{tE.footerContact}</h4>
-            <p className="text-xs">+30 697 769 1776</p>
-            <p className="text-xs">kalafatasagapitos@gmail.com</p>
-          </div>
-          <div className="space-y-2">
-            <h4 className="text-slate-50 font-semibold text-xs uppercase tracking-wider">{tE.footerServices}</h4>
-            <p className="text-xs">{tE.footerServicesList}</p>
-          </div>
-        </div>
-        <div className="max-w-6xl mx-auto px-5 sm:px-10 lg:px-20 pt-7 border-t border-slate-400/12 flex flex-col sm:flex-row items-center justify-between text-xs gap-4">
-          <p>© 2026 Agapitos Kalafatas. All rights reserved.</p>
-          <div className="flex gap-4">
-            <Link href="/" className="hover:text-white">
-              {tE.footerHome}
-            </Link>
-            <Link href="/contact" className="hover:text-white">
-              {tE.footerContactLink}
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </div>
+      <SiteFooter hideBrand />
+    </main>
   );
 }

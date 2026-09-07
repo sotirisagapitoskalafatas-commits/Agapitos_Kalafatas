@@ -6,6 +6,7 @@ import gsap from "gsap";
 import UnifiedContactForm from "@/components/UnifiedContactForm";
 import Scene3DBackground from "@/components/Scene3DBackground";
 import Navbar from "@/components/Navbar";
+import SiteFooter from "@/components/SiteFooter";
 import { useLocale } from "@/contexts/LanguageContext";
 
 export default function ContactPage() {
@@ -84,11 +85,7 @@ export default function ContactPage() {
       </div>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-slate-100 bg-white/50 backdrop-blur-sm relative z-10">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-xs text-slate-400">© 2026 Agapitos Kalafatas. All rights reserved.</p>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
     </>
   );
