@@ -17,7 +17,6 @@ import {
   Mail,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import AtmosTransition from "@/components/AtmosTransition";
 import { useLocale } from "@/contexts/LanguageContext";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -205,8 +204,6 @@ export default function InsurancePage() {
           </div>
         </div>
       </section>
-
-      <AtmosTransition />
 
       {/* INSURANCE CATEGORIES (Accordion) */}
       <section id="plans" className="py-20 bg-white">

@@ -19,7 +19,6 @@ import {
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import EnergyCinematicBackground from "@/components/EnergyCinematicBackground";
-import AtmosTransition from "@/components/AtmosTransition";
 import AtmosSphere from "@/components/AtmosSphere";
 import { useLocale } from "@/contexts/LanguageContext";
 
@@ -150,8 +149,6 @@ export default function EnergyPage() {
         </div>
       </section>
 
-      <AtmosTransition from="#02060f" to="#0a1120" variant="dark-dark" />
-
       {/* TRUST VALUES */}
       <section className="relative z-10 px-5 sm:px-10 lg:px-20 pb-20">
         <div className="max-w-6xl mx-auto grid gap-4 sm:grid-cols-3">
@@ -159,7 +156,7 @@ export default function EnergyPage() {
             <div
               key={idx}
               data-reveal
-              className="p-6 lg:p-8 bg-[#040a16]/60 backdrop-blur-md border border-slate-400/12 rounded-2xl"
+              className="p-6 lg:p-8 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_32px_rgba(0,0,0,0.20)]"
             >
               <div className="text-3xl lg:text-4xl font-light text-amber-400">
                 {item.title}
@@ -192,7 +189,7 @@ export default function EnergyPage() {
                 <div
                   key={idx}
                   data-reveal
-                  className="flex flex-col gap-3.5 p-7 lg:p-8 bg-[#040a16]/72 border border-slate-400/14 rounded-2xl transition-colors hover:bg-[#091222]/85 hover:border-amber-400/35"
+                  className="flex flex-col gap-3.5 p-7 lg:p-8 bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_32px_rgba(0,0,0,0.20)] transition-colors hover:bg-white/[0.16] hover:border-amber-400/50"
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] tracking-[0.2em] text-amber-400/75">
@@ -230,7 +227,7 @@ export default function EnergyPage() {
             <p className="mt-5 font-light text-slate-300/82 leading-relaxed">
               {tE.aboutText}
             </p>
-            <div className="mt-7 p-6 rounded-2xl bg-[#091222]/50 border-l-[3px] border-amber-400/40 border border-slate-400/12">
+            <div className="mt-7 p-6 rounded-2xl bg-white/[0.08] backdrop-blur-2xl border-l-[3px] border-amber-400/50 border border-white/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
               <h3 className="text-[13px] font-semibold tracking-[0.1em] uppercase text-amber-400">
                 {tE.visionTitle}
               </h3>
@@ -240,7 +237,7 @@ export default function EnergyPage() {
             </div>
           </div>
 
-          <div data-reveal className="p-7 lg:p-9 rounded-3xl border border-slate-400/18 bg-gradient-to-br from-[#091222]/80 to-[#040a16]/50">
+          <div data-reveal className="p-7 lg:p-9 rounded-3xl border border-white/20 bg-gradient-to-br from-white/15 via-white/10 to-white/5 backdrop-blur-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_32px_rgba(0,0,0,0.20)]">
             <p className="flex items-center gap-2.5 text-[12px] tracking-[0.14em] uppercase text-amber-400">
               <span className="block w-1.5 h-1.5 rounded-full bg-amber-400" />
               {tE.aboutImgCaption}
@@ -275,7 +272,7 @@ export default function EnergyPage() {
             {faqs.map((faq, idx) => (
               <div
                 key={idx}
-                className="bg-[#040a16]/72 border border-slate-400/14 rounded-2xl overflow-hidden"
+                className="bg-white/10 backdrop-blur-2xl border border-white/20 rounded-2xl overflow-hidden shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]"
               >
                 <button
                   onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
@@ -289,7 +286,7 @@ export default function EnergyPage() {
                   )}
                 </button>
                 {openFaq === idx && (
-                  <p className="px-5 pb-5 text-sm font-light text-slate-300/80 leading-relaxed border-t border-slate-400/8 pt-4">
+                  <p className="px-5 pb-5 text-sm font-light text-slate-300/80 leading-relaxed border-t border-white/15 pt-4">
                     {faq.a}
                   </p>
                 )}
@@ -318,7 +315,7 @@ export default function EnergyPage() {
             <div data-reveal className="lg:col-span-4 grid gap-4">
               <a
                 href="tel:+306977691776"
-                className="flex items-center gap-4 rounded-2xl border border-slate-400/18 bg-[#040a16]/60 p-5 transition-colors hover:border-amber-400/40"
+                className="flex items-center gap-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-2xl p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-colors hover:border-amber-400/50"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-400/10">
                   <Phone className="h-5 w-5 text-amber-400" />
@@ -332,7 +329,7 @@ export default function EnergyPage() {
               </a>
               <a
                 href="mailto:kalafatasagapitos@gmail.com"
-                className="flex items-center gap-4 rounded-2xl border border-slate-400/18 bg-[#040a16]/60 p-5 transition-colors hover:border-amber-400/40"
+                className="flex items-center gap-4 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-2xl p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-colors hover:border-amber-400/50"
               >
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-400/10">
                   <Mail className="h-5 w-5 text-amber-400" />
@@ -351,7 +348,7 @@ export default function EnergyPage() {
             <form
               data-reveal
               onSubmit={handleEnergySubmit}
-              className="lg:col-span-8 grid gap-5 p-6 sm:p-9 rounded-3xl border border-slate-400/18 bg-[#060d1a]/75"
+              className="lg:col-span-8 grid gap-5 p-6 sm:p-9 rounded-3xl border border-white/20 bg-white/10 backdrop-blur-2xl shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_12px_32px_rgba(0,0,0,0.20)]"
             >
               <div className="grid sm:grid-cols-2 gap-5">
                 <div>
@@ -362,7 +359,7 @@ export default function EnergyPage() {
                     type="text"
                     name="first_name"
                     required
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
+                    className="w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
                   />
                 </div>
                 <div>
@@ -373,7 +370,7 @@ export default function EnergyPage() {
                     type="text"
                     name="last_name"
                     required
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
+                    className="w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
                   />
                 </div>
               </div>
@@ -385,7 +382,7 @@ export default function EnergyPage() {
                   <input
                     type="email"
                     name="email"
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
+                    className="w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
                   />
                 </div>
                 <div>
@@ -396,7 +393,7 @@ export default function EnergyPage() {
                     type="tel"
                     name="phone"
                     required
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
+                    className="w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none focus:border-amber-400/70"
                   />
                 </div>
               </div>
@@ -407,7 +404,7 @@ export default function EnergyPage() {
                   </label>
                   <select
                     name="property_type"
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none"
+                    className="w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none"
                   >
                     <option className="bg-[#0a1120]">{tE.formHome}</option>
                     <option className="bg-[#0a1120]">{tE.formBusiness}</option>
@@ -419,7 +416,7 @@ export default function EnergyPage() {
                   </label>
                   <select
                     name="region"
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none"
+                    className="w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none"
                   >
                     <option className="bg-[#0a1120]">
                       {regions[0]?.title || "Attica"}
@@ -439,7 +436,7 @@ export default function EnergyPage() {
                   </label>
                   <select
                     name="service_category"
-                    className="w-full bg-[#02060f]/60 border border-slate-400/22 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none"
+                    className="w-full bg-white/10 border border-white/25 rounded-xl px-4 py-3 text-sm text-slate-50 outline-none"
                   >
                     {services.map((s, i) => (
                       <option key={i} className="bg-[#0a1120]">
@@ -453,7 +450,7 @@ export default function EnergyPage() {
                 <label className="block text-[10.5px] font-semibold tracking-[0.16em] uppercase text-slate-400/75 mb-2">
                   {tE.formUpload}
                 </label>
-                <label className="block border-2 border-dashed border-slate-400/28 rounded-2xl p-6 text-center bg-[#02060f]/45 cursor-pointer hover:border-amber-400/50 transition-colors">
+                <label className="block border-2 border-dashed border-white/30 rounded-2xl p-6 text-center bg-white/10 cursor-pointer hover:border-amber-400/50 transition-colors">
                   <Upload className="w-8 h-8 text-amber-400 mx-auto mb-2" />
                   <p className="text-xs font-medium text-slate-400">
                     {tE.formUploadHint}
@@ -467,7 +464,7 @@ export default function EnergyPage() {
                   name="gdpr_consent"
                   value="true"
                   required
-                  className="mt-1 w-4 h-4 accent-amber-400 rounded border-slate-400/40"
+                  className="mt-1 w-4 h-4 accent-amber-400 rounded border-white/40"
                 />
                 <label className="text-xs font-light text-slate-400 leading-relaxed">
                   {tE.formConsent}{" "}
