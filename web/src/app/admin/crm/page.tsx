@@ -1034,7 +1034,10 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        <a href="/admin/diagnostic" className="text-sm bg-violet-500/10 text-violet-600 hover:bg-violet-500/20 font-semibold px-5 py-2.5 rounded-xl transition-all border border-violet-500/20">
+           Sales Diagnostic →
+        </a>
         <a href="/admin/analytics" className="text-sm bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/20 font-semibold px-5 py-2.5 rounded-xl transition-all border border-indigo-500/20">
            Full Analytics →
         </a>
