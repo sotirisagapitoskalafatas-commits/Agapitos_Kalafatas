@@ -164,14 +164,62 @@ export async function decideApproval(
 // ── Executors: perform the actual (safe) write with the service role ──
 type Executor = (payload: Record<string, any>) => Promise<any>;
 
+// Live leads.status CHECK values — map any model-supplied status onto these;
+// anything else falls back to the default (NOT NULL-safe lowercase value).
+const LEAD_STATUSES = new Set([
+  "new_lead",
+  "contacted",
+  "qualified",
+  "customer",
+  "lost",
+  "archived",
+]);
+
+function normalizeLeadStatus(v: unknown): string {
+  const raw = String(v || "new_lead").toLowerCase();
+  return LEAD_STATUSES.has(raw) ? raw : "new_lead";
+}
+
+// Live calendar_events.event_type CHECK values.
+const EVENT_TYPES = new Set(["meeting", "call", "task", "reminder", "deadline"]);
+
+function normalizeEventType(v: unknown): string {
+  const raw = String(v || "task").toLowerCase();
+  return EVENT_TYPES.has(raw) ? raw : "task";
+}
+
+// Live deals.stage CHECK values.
+const DEAL_STAGES = new Set([
+  "lead",
+  "qualified",
+  "proposal",
+  "negotiation",
+  "closed_won",
+  "closed_lost",
+]);
+
+function normalizeDealStage(v: unknown): string {
+  const raw = String(v || "lead").toLowerCase();
+  return DEAL_STAGES.has(raw) ? raw : "lead";
+}
+
 const executors: Record<ActionType, Executor> = {
   async create_lead(payload) {
+    // Live leads.first_name is NOT NULL; split fullName onto it so an
+    // approval doesn't fail at insert time.
+    const rawName = String(payload.fullName || payload.firstName || "")
+      .trim();
+    const parts = rawName.split(/\s+/).filter(Boolean);
+    const firstName = parts[0] || payload.email || "Unknown";
+    const lastName = parts.slice(1).join(" ");
     const { error } = await supabase.from("leads").insert({
-      full_name: payload.fullName,
+      first_name: firstName,
+      last_name: lastName || null,
+      full_name: rawName || null,
       email: payload.email || null,
       phone: payload.phone || null,
       company: payload.company || null,
-      status: (payload.status || "NEW").toUpperCase(),
+      status: normalizeLeadStatus(payload.status),
       source: payload.source || "ai-agent",
       notes: payload.notes || null,
       tags: payload.tags || ["ai-agent"],
@@ -185,8 +233,7 @@ const executors: Record<ActionType, Executor> = {
       title: payload.title,
       value: payload.value || 0,
       currency: payload.currency || "EUR",
-      stage: (payload.stage || "lead").toLowerCase(),
-      probability: payload.probability ?? 20,
+      stage: normalizeDealStage(payload.stage),
       notes: payload.notes || null,
     });
     if (error) throw new Error(error.message);
@@ -194,12 +241,13 @@ const executors: Record<ActionType, Executor> = {
   },
 
   async create_event(payload) {
-    const { error } = await supabase.from("events").insert({
+    // The live table is calendar_events (start_time/end_time), not `events`.
+    const { error } = await supabase.from("calendar_events").insert({
       title: payload.title,
       description: payload.description || null,
-      event_type: (payload.eventType || "other").toLowerCase(),
-      starts_at: payload.startsAt,
-      ends_at: payload.endsAt || null,
+      event_type: normalizeEventType(payload.eventType),
+      start_time: payload.startsAt,
+      end_time: payload.endsAt || null,
       completed: false,
     });
     if (error) throw new Error(error.message);

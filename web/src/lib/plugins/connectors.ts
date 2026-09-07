@@ -117,9 +117,17 @@ function mapStripeTime(epochSeconds: number): string {
 // then the service-role-only `integration_credentials` row (unique service_name =
 // 'stripe'). metadata.account / metadata.connected_account selects a Connect
 // account via the Stripe-Account header.
+//
+// SECURITY: tokens stored in `integration_credentials` are expected to be
+// encrypted at rest. We do NOT ship a decryption step, so the stored blob must
+// never be sent verbatim to Stripe. The row is only used when the operator
+// explicitly opts in for a private deployment (INTEGRATION_TOKEN_IS_PLAINTEXT=1)
+// — otherwise we fall through to the clearly-marked sample set.
 async function loadStripeCredential(): Promise<{ secret: string; account?: string } | null> {
   const envSecret = process.env.STRIPE_SECRET_KEY;
   if (envSecret) return { secret: envSecret };
+
+  if (!process.env.INTEGRATION_TOKEN_IS_PLAINTEXT) return null;
 
   try {
     const { data } = await supabase
@@ -130,7 +138,7 @@ async function loadStripeCredential(): Promise<{ secret: string; account?: strin
     if (data?.is_enabled && data.encrypted_token) {
       const meta = (data.metadata || {}) as Record<string, any>;
       return {
-        secret: data.encrypted_token, // production decrypts the app-level encryption here
+        secret: data.encrypted_token,
         account: meta.account || meta.connected_account || undefined,
       };
     }
@@ -307,11 +315,20 @@ const connectors: Record<ConnectorId, Connector> = {
 // Connector availability + access
 // ---------------------------------------------------------------------------
 
-// Which connectors currently have credentials configured. For the stub phase we
-// treat every connector as "available" so the whole menu works; swap this to read
-// `integration_credentials` (service role) once real keys are wired.
+// Which connectors are TRULY operational right now (live credentials present),
+// as opposed to connectors in the registry that run on clearly-marked SAMPLE
+// data. `missingConnectors(...)` should be honest: a stub stub-tool is NOT
+// "connected", so the UI/commands never claim an integration is ready when only
+// demo data is available.
 export function availableConnectors(): ConnectorId[] {
-  return Object.keys(connectors) as ConnectorId[];
+  const live: ConnectorId[] = [];
+  // Stripe is the only connector with a real integration path. Env key is the
+  // supported route; the DB row only counts when the plaintext escape hatch is
+  // set (see loadStripeCredential). All other connectors are demo stubs.
+  if (process.env.STRIPE_SECRET_KEY || process.env.INTEGRATION_TOKEN_IS_PLAINTEXT) {
+    live.push("stripe");
+  }
+  return live;
 }
 
 export function missingConnectors(wanted: ConnectorId[]): ConnectorId[] {

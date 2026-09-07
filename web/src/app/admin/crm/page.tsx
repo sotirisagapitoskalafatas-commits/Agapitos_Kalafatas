@@ -178,7 +178,7 @@ const PROVIDERS = ["ΔΕΗ", "Protergia", "ΗΡΩΝ", "Elpedison", "NRG", "Volto
 const PROGRAMS = ["Σταθερό", "Κυμαινόμενο", "Μπλε", "Πράσινο", "Οικιακό", "Επαγγελματικό", "Νυχτερινό", "Άλλο"];
 const SOURCES = ["Ιστότοπος", "Facebook", "Instagram", "Google", "Σύσταση", "Τηλέφωνο", "Walk-in", "Συνεργάτης", "Άλλο"];
 const LEAD_TYPES = ["Οικιακό", "Επαγγελματικό", "Βιομηχανικό"];
-const AGENTS = ["Ενέργεια", "Ασφάλειες", "Web & Software", "—"];
+const AGENTS = ["Ενέργεια", "Ασφάλειες", "Web & Software"];
 const SUPPLY_TYPES = ["Ρεύμα", "Φυσικό Αέριο"];
 
 // ── Document slots (typed uploads stored at leadId/<key>/file) ──

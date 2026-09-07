@@ -42,7 +42,7 @@ const tools = {
       type: "object",
       properties: {
         query: { type: "string" },
-        status: { type: "string", description: "new_lead, contacted, qualified, proposal, closed_won, closed_lost" },
+        status: { type: "string", description: "new_lead, contacted, qualified, customer, lost, archived" },
         limit: { type: "number" },
       },
     },
@@ -56,7 +56,7 @@ const tools = {
     argsSchema: {
       type: "object",
       properties: {
-        stage: { type: "string", description: "lead, qualified, proposal, won, lost" },
+        stage: { type: "string", description: "lead, qualified, proposal, negotiation, closed_won, closed_lost" },
         title: { type: "string" },
         minValue: { type: "number" },
         maxValue: { type: "number" },
@@ -76,7 +76,7 @@ const tools = {
 
   get_invoices: {
     name: "get_invoices",
-    description: "List invoices, optionally filtered by status (draft, sent, paid, overdue). Read-only.",
+    description: "List invoices, optionally filtered by status (draft, sent, accepted, rejected, paid, expired). Read-only.",
     category: "read",
     argsSchema: {
       type: "object",
@@ -87,11 +87,11 @@ const tools = {
 
   get_tasks: {
     name: "get_tasks",
-    description: "List tasks, optionally filtered by status or assignee. Read-only.",
+    description: "List upcoming tasks/reminders, optionally filtered by event type (meeting, call, task, reminder, deadline) or completion (open/done). Read-only.",
     category: "read",
     argsSchema: {
       type: "object",
-      properties: { status: { type: "string" }, assignee: { type: "string" }, limit: { type: "number" } },
+      properties: { eventType: { type: "string" }, status: { type: "string", description: "open or done" }, limit: { type: "number" } },
     },
     run: (ctx: AgentContext, args: any) => getTasks(ctx, args),
   } as Tool,
@@ -178,7 +178,7 @@ const tools = {
       properties: {
         title: { type: "string" },
         description: { type: "string" },
-        eventType: { type: "string" },
+        eventType: { type: "string", description: "meeting, call, task, reminder, deadline" },
         startsAt: { type: "string", description: "ISO timestamp" },
         endsAt: { type: "string" },
       },

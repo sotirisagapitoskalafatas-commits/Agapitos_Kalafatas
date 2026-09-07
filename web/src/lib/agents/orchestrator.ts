@@ -1,11 +1,15 @@
 // Master orchestrator: routes user requests to specialist agents,
 // runs the model tier cascade, and records audit trail.
-import { runAgent } from "./registry";
-import { ALL_AGENTS, findAgent } from "./core-agents";
+import { runAgent, type AgentDef } from "./registry";
+import { ALL_AGENTS, findAgent, generalAgent } from "./core-agents";
 import { getModelClient, type ChatMessage } from "./model-client";
 import { decideTier } from "./router";
-import type { AgentCall, AgentContext, AgentResult, AuditRecord, Tier } from "./types";
+import type { AgentCall, AgentContext, AgentResult, AuditRecord, Tier, Tool } from "./types";
 import { supabase } from "./db";
+
+// Public (unauthenticated) mode only ever reaches these service-advisory
+// agents. The CRM/communications/tasks agents hold PII and are admin-only.
+const PUBLIC_AGENTS = new Set(["webdev", "energy", "insurance", "general"]);
 
 const ORCHESTRATOR_SYSTEM = `You are Atlas Master — the orchestrating AI for Agapitos Kalafatas.
 Your job is to understand the user's request and delegate it to the correct specialist agent.
@@ -27,10 +31,23 @@ export type ProgressEvent =
 
 export type ProgressReporter = (event: ProgressEvent) => void;
 
+export type OrchestrateOptions = {
+  // Restrict routing to service-advisory agents and expose ONLY knowledge-base
+  // read tools (no CRM/PII tools). Used by the public /api/chat.
+  publicMode?: boolean;
+  // Extra tools layered on the selected agent (e.g. public lead capture).
+  extraTools?: Tool[];
+  // Extra system-instruction text (forced language / marketing mode).
+  systemExtra?: string;
+  // Prior conversation turns for multi-turn context (internal-only callers).
+  history?: ChatMessage[];
+};
+
 export async function orchestrate(
   context: AgentContext,
   userInput: string,
-  onProgress?: ProgressReporter
+  onProgress?: ProgressReporter,
+  opts: OrchestrateOptions = {}
 ): Promise<AgentResult> {
   const llm = getModelClient();
   const steps: AgentCall[] = [];
@@ -40,7 +57,22 @@ export async function orchestrate(
     // 1. Route to the right agent (use small model — cheap routing)
     onProgress?.({ stage: "routing", message: "Analyzing your request and selecting the right specialist…" });
     const routed = await routeToAgent(llm, userInput);
-    const agent = findAgent(routed.agent) || ALL_AGENTS[ALL_AGENTS.length - 1];
+    const routedAgent = findAgent(routed.agent) || ALL_AGENTS[ALL_AGENTS.length - 1];
+
+    // Public mode: never route to CRM/admin agents.
+    const baseAgent =
+      opts.publicMode && !PUBLIC_AGENTS.has(routedAgent.id) ? generalAgent : routedAgent;
+
+    // Public mode: expose ONLY knowledge-base read tools. Agents normally also
+    // carry CRM read tools (search_leads, search_deals, …) which must never
+    // reach an unauthenticated caller.
+    let tools = baseAgent.tools;
+    if (opts.publicMode) {
+      tools = baseAgent.tools.filter(
+        (t) => t.category === "read" && t.name.startsWith("search_knowledge_")
+      );
+    }
+    const agent: AgentDef = { ...baseAgent, tools: [...tools, ...(opts.extraTools || [])] };
 
     // 2. Decide tier for quality/cost cascade
     const { tier } = decideTier(userInput);
@@ -53,7 +85,11 @@ export async function orchestrate(
     });
 
     // 3. Run the specialist agent at the chosen tier
-    const agentCall = await runAgent(context, agent, userInput, { tier });
+    const agentCall = await runAgent(context, agent, userInput, {
+      tier,
+      history: opts.history,
+      systemExtra: opts.systemExtra,
+    });
     steps.push(agentCall);
 
     const durationMs = Date.now() - start;

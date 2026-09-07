@@ -47,7 +47,9 @@ export async function lookupLead(
     const text = String(args.query).trim();
     q = q.or(`full_name.ilike.%${text}%,email.ilike.%${text}%`);
   }
-  if (args.status) q = q.eq("status", String(args.status).toUpperCase());
+  // leads.status CHECK values are lowercase (new_lead, contacted, qualified,
+  // customer, lost, archived) — normalize, don't uppercase.
+  if (args.status) q = q.eq("status", String(args.status).toLowerCase());
 
   const { data, error } = await q;
   if (error) return { error: error.message };
@@ -82,6 +84,11 @@ export async function getPipelineMetrics(
   const deals = await supabase.from("deals").select("stage, value, probability, status");
   if (deals.error) return { error: deals.error.message };
 
+  // Live deals.stage CHECK: lead, qualified, proposal, negotiation,
+  // closed_won, closed_lost.
+  const WON = "closed_won";
+  const LOST = "closed_lost";
+
   const stages: Record<string, { count: number; value: number }> = {};
   let wonValue = 0;
   let pipelineValue = 0;
@@ -90,8 +97,8 @@ export async function getPipelineMetrics(
     stages[d.stage] = stages[d.stage] || { count: 0, value: 0 };
     stages[d.stage].count++;
     stages[d.stage].value += Number(d.value) || 0;
-    if (d.stage === "won") wonValue += Number(d.value) || 0;
-    if (d.stage !== "won" && d.stage !== "lost") pipelineValue += Number(d.value) || 0;
+    if (d.stage === WON) wonValue += Number(d.value) || 0;
+    if (d.stage !== WON && d.stage !== LOST) pipelineValue += Number(d.value) || 0;
   }
 
   return {
@@ -100,8 +107,9 @@ export async function getPipelineMetrics(
     wonValue,
     pipelineValue,
     winRate: (deals.data || []).length
-      ? Math.round(((stages.won?.count || 0) / (deals.data || []).length) * 100)
+      ? Math.round(((stages[WON]?.count || 0) / (deals.data || []).length) * 100)
       : 0,
+    closedLostValue: stages[LOST]?.value || 0,
   };
 }
 
@@ -124,23 +132,36 @@ export async function getInvoices(
 }
 
 // ── Tasks / Communications / Documents read tools (non-vector) ──
+// There is no `tasks` table: calendar_events is the tasks/reminders store.
 export async function getTasks(
   context: AgentContext,
-  args: { status?: string; assignee?: string; limit?: number }
+  args: { eventType?: string; status?: string; limit?: number }
 ): Promise<any> {
   const limit = Math.min(Number(args.limit) || 10, 30);
   let q = supabase
-    .from("tasks")
-    .select("id, title, description, status, priority, assignee, due_date, created_at")
-    .order("created_at", { ascending: false })
+    .from("calendar_events")
+    .select("id, title, description, event_type, start_time, end_time, completed, created_at")
+    .order("start_time", { ascending: true })
     .limit(limit);
 
-  if (args.status) q = q.ilike("status", `%${args.status}%`);
-  if (args.assignee) q = q.ilike("assignee", `%${args.assignee}%`);
+  if (args.eventType) q = q.eq("event_type", String(args.eventType).toLowerCase());
+  if (args.status) {
+    const done = /^(done|completed|closed)$/.test(String(args.status).toLowerCase());
+    q = q.eq("completed", !!done);
+  }
 
   const { data, error } = await q;
   if (error) return { error: error.message };
-  return { results: data || [] };
+  return {
+    results: (data || []).map((t) => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      event_type: t.event_type,
+      due: t.start_time,
+      completed: t.completed,
+    })),
+  };
 }
 
 export async function getCommunications(

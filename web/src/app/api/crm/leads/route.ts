@@ -29,15 +29,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json();
 
   // Whitelist writable columns so an unexpected key can't error the insert.
-  const ALLOWED = [
-    "first_name", "last_name", "email", "phone", "property_type", "region",
-    "service_category", "comments", "status", "gdpr_consent", "notes",
-    "company", "address", "id_number", "provider", "program", "source",
-    "lead_type", "partner", "partner_notes", "assigned_agent", "renewal_date",
-    "supplies",
-  ];
   const record: Record<string, unknown> = {};
-  for (const key of ALLOWED) {
+  for (const key of LEAD_COLUMNS) {
     if (body[key] !== undefined) record[key] = body[key];
   }
 
@@ -61,6 +54,16 @@ export async function POST(req: NextRequest) {
   return NextResponse.json(data);
 }
 
+// Column whitelist shared by POST and PATCH so both paths write to the exact
+// same set of lead fields (and nothing else).
+const LEAD_COLUMNS = [
+  "first_name", "last_name", "email", "phone", "property_type", "region",
+  "service_category", "comments", "status", "gdpr_consent", "notes",
+  "company", "address", "id_number", "provider", "program", "source",
+  "lead_type", "partner", "partner_notes", "assigned_agent", "renewal_date",
+  "supplies",
+];
+
 export async function PATCH(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.ok) return unauthorizedResponse();
@@ -68,8 +71,18 @@ export async function PATCH(req: NextRequest) {
   const { id, ...updates } = await req.json();
   if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
 
+  // Whitelist writable columns on PATCH too, symmetric with POST, so a stray
+  // body key can't silently write to the table.
+  const record: Record<string, unknown> = {};
+  for (const key of LEAD_COLUMNS) {
+    if (updates[key] !== undefined) record[key] = updates[key];
+  }
+  if (Object.keys(record).length === 0) {
+    return NextResponse.json({ error: "No updatable fields provided" }, { status: 400 });
+  }
+
   // DATE columns reject "" — normalize an empty/cleared date to null.
-  if (updates.renewal_date === "") updates.renewal_date = null;
+  if (record.renewal_date === "") record.renewal_date = null;
 
   const { data, error } = await supabase
     .from("leads")

@@ -1,379 +1,208 @@
+// Public chat — the single path to Atlas for site visitors (/chat page and the
+// AtlasAgenticWidget FAB).
+//
+// Consolidated onto the lib/agents orchestrator (multi-agent RAG + tier
+// cascade + audit). Differences from the admin /api/agent:
+//   - Unauthenticated, rate-limited 12/min/IP.
+//   - publicMode=true: routing is restricted to the service-advisory agents
+//     (webdev/energy/insurance/general) and ONLY knowledge-base read tools are
+//     exposed — the CRM/PII read tools (search_leads, search_deals, …) never
+//     reach a visitor.
+//   - Lead capture is a dedicated public tool: it requires explicit GDPR
+//     consent (gdprConsent === true) and HTML-escapes everything before it
+//     reaches an email body or subject.
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { createClient } from "@supabase/supabase-js";
-import { retrieveKnowledge } from "@/lib/rag";
-import { getMarketingSystemPrompt } from "@/lib/marketingInjector";
 import { Resend } from "resend";
+import { orchestrate } from "@/lib/agents/orchestrator";
 import { rateLimit } from "@/lib/rate-limit";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
+import { getMarketingSystemPrompt } from "@/lib/marketingInjector";
+import type { AgentContext, Tool } from "@/lib/agents/types";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-const resend = new Resend(process.env.RESEND_API_KEY);
 
-// ── Tool Definitions ──────────────────────────────────────────
+const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL_TO || "kalafatasagapitos@gmail.com";
 
-async function handleToolCall(
-  toolName: string,
-  args: Record<string, any>
-): Promise<string> {
-  switch (toolName) {
-    case "webDevSubAgent": {
-      const knowledge = await retrieveKnowledge(args.query, "web_dev");
-      return JSON.stringify({
-        agent: "Agent 1 (Web & Software)",
-        context: knowledge,
-      });
+const langMap: Record<string, string> = {
+  en: "English",
+  el: "Greek",
+  fr: "French",
+};
+
+// Escape every user/model-controlled value before it enters an email body or
+// subject line (HTML/email injection vector).
+function escapeHtml(value: unknown): string {
+  return String(value ?? "").replace(/[&<>"']/g, (c) => {
+    switch (c) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      default:
+        return "&#39;";
     }
-    case "energySubAgent": {
-      const knowledge = await retrieveKnowledge(args.query, "energy");
-      return JSON.stringify({
-        agent: "Agent 2 (Energy Services)",
-        context: knowledge,
-      });
-    }
-    case "insuranceSubAgent": {
-      const knowledge = await retrieveKnowledge(args.query, "insurance");
-      return JSON.stringify({
-        agent: "Agent 3 (Insurance Services)",
-        context: knowledge,
-      });
-    }
-    case "saveLeadToCRM": {
-      try {
-        const { error: dbError } = await supabase.from("leads").insert([
-          {
-            first_name: args.firstName,
-            last_name: args.lastName,
-            phone: args.contactInfo,
-            service_category: args.serviceCategory,
-            comments: `[Agentic RAG Lead]: ${args.projectDetails}`,
-            status: "new_lead",
-            gdpr_consent: true,
-          },
-        ]);
-
-        if (dbError) {
-          return JSON.stringify({ success: false, error: dbError.message });
-        }
-
-        // Send email notification
-        try {
-          await resend.emails.send({
-            from: "Atlas AI <leads@agapitoskalafatas.com>",
-            to: "kalafatasagapitos@gmail.com",
-            subject: `🤖 Agentic RAG Lead: ${args.firstName} ${args.lastName} (${args.serviceCategory})`,
-            html: `<div style="font-family:sans-serif;padding:20px;background:#f8f9fa;border-radius:12px;">
-              <h2 style="color:#2563eb;">New Lead via Atlas AI Agentic RAG</h2>
-              <p><strong>Name:</strong> ${args.firstName} ${args.lastName}</p>
-              <p><strong>Contact:</strong> ${args.contactInfo}</p>
-              <p><strong>Service:</strong> ${args.serviceCategory}</p>
-              <p><strong>Details:</strong> ${args.projectDetails}</p>
-            </div>`,
-          });
-        } catch {
-          // Email fail is non-critical
-        }
-
-        return JSON.stringify({
-          success: true,
-          message: "Lead saved to CRM and email sent.",
-        });
-      } catch {
-        return JSON.stringify({ success: false, error: "CRM insert failed" });
-      }
-    }
-    default:
-      return JSON.stringify({ error: `Unknown tool: ${toolName}` });
-  }
+  });
 }
 
-// ── Gemini Tool Schema ────────────────────────────────────────
-
-const GEMINI_TOOLS = [
-  {
-    functionDeclarations: [
-      {
-        name: "webDevSubAgent",
-        description:
-          "Agent 1: Consults knowledge base for E-shops (starting €1400), Website Management, Custom Web Development, Software/SaaS Development, AI Agents. Use when user asks about web development, pricing, software, SaaS, or AI systems.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            query: {
-              type: "STRING",
-              description: "The specific web/software topic to look up",
-            },
-          },
-          required: ["query"],
-        },
-      },
-      {
-        name: "energySubAgent",
-        description:
-          "Agent 2: Consults knowledge base for energy services - electricity rates, natural gas, photovoltaics, EV charging, energy storage. Use when user asks about Ρεύμα, Αέριο, Φωτοβολταϊκά, EV charging, or energy.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            query: {
-              type: "STRING",
-              description: "The energy service question",
-            },
-          },
-          required: ["query"],
-        },
-      },
-      {
-        name: "insuranceSubAgent",
-        description:
-          "Agent 3: Consults knowledge base for Life Insurance, Health Insurance, Car Insurance, and property insurance. Use when user asks about Ασφάλεια, insurance policies, health, life, or car coverage.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            query: {
-              type: "STRING",
-              description: "The insurance product question",
-            },
-          },
-          required: ["query"],
-        },
-      },
-      {
-        name: "saveLeadToCRM",
-        description:
-          "Saves lead details directly to Supabase CRM and sends email notification. Use when user has provided: first name, last name, contact info (phone/email), and service category.",
-        parameters: {
-          type: "OBJECT",
-          properties: {
-            firstName: { type: "STRING", description: "Lead first name" },
-            lastName: { type: "STRING", description: "Lead last name" },
-            contactInfo: {
-              type: "STRING",
-              description: "Phone or email",
-            },
-            serviceCategory: {
-              type: "STRING",
-              description: "The service they are interested in",
-            },
-            projectDetails: {
-              type: "STRING",
-              description: "Summary of what they need",
-            },
-          },
-          required: [
-            "firstName",
-            "lastName",
-            "contactInfo",
-            "serviceCategory",
-            "projectDetails",
-          ],
-        },
-      },
-    ],
-  },
-];
-
-const SYSTEM_PROMPT = `You are Atlas AI, an Agentic RAG-powered virtual assistant for Agapitos Kalafatas.
-
-ARCHITECTURE (Chain-of-Thought Planning):
-1. Short/Long Term Memory: Analyze the full chat history for context.
-2. Planning (CoT): Before answering, determine which Sub-Agent to consult:
-   - Agent 1 (Web & Software): E-shops starting at €1400, Custom Web Design, Website Management, Software/SaaS Development, AI Agents.
-   - Agent 2 (Energy): Electricity/Ρεύμα, Natural Gas, Photovoltaics, EV Charging, Energy Storage.
-   - Agent 3 (Insurance): Life Insurance, Health Insurance, Car Insurance.
-3. Retrieval (RAG): Invoke the matching sub-agent tool to fetch verified facts from the knowledge base before answering pricing or policy questions.
-4. Lead Collection: Collect First Name, Last Name, Phone/Email, Service, and Details. Once gathered, call 'saveLeadToCRM'.
-
-RULES:
-- Always call the appropriate Sub-Agent tool when discussing pricing, policies, or services.
-- Be helpful, concise, and professional.
-- Respond in the same language the user writes in.
-- Do NOT make up pricing or policy details — only use retrieved knowledge.
-- When you have collected lead details, save them immediately.`;
-
-// ── Main API Handler ──────────────────────────────────────────
+const cap = (value: unknown, max: number) => String(value ?? "").slice(0, max);
 
 export async function POST(request: NextRequest) {
-  // Rate limit: 12 messages / minute / IP (protects the Gemini quota).
+  // Rate limit: 12 messages / minute / IP (protects the LLM quota).
   const limited = rateLimit(request, "chat", 12, 60_000);
   if (limited) return limited;
+
+  let lead: {
+    clientName: string;
+    clientContact: string;
+    projectDetails: string;
+  } | null = null;
+
+  const savePublicLead: Tool = {
+    name: "save_public_lead",
+    description:
+      "Save a site visitor's contact details as a CRM lead. Call this ONLY after the user has explicitly given their first name, last name, and a phone/email AND has clearly asked to be contacted (or otherwise agreed to it). Never store or send anything without their contact info and consent.",
+    category: "write",
+    argsSchema: {
+      type: "object",
+      properties: {
+        firstName: { type: "string", description: "Lead first name" },
+        lastName: { type: "string", description: "Lead last name" },
+        contactInfo: { type: "string", description: "Phone or email, exactly as given" },
+        serviceCategory: { type: "string", description: "The service they are interested in" },
+        projectDetails: { type: "string", description: "Brief summary of what they need" },
+        gdprConsent: { type: "boolean", description: "Did the user agree to being contacted?" },
+      },
+      required: ["firstName", "contactInfo", "gdprConsent"],
+    },
+    run: async (_ctx, args) => {
+      if (args.gdprConsent !== true) {
+        return { success: false, error: "The visitor has not consented to being contacted." };
+      }
+      const firstName = cap(args.firstName, 120);
+      const contactInfo = cap(args.contactInfo, 120);
+      if (!firstName.trim() || !contactInfo.trim()) {
+        return { success: false, error: "Missing contact details." };
+      }
+
+      const record = {
+        first_name: firstName,
+        last_name: cap(args.lastName, 120),
+        phone: contactInfo,
+        service_category: cap(args.serviceCategory || "other", 80),
+        comments: `[Atlas Chat]: ${cap(args.projectDetails, 1000)}`,
+        status: "new_lead",
+        gdpr_consent: true,
+        source: "atlas-chat",
+      };
+
+      const { error } = await supabase.from("leads").insert([record]);
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      lead = {
+        clientName: `${firstName} ${cap(args.lastName, 120)}`.trim(),
+        clientContact: contactInfo,
+        projectDetails: cap(args.projectDetails, 1000),
+      };
+
+      // Notification email is non-critical — best-effort only.
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: "Atlas AI <leads@agapitoskalafatas.com>",
+          to: NOTIFY_EMAIL,
+          subject: `🤖 New Atlas Chat lead: ${escapeHtml(firstName)} ${escapeHtml(record.last_name)} (${escapeHtml(record.service_category)})`,
+          html: `<div style="font-family:sans-serif;padding:20px;background:#f8f9fa;border-radius:12px;">
+              <h2 style="color:#2563eb;">New Lead via Atlas AI Chat</h2>
+              <p><strong>Name:</strong> ${escapeHtml(firstName)} ${escapeHtml(record.last_name)}</p>
+              <p><strong>Contact:</strong> ${escapeHtml(contactInfo)}</p>
+              <p><strong>Service:</strong> ${escapeHtml(record.service_category)}</p>
+              <p><strong>Details:</strong> ${escapeHtml(args.projectDetails)}</p>
+            </div>`,
+        });
+      } catch {
+        // ignore — CRM save already succeeded
+      }
+
+      return { success: true, message: "Lead saved." };
+    },
+  };
 
   try {
     const { message, history, locale, page } = await request.json();
 
-    if (!GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: "GEMINI_API_KEY not configured" },
-        { status: 500 }
-      );
+    if (typeof message !== "string" || !message.trim()) {
+      return NextResponse.json({ error: "message is required" }, { status: 400 });
     }
+    const text = message.trim().slice(0, 4000);
 
-    const langMap: Record<string, string> = {
-      en: "English",
-      el: "Greek",
-      fr: "French",
-    };
     const langInstruction =
       locale && langMap[locale]
         ? `\n\nIMPORTANT: The user's language is set to ${langMap[locale]}. Respond entirely in ${langMap[locale]}.`
         : "";
 
-    // Inject marketing context when on /marketing page
-    const marketingContext = page === "marketing"
-      ? `\n\n${getMarketingSystemPrompt()}\n\nYou are currently in Marketing mode. Apply the marketing frameworks above to all responses.`
-      : "";
+    const marketingContext =
+      page === "marketing"
+        ? `\n\n${getMarketingSystemPrompt()}\n\nYou are currently in Marketing mode. Apply the marketing frameworks above to all responses.`
+        : "";
 
-    // Build conversation history
-    const contents: any[] = [];
-    if (history && Array.isArray(history)) {
-      for (const msg of history) {
-        contents.push({
-          role: msg.role === "user" ? "user" : "model",
-          parts: [{ text: msg.content }],
-        });
-      }
-    }
-    contents.push({ role: "user", parts: [{ text: message }] });
+    // Bounded prior turns only. Client-supplied roles are never trusted for a
+    // system role, and history is capped so it can't bloat the context window.
+    const safeHistory = Array.isArray(history)
+      ? history
+          .filter((m: any) => m && (m.role === "user" || m.role === "assistant"))
+          .slice(-12)
+          .map((m: any) => ({
+            role: m.role as "user" | "assistant",
+            content: String(m.content || "").slice(0, 3000),
+          }))
+      : [];
 
-    // ── Agentic Loop (max 3 tool-call rounds) ──────────────
-    let finalText = "";
-    let lead = null;
+    const context: AgentContext = {
+      userId: "anon",
+      organizationId: "public",
+      role: "member",
+      requestId: randomUUID(),
+    };
 
-    for (let round = 0; round < 3; round++) {
-      const response = await fetch(
-        `${GEMINI_API_URL}?key=${GEMINI_API_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents,
-            systemInstruction: {
-              parts: [{ text: SYSTEM_PROMPT + langInstruction + marketingContext }],
-            },
-            tools: GEMINI_TOOLS,
-            generationConfig: {
-              temperature: 0.7,
-              topP: 0.95,
-              maxOutputTokens: 2048,
-            },
-            safetySettings: [
-              { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-              { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-              {
-                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                threshold: "BLOCK_NONE",
-              },
-              {
-                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold: "BLOCK_NONE",
-              },
-            ],
-          }),
-        }
-      );
+    const result = await orchestrate(context, text, undefined, {
+      publicMode: true,
+      extraTools: [savePublicLead],
+      systemExtra: langInstruction + marketingContext,
+      history: safeHistory,
+    });
 
-      if (!response.ok) {
-        const errBody = await response.json().catch(() => null);
-        console.error("Gemini API error:", errBody);
-
-        if (
-          response.status === 429 ||
-          errBody?.error?.status === "RESOURCE_EXHAUSTED"
-        ) {
-          const quotaMsg =
-            langMap[locale] === "Greek"
-              ? "Το ημερήσιο όριο αιτημάτων του AI έχει εξαντληθεί (δωρεάν plan, 20/ημέρα). Δοκιμάστε ξανά σε λίγα λεπτά."
-              : langMap[locale] === "French"
-              ? "La limite quotidienne de requêtes IA est atteinte (gratuit, 20/jour). Réessayez dans quelques minutes."
-              : "The AI daily request limit has been reached (free tier, 20/day). Please try again in a few minutes.";
-          return NextResponse.json({ response: quotaMsg, lead: null });
-        }
-
-        return NextResponse.json(
-          { error: "Failed to get response from Gemini" },
-          { status: 500 }
-        );
-      }
-
-      const data = await response.json();
-      const candidate = data.candidates?.[0];
-
-      if (!candidate?.content?.parts?.length) {
-        return NextResponse.json({
-          response: "I could not generate a response. Please try again.",
-          lead: null,
-        });
-      }
-
-      const parts = candidate.content.parts;
-
-      // Check for function calls
-      const functionCalls = parts.filter((p: any) => p.functionCall);
-      const textParts = parts.filter((p: any) => p.text);
-
-      if (functionCalls.length > 0) {
-        // Add model response with function calls to history
-        contents.push({ role: "model", parts });
-
-        // Execute each tool call
-        for (const fc of functionCalls) {
-          const toolResult = await handleToolCall(
-            fc.functionCall.name,
-            fc.functionCall.args
-          );
-
-          // Check if this was a lead save
-          if (fc.functionCall.name === "saveLeadToCRM") {
-            try {
-              const parsed = JSON.parse(toolResult);
-              if (parsed.success) {
-                lead = {
-                  clientName: `${fc.functionCall.args.firstName} ${fc.functionCall.args.lastName}`,
-                  clientContact: fc.functionCall.args.contactInfo,
-                  projectDetails: fc.functionCall.args.projectDetails,
-                };
-              }
-            } catch {}
-          }
-
-          // Add tool response to conversation
-          contents.push({
-            role: "function",
-            parts: [
-              {
-                functionResponse: {
-                  name: fc.functionCall.name,
-                  response: JSON.parse(toolResult),
-                },
-              },
-            ],
-          });
-        }
-
-        // Continue loop to let Gemini formulate final response
-        continue;
-      }
-
-      // No function calls — this is the final text response
-      finalText = textParts.map((p: any) => p.text).join("\n");
-      break;
+    // Preserve the free-tier quota UX instead of the generic error text.
+    if (/\(429\)|RESOURCE_EXHAUSTED/i.test(result.finalAnswer) && result.steps.length === 0) {
+      const quotaMsg =
+        langMap[locale] === "Greek"
+          ? "Το ημερήσιο όριο αιτημάτων του AI έχει εξαντληθεί (δωρεάν plan, 20/ημέρα). Δοκιμάστε ξανά σε λίγα λεπτά."
+          : langMap[locale] === "French"
+          ? "La limite quotidienne de requêtes IA est atteinte (gratuit, 20/jour). Réessayez dans quelques minutes."
+          : "The AI daily request limit has been reached (free tier, 20/day). Please try again in a few minutes.";
+      return NextResponse.json({ response: quotaMsg, lead: null });
     }
 
-    if (!finalText) {
-      finalText =
-        "I apologize, I encountered an issue processing your request. Please try again.";
-    }
-
-    return NextResponse.json({ response: finalText, lead });
+    return NextResponse.json({
+      response: result.finalAnswer,
+      lead,
+      meta: {
+        provider: result.provider,
+        model: result.model,
+        agent: result.steps[0]?.agent || null,
+      },
+    });
   } catch (error) {
     console.error("Chat API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

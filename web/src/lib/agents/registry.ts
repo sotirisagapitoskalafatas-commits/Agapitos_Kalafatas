@@ -1,6 +1,6 @@
 // Agent registry: the master orchestrator knows which agents exist and how to route to them.
 import { getModelClient, type ChatMessage, type ToolDefinition } from "./model-client";
-import type { AgentCall, AgentContext, Tool } from "./types";
+import type { AgentCall, AgentContext, Tier, Tool } from "./types";
 
 export type AgentDef = {
   id: string;
@@ -42,28 +42,52 @@ export async function runAgent(
   context: AgentContext,
   def: AgentDef,
   input: string,
-  opts: { history?: ChatMessage[]; tier?: "small" | "medium" | "large" } = {}
+  opts: {
+    history?: ChatMessage[];
+    tier?: Tier;
+    // Additional tools layered on top of the agent's own (e.g. public-mode
+    // lead capture). Never overrides the agent's curated tool set.
+    extraTools?: Tool[];
+    // Extra system-instruction text appended after the agent prompt
+    // (e.g. forced-language or marketing-mode injects).
+    systemExtra?: string;
+  } = {}
 ): Promise<AgentCall> {
   const llm = getModelClient(opts.tier || "medium");
   const start = Date.now();
 
+  const tools = [...def.tools, ...(opts.extraTools || [])];
+
   const messages: ChatMessage[] = [
-    { role: "system", content: systemPrompt(def) },
+    {
+      role: "system",
+      content: systemPrompt(def) + (opts.systemExtra ? `\n${opts.systemExtra}` : ""),
+    },
     ...(opts.history || []),
     { role: "user", content: input },
   ];
 
-  const tools = agentToolDefinitions(def);
+  const toolDefs: ToolDefinition[] = [
+    ...agentToolDefinitions(def),
+    ...(opts.extraTools || []).map((tool) => ({
+      type: "function" as const,
+      function: {
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.argsSchema,
+      },
+    })),
+  ];
 
   // max 4 tool rounds per agent
   let finalText = "";
   for (let round = 0; round < 4; round++) {
-    const resp = await llm.chat(messages, tools);
+    const resp = await llm.chat(messages, toolDefs);
 
     if (resp.toolCalls.length > 0) {
       messages.push({ role: "assistant", content: resp.content || "" });
       for (const call of resp.toolCalls) {
-        const tool = def.tools.find((t) => t.name === call.name);
+        const tool = tools.find((t) => t.name === call.name);
         if (!tool) {
           messages.push({
             role: "tool",
