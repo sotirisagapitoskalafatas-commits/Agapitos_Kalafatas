@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Lightbulb, PenTool, Rocket, LineChart, ArrowRight } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
-import AtmosTransition from "@/components/AtmosTransition";
 import { useLocale } from "@/contexts/LanguageContext";
 
 const recipeUi = [
@@ -79,8 +78,6 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        <AtmosTransition />
 
         <section className="py-20">
           <div className="mx-auto max-w-6xl px-6">

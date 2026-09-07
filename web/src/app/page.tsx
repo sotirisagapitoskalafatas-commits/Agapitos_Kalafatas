@@ -14,7 +14,6 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import LumenScrollHero from "@/components/LumenScrollHero";
 import Scene3D from "@/components/Scene3D";
-import AtmosTransition from "@/components/AtmosTransition";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { ServiceGrid } from "@/components/ServiceGrid";
@@ -178,8 +177,6 @@ export default function Home() {
 
       {/* LUMEN pinned scroll-scrub hero — scrubs 123 frames from /public/frames/hero-sequence/ */}
       <LumenScrollHero />
-
-      <AtmosTransition />
 
       {/* About — Όραμα & Αποστολή + services pillars */}
       <section

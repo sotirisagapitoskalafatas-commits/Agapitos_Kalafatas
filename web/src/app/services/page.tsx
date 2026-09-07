@@ -13,7 +13,6 @@ import { getServicesList } from "@/lib/servicesData";
 import Navbar from "@/components/Navbar";
 import CinematicSkyBackground from "@/components/CinematicSkyBackground";
 import Service3DCard from "@/components/Service3DCard";
-import AtmosTransition from "@/components/AtmosTransition";
 import { useLocale } from "@/contexts/LanguageContext";
 
 export default function ServicesHubPage() {
@@ -82,9 +81,6 @@ export default function ServicesHubPage() {
 
         {/* Pass-through beat — pure animation, no content */}
         <section className="h-[120vh]" aria-hidden="true" />
-
-        {/* Cloud level — Athens rises out of the white mist */}
-        <AtmosTransition height={200} intensity={0.9} />
 
         {/* Sector hub + Digital Solutions grid — lands as Athens rises out of the clouds */}
         <section className="px-5 sm:px-10 lg:px-20 pt-24 pb-32 bg-gradient-to-b from-transparent via-[#030711]/75 to-[#030711]/95">
