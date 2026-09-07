@@ -2352,7 +2352,7 @@ function SettingsView() {
     supabase_webhook_secret: "",
     notify_email: "kalafatasagapitos@gmail.com",
     ga_measurement_id: "",
-    ai_system_prompt: "You are Atlas, an AI agent created by Agapitos Kalafatas. You are a helpful, knowledgeable assistant specialized in full-stack development, SaaS architecture, AI/ML, cloud computing, and digital operations.",
+    ai_system_prompt: "You tone and focus guidance for Atlas: You are professional, warm, concrete and concise. You speak the user's language (Greek or English). You help with technology services (e-shops, websites, SaaS, AI agents), energy (electricity, gas, photovoltaics, EV charging), and insurance (life, health, car, home). Use the company knowledge base and the user's CRM data for grounded answers. You never fabricate facts, prices, or statistics.",
     pipeline_stages: ["New", "Qualified", "Proposal", "Negotiation", "Won", "Lost"],
   });
 

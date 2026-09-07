@@ -18,13 +18,16 @@ export default function ChatPage() {
   const { locale, t } = useLocale();
   const tC = (t as any).chatPage ?? {};
 
+  const defaultGreeting =
+    locale === "el"
+      ? "Γεια σας! Είμαι ο Atlas, ο βοηθός του Αγαπητού Καλαφατά. Μπορώ να σας βοηθήσω με υπηρεσίες τεχνολογίας (e-shop, ιστοσελίδες, SaaS, AI agents), ενέργειας (ρεύμα, αέριο, φωτοβολταϊκά, φόρτιση EV) και ασφάλισης (ζωή, υγεία, αυτοκίνητο, κατοικία). Πώς μπορώ να σας βοηθήσω;"
+      : "Hello! I'm Atlas, the assistant of Agapitos Kalafatas. I can help you with technology services (e-shops, websites, SaaS, AI agents), energy (electricity, gas, photovoltaics, EV charging) and insurance (life, health, car, home). How can I help you today?";
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
       role: "assistant",
-      content:
-        tC.greeting ||
-        "Hello! I'm Atlas, the AI agent built by Agapitos Kalafatas. I can help you understand his work, discuss full-stack architecture, or talk about any software engineering topic. How can I help you today?",
+      content: tC.greeting || defaultGreeting,
       timestamp: new Date(),
     },
   ]);
@@ -37,16 +40,11 @@ export default function ChatPage() {
     setMessages((prev) =>
       prev.map((m) =>
         m.id === "1"
-          ? {
-              ...m,
-              content:
-                tC.greeting ||
-                "Hello! I'm Atlas, the AI agent built by Agapitos Kalafatas. I can help you understand his work, discuss full-stack architecture, or talk about any software engineering topic. How can I help you today?",
-            }
+          ? { ...m, content: tC.greeting || defaultGreeting }
           : m
       )
     );
-  }, [locale, tC.greeting]);
+  }, [locale, tC.greeting, defaultGreeting]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
