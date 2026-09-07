@@ -28,14 +28,14 @@ const iconBySlug: Record<string, React.ElementType> = {
 };
 
 const colorBySlug: Record<string, string> = {
-  "web-development": "text-sky-300",
-  "eshop-development": "text-purple-300",
-  "ux-ui-branding": "text-indigo-300",
-  "seo-performance": "text-emerald-300",
-  "digital-marketing": "text-amber-300",
-  "web-mobile-apps": "text-cyan-300",
-  "hosting-support": "text-rose-300",
-  "custom-integrations": "text-slate-200",
+  "web-development": "text-sky-600",
+  "eshop-development": "text-purple-600",
+  "ux-ui-branding": "text-indigo-600",
+  "seo-performance": "text-emerald-600",
+  "digital-marketing": "text-amber-600",
+  "web-mobile-apps": "text-cyan-600",
+  "hosting-support": "text-rose-600",
+  "custom-integrations": "text-slate-700",
 };
 
 interface TiltCardProps {
@@ -53,7 +53,7 @@ function TiltCard({ slug, title, description, learnMore }: TiltCardProps) {
   const rotateY = useSpring(useTransform(mx, [0, 1], [-12, 12]), { stiffness: 200, damping: 20 });
 
   const Icon = iconBySlug[slug] || Globe;
-  const color = colorBySlug[slug] || "text-sky-300";
+  const color = colorBySlug[slug] || "text-sky-600";
 
   const onMouseMove = (e: React.MouseEvent) => {
     const el = ref.current;
@@ -76,31 +76,31 @@ function TiltCard({ slug, title, description, learnMore }: TiltCardProps) {
       onMouseLeave={onMouseLeave}
       style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
       whileHover={{ y: -6 }}
-      className="group card-space relative flex flex-col justify-between w-80 p-7 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg shadow-black/40 hover:shadow-2xl hover:shadow-black/60 hover:border-white/20 transition-all duration-300 flex-shrink-0 cursor-pointer"
+      className="group card-space relative flex flex-col justify-between w-80 p-7 rounded-2xl bg-white border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-slate-200/70 hover:border-slate-300 transition-all duration-300 flex-shrink-0 cursor-pointer"
     >
       <div>
         <div
           style={{ transform: "translateZ(40px)" }}
-          className={`w-12 h-12 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
+          className={`w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300`}
         >
           <Icon className={`w-6 h-6 ${color}`} />
         </div>
         <h3
           style={{ transform: "translateZ(30px)" }}
-          className="text-xl font-bold text-white mb-2 group-hover:text-sky-200 transition-colors"
+          className="text-xl font-bold text-slate-900 mb-2 group-hover:text-sky-700 transition-colors"
         >
           {title}
         </h3>
         <p
           style={{ transform: "translateZ(20px)" }}
-          className="text-white/55 text-sm leading-relaxed mb-6"
+          className="text-slate-600 text-sm leading-relaxed mb-6"
         >
           {description}
         </p>
       </div>
       <div
         style={{ transform: "translateZ(24px)" }}
-        className="flex items-center text-sm font-semibold text-sky-300 group-hover:translate-x-1 transition-transform"
+        className="flex items-center text-sm font-semibold text-sky-600 group-hover:translate-x-1 transition-transform"
       >
         {learnMore} &rarr;
       </div>
@@ -157,13 +157,13 @@ export const ServiceGrid: React.FC = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-12">
-          <p className="inline-block text-sm font-semibold tracking-[0.24em] text-sky-200 uppercase px-4 py-1.5 rounded-full border border-sky-400/25 bg-sky-500/10">
+          <p className="inline-block text-sm font-semibold tracking-[0.24em] text-sky-700 uppercase px-4 py-1.5 rounded-full border border-sky-200 bg-sky-50">
             {tPage.badge}
           </p>
-          <h2 className="text-3xl font-extrabold text-white sm:text-4xl mt-4">
+          <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl mt-4">
             {tPage.title}
           </h2>
-          <p className="text-white/60 mt-4">{tPage.subtitle}</p>
+          <p className="text-slate-500 mt-4">{tPage.subtitle}</p>
         </div>
 
         <div className="mb-6 flex items-center justify-center gap-4">
@@ -171,7 +171,7 @@ export const ServiceGrid: React.FC = () => {
             type="button"
             onClick={() => nudge(-1)}
             aria-label={tPage.prev || "Previous"}
-            className="w-11 h-11 rounded-full border border-white/15 bg-white/5 backdrop-blur text-white grid place-items-center transition-all hover:bg-white/10 hover:border-white/30"
+            className="w-11 h-11 rounded-full border border-slate-300 bg-white shadow-sm text-slate-700 grid place-items-center transition-all hover:bg-slate-50 hover:border-slate-400"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
@@ -179,7 +179,7 @@ export const ServiceGrid: React.FC = () => {
             type="button"
             onClick={() => nudge(1)}
             aria-label={tPage.next || "Next"}
-            className="w-11 h-11 rounded-full border border-white/15 bg-white/5 backdrop-blur text-white grid place-items-center transition-all hover:bg-white/10 hover:border-white/30"
+            className="w-11 h-11 rounded-full border border-slate-300 bg-white shadow-sm text-slate-700 grid place-items-center transition-all hover:bg-slate-50 hover:border-slate-400"
           >
             <ArrowRight className="w-5 h-5" />
           </button>

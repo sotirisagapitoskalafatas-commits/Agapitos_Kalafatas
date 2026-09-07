@@ -13,6 +13,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${BASE_URL}/insurance`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.8 },
     { url: `${BASE_URL}/chat`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.7 },
     { url: `${BASE_URL}/marketing`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.5 },
+    { url: `${BASE_URL}/about`, lastModified: now, changeFrequency: "monthly" as const, priority: 0.6 },
+    { url: `${BASE_URL}/privacy-policy`, lastModified: now, changeFrequency: "yearly" as const, priority: 0.3 },
+    { url: `${BASE_URL}/terms-of-use`, lastModified: now, changeFrequency: "yearly" as const, priority: 0.3 },
+    { url: `${BASE_URL}/gdpr`, lastModified: now, changeFrequency: "yearly" as const, priority: 0.3 },
+    { url: `${BASE_URL}/cookies`, lastModified: now, changeFrequency: "yearly" as const, priority: 0.3 },
+    { url: `${BASE_URL}/policy`, lastModified: now, changeFrequency: "yearly" as const, priority: 0.3 },
   ];
 
   const serviceSlugs = [
