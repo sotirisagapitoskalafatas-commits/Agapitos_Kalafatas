@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import UnifiedContactForm from "@/components/UnifiedContactForm";
 import Scene3DBackground from "@/components/Scene3DBackground";
+import AtmosTransition from "@/components/AtmosTransition";
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import { useLocale } from "@/contexts/LanguageContext";
@@ -37,6 +38,8 @@ export default function ContactPage() {
             {tC.heroDesc}
           </p>
         </div>
+
+        <AtmosTransition />
 
         <div className="grid lg:grid-cols-3 gap-12">
           {/* Form */}

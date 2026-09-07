@@ -18,7 +18,9 @@ import {
   Check,
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
-import CinematicSkyBackground from "@/components/CinematicSkyBackground";
+import EnergyCinematicBackground from "@/components/EnergyCinematicBackground";
+import AtmosTransition from "@/components/AtmosTransition";
+import AtmosSphere from "@/components/AtmosSphere";
 import { useLocale } from "@/contexts/LanguageContext";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -97,7 +99,7 @@ export default function EnergyPage() {
     <div className="min-h-screen bg-[#030711] text-slate-100 font-sans antialiased overflow-x-clip">
       <style>{`@keyframes pulseDot{0%,100%{opacity:1}50%{opacity:.35}} .reveal-init{opacity:0;transform:translateY(26px);transition:opacity .85s cubic-bezier(.2,.7,.2,1),transform .85s cubic-bezier(.2,.7,.2,1)} .revealed{opacity:1;transform:none}`}</style>
 
-      <CinematicSkyBackground pushScreens={1.75} mistIntensity={0.65} />
+      <EnergyCinematicBackground flowCyan={true} />
 
       <Navbar />
 
@@ -109,6 +111,7 @@ export default function EnergyPage() {
             "linear-gradient(to top, rgba(2,6,15,.72), rgba(2,6,15,0) 46%)",
         }}
       >
+        <AtmosSphere className="absolute inset-0 z-0" />
         <div className="max-w-4xl">
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-[#02060f]/80 border border-amber-400/40 text-[11px] font-medium tracking-[0.2em] uppercase text-amber-400">
             <span
@@ -146,6 +149,8 @@ export default function EnergyPage() {
           Scroll
         </div>
       </section>
+
+      <AtmosTransition from="#02060f" to="#0a1120" variant="dark-dark" />
 
       {/* TRUST VALUES */}
       <section className="relative z-10 px-5 sm:px-10 lg:px-20 pb-20">
