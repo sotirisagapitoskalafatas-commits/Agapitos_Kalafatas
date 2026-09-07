@@ -37,7 +37,7 @@ function SoftGlobe({ color }: { color: string }) {
       <meshPhysicalMaterial
         color={color}
         transparent
-        opacity={0.05}
+        opacity={0.04}
         roughness={0.1}
         metalness={0}
         transmission={0.8}
@@ -79,7 +79,7 @@ function DustPoints() {
           itemSize={3}
         />
       </bufferGeometry>
-      <pointsMaterial size={0.035} color="#bfd8ff" transparent opacity={0.4} sizeAttenuation />
+      <pointsMaterial size={0.035} color="#dbe8f8" transparent opacity={0.3} sizeAttenuation />
     </points>
   );
 }
@@ -87,7 +87,7 @@ function DustPoints() {
 export default function AtmosSphere({
   className = "",
   trigger,
-  color = "#7db8ff",
+  color = "#a9c6ea",
   parallax = 120,
 }: AtmosSphereProps) {
   const wrapRef = useRef<HTMLDivElement>(null);

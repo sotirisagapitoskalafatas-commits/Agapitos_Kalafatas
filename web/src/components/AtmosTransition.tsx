@@ -1,11 +1,29 @@
 "use client";
 
-import { useEffect, useRef, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 gsap.registerPlugin(ScrollTrigger);
 if (typeof window !== "undefined") ScrollTrigger.config({ ignoreMobileResize: true });
+
+/**
+ * AtmosTransition
+ * ---------------
+ * Global cinematic section bridge. Replaces hard seams / divider bars.
+ *
+ * Visual model: the dark section above dissolves into LAYERED, predominantly
+ * WHITE volumetric mist (cloud puffs at different heights, widths, blur and
+ * parallax speeds) which then merges seamlessly into the light section below.
+ *
+ * - No solid shapes, no straight divider, no saturated blue band.
+ * - Multiple independent mist layers with jagged/asymmetric silhouettes.
+ * - GSAP ScrollTrigger scrub parallax (each layer drifts while the white haze
+ *   brightens) → "dark giving way to cloud".
+ * - Fully configurable per page (variant, colors, height, intensity, density,
+ *   scrub, drift, particles) and responsive (desktop 180–260 / tablet 150–210 /
+ *   mobile 100–160).
+ */
 
 type Variant = "dark-light" | "dark-dark" | "light-light";
 
@@ -16,10 +34,18 @@ type AtmosTransitionProps = {
   from?: string;
   /** Override the color of the section BELOW the seam (default: auto-detected). */
   to?: string;
-  /** Height of the atmospheric band in px. Default 150 (scales down on mobile). */
+  /** Height of the mist band in px at desktop (clamped to 180–260). Scales down on tablet/mobile. */
   height?: number;
   /** Show drifting dust particles. Default true. */
   particles?: boolean;
+  /** Mist opacity multiplier (0.4–1.6, default 1). */
+  intensity?: number;
+  /** Particle density multiplier (0.4–3, default 1). */
+  density?: number;
+  /** ScrollTrigger scrub seconds (default 1.2). */
+  scrub?: number;
+  /** Mist parallax travel multiplier (0–2, default 1). */
+  drift?: number;
   className?: string;
   style?: CSSProperties;
 };
@@ -27,7 +53,6 @@ type AtmosTransitionProps = {
 type Rgb = { r: number; g: number; b: number };
 
 const DARK = "#05080D";
-const LIGHT = "#f7f8fb";
 
 function hexToRgb(c: string): Rgb | null {
   let m = c.match(/^#([0-9a-f]{3})$/i);
@@ -52,26 +77,6 @@ function hexToRgb(c: string): Rgb | null {
   return null;
 }
 
-function toHex(c: Rgb): string {
-  return "#" + [c.r, c.g, c.b].map((v) => v.toString(16).padStart(2, "0")).join("");
-}
-
-function luminance(c: Rgb): number {
-  return (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
-}
-
-function mix(a: Rgb, b: Rgb, t: number): Rgb {
-  return {
-    r: Math.round(a.r + (b.r - a.r) * t),
-    g: Math.round(a.g + (b.g - a.g) * t),
-    b: Math.round(a.b + (b.b - a.b) * t),
-  };
-}
-
-function rgba(c: Rgb, a: number): string {
-  return `rgba(${c.r},${c.g},${c.b},${a})`;
-}
-
 /** Best-effort resolution of a section's background color (image first stop, then color, then ancestors). */
 function resolveBg(el: HTMLElement | null, hops = 3): Rgb | null {
   if (!el) return null;
@@ -92,60 +97,126 @@ function resolveBg(el: HTMLElement | null, hops = 3): Rgb | null {
   return null;
 }
 
-const BLUE_A = { r: 96, g: 165, b: 250 };
-const BLUE_B = { r: 56, g: 120, b: 220 };
+function luminance(c: Rgb): number {
+  return (0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b) / 255;
+}
 
-function buildPalette(fromColor: Rgb, variant: Variant) {
+/** Irregular, asymmetric white cloud blob. */
+function mistGradient(cx: number, cy: number, sx: number): string {
+  return `radial-gradient(ellipse ${sx}% 58% at ${cx}% ${cy}%, rgba(255,255,255,1) 0%, rgba(255,255,255,0.42) 42%, rgba(255,255,255,0) 74%)`;
+}
+
+/** Ground haze that merges into the light section below — the "curtain" is a soft radial, never a line. */
+const HAZE_GRADIENT =
+  "radial-gradient(ellipse 150% 80% at 50% 100%, rgba(255,255,255,1) 0%, rgba(255,255,255,0.32) 55%, rgba(255,255,255,0) 80%)";
+
+type MistSpec = {
+  left: string;
+  width: string;
+  h: number; // height as multiple of H
+  bottom: number; // % of H
+  blur: number;
+  cx: number;
+  cy: number;
+  sx: number; // gradient horizontal stretch %
+};
+
+const MIST: MistSpec[] = [
+  { left: "-14%", width: "58%", h: 1.5, bottom: 34, blur: 30, cx: 55, cy: 60, sx: 84 },
+  { left: "40%", width: "62%", h: 2.2, bottom: -4, blur: 26, cx: 40, cy: 52, sx: 78 },
+  { left: "64%", width: "56%", h: 1.6, bottom: 46, blur: 34, cx: 35, cy: 45, sx: 88 },
+  { left: "-6%", width: "60%", h: 1.9, bottom: 12, blur: 28, cx: 60, cy: 48, sx: 76 },
+  { left: "24%", width: "74%", h: 1.3, bottom: 58, blur: 40, cx: 50, cy: 70, sx: 92 },
+];
+
+type Palette = {
+  hazeOp: number;
+  glowA: string;
+  glowB: string;
+  mists: number[]; // per-layer opacity
+  particle: Rgb;
+  particleMax: number;
+  bokeh: boolean;
+};
+
+function buildPalette(variant: Variant): Palette {
   if (variant === "dark-light") {
     return {
-      glowA: rgba(BLUE_A, 0.28),
-      glowB: rgba(BLUE_B, 0.12),
-      mist1: rgba({ r: 148, g: 197, b: 255 }, 0.3),
-      mist2: rgba({ r: 255, g: 255, b: 255 }, 0.22),
-      shadow: rgba(BLUE_A, 0.12),
-      particle: { r: 190, g: 225, b: 255 },
-      curve: LIGHT,
+      hazeOp: 0.9,
+      glowA: "rgba(228,241,255,0.16)",
+      glowB: "rgba(255,255,255,0.05)",
+      mists: [0.5, 0.85, 0.4, 0.62, 0.3],
+      particle: { r: 232, g: 240, b: 250 },
+      particleMax: 0.45,
+      bokeh: true,
     };
   }
   if (variant === "dark-dark") {
-    const near = mix(fromColor, BLUE_B, 0.5);
     return {
-      glowA: rgba(BLUE_A, 0.16),
-      glowB: rgba(mix(fromColor, BLUE_B, 0.25), 0.18),
-      mist1: rgba({ r: 120, g: 170, b: 230 }, 0.13),
-      mist2: rgba({ r: 180, g: 205, b: 255 }, 0.1),
-      shadow: rgba({ r: 90, g: 140, b: 210 }, 0.08),
-      particle: { r: 200, g: 225, b: 255 },
-      curve: toHex(near),
+      hazeOp: 0.55,
+      glowA: "rgba(214,230,250,0.1)",
+      glowB: "rgba(255,255,255,0.03)",
+      mists: [0.32, 0.5, 0.26, 0.38, 0.2],
+      particle: { r: 226, g: 235, b: 246 },
+      particleMax: 0.3,
+      bokeh: true,
     };
   }
-  const lightCurve = mix(fromColor, { r: 30, g: 41, b: 59 }, 0.02);
   return {
-    glowA: rgba({ r: 140, g: 190, b: 255 }, 0.22),
-    glowB: rgba({ r: 180, g: 215, b: 255 }, 0.1),
-    mist1: rgba({ r: 180, g: 215, b: 255 }, 0.26),
-    mist2: rgba({ r: 235, g: 245, b: 255 }, 0.35),
-    shadow: rgba({ r: 120, g: 170, b: 230 }, 0.06),
-    particle: { r: 120, g: 170, b: 235 },
-    curve: toHex(mix(lightCurve, { r: 247, g: 248, b: 251 }, 0.35)),
+    hazeOp: 0.32,
+    glowA: "rgba(226,240,255,0.1)",
+    glowB: "rgba(255,255,255,0.04)",
+    mists: [0.16, 0.26, 0.12, 0.2, 0.1],
+    particle: { r: 148, g: 176, b: 210 },
+    particleMax: 0.22,
+    bokeh: false,
   };
 }
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 export default function AtmosTransition({
   variant: variantProp = "auto",
   from: fromProp,
   to: toProp,
-  height = 150,
+  height = 220,
   particles = true,
+  intensity = 1,
+  density = 1,
+  scrub = 1.2,
+  drift = 1,
   className = "",
   style,
 }: AtmosTransitionProps) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const hazeRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
-  const mist1Ref = useRef<HTMLDivElement>(null);
-  const mist2Ref = useRef<HTMLDivElement>(null);
-  const curveRef = useRef<HTMLDivElement>(null);
+  const layerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Band height in px — responsive: desktop 180–260, tablet 150–210, mobile 100–160.
+  const [h, setH] = useState<number>(height);
+
+  useEffect(() => {
+    const computeH = () => {
+      const vh = Math.max(window.innerHeight, 640);
+      const w = window.innerWidth;
+      const raw = w < 768 ? Math.min(height, vh * 0.18) : w < 1280 ? Math.min(height, vh * 0.22) : Math.min(height, vh * 0.26);
+      return clamp(Math.round(raw), 100, Math.min(height, 260));
+    };
+    setH(computeH());
+    if (typeof window === "undefined") return;
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setH(computeH()));
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [height]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -165,7 +236,7 @@ export default function AtmosTransition({
     if (!toC && root.parentElement) toC = resolveBg(root.parentElement);
 
     const f = fromC || hexToRgb(DARK)!;
-    const t = toC || hexToRgb(LIGHT)!;
+    const t = toC || { r: 247, g: 248, b: 251 };
 
     let variant: Variant;
     if (variantProp !== "auto") variant = variantProp;
@@ -175,99 +246,109 @@ export default function AtmosTransition({
       variant = df && !dt ? "dark-light" : df && dt ? "dark-dark" : "light-light";
     }
 
-    const palette = buildPalette(f, variant);
+    const palette = buildPalette(variant);
     const reduce =
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const vh = Math.max(window.innerHeight, 640);
-    const H = Math.round(Math.min(height, vh * 0.22));
+    const H = h;
+    const mistOpacity = (i: number) => clamp(palette.mists[i] * intensity, 0, 1.2);
 
+    const haze = hazeRef.current;
     const glow = glowRef.current;
-    const mist1 = mist1Ref.current;
-    const mist2 = mist2Ref.current;
-    const curve = curveRef.current;
+    const layers = layerRefs.current;
     const canvas = canvasRef.current;
 
+    // --- Static paint -------------------------------------------------------
+    if (haze) {
+      haze.style.background = HAZE_GRADIENT;
+      haze.style.height = `${Math.round(H * 1.8)}px`;
+      haze.style.bottom = `${-Math.round(H * 0.85)}px`;
+      haze.style.opacity = String(clamp(palette.hazeOp * Math.max(0.5, intensity), 0, 1.2));
+    }
     if (glow) {
-      glow.style.background = `radial-gradient(ellipse at 50% 62%, ${palette.glowA}, ${palette.glowB} 38%, transparent 70%)`;
+      glow.style.background = `radial-gradient(ellipse 48% 64% at 50% 70%, ${palette.glowA}, ${palette.glowB} 46%, transparent 74%)`;
       glow.style.height = `${Math.round(H * 2.6)}px`;
-      glow.style.bottom = `${-Math.round(H * 0.9)}px`;
+      glow.style.bottom = `${-Math.round(H * 1.2)}px`;
     }
-    if (mist1) {
-      mist1.style.background = `radial-gradient(ellipse, ${palette.mist1}, transparent 68%)`;
-      mist1.style.height = `${Math.round(H * 0.72)}px`;
-      mist1.style.bottom = `${Math.round(H * 0.36)}px`;
-    }
-    if (mist2) {
-      mist2.style.background = `radial-gradient(ellipse, ${palette.mist2}, transparent 64%)`;
-      mist2.style.height = `${Math.round(H * 0.66)}px`;
-      mist2.style.bottom = `${Math.round(H * 0.16)}px`;
-    }
-    if (curve) {
-      curve.style.height = `${Math.round(H * 2.6)}px`;
-      curve.style.bottom = `${-Math.round(H * 1.4)}px`;
-      curve.style.background = palette.curve;
-      curve.style.boxShadow = `0 -${Math.round(H * 0.12)}px ${Math.round(H * 0.4)}px ${palette.shadow}`;
-    }
+    layers.forEach((el, i) => {
+      if (!el) return;
+      const spec = MIST[i];
+      el.style.height = `${Math.round(spec.h * H)}px`;
+      el.style.bottom = `${Math.round((spec.bottom / 100) * H)}px`;
+      el.style.background = mistGradient(spec.cx, spec.cy, spec.sx);
+      el.style.opacity = String(mistOpacity(i));
+    });
 
+    // --- Scroll parallax ----------------------------------------------------
     let ctx: gsap.Context | undefined;
 
     if (!reduce) {
       ctx = gsap.context(() => {
-        const tie = { scrub: 1.2, trigger: root, start: "top bottom", end: "bottom top", ease: "none" };
-        if (mist1) {
+        const tie = {
+          scrub,
+          trigger: root,
+          start: "top bottom",
+          end: "bottom top",
+          ease: "none",
+        };
+        const sway = [-14, 12, -10, 16, -7];
+        const rise = [0.8, 1.05, 0.55, 1.2, 0.5];
+        layers.forEach((el, i) => {
+          if (!el) return;
+          const travel = Math.min(H * 0.9, 190) * drift * rise[i];
           gsap.fromTo(
-            mist1,
-            { y: 0, scale: 1 },
-            { y: -Math.min(54, Math.round(H * 0.36)), scale: 1.18, scrollTrigger: tie }
+            el,
+            { y: H * 0.06, x: -sway[i] * drift, scale: 1 },
+            { y: -travel, x: sway[i] * drift, scale: 1.16, scrollTrigger: tie }
           );
-        }
-        if (mist2) {
+        });
+        if (haze) {
           gsap.fromTo(
-            mist2,
-            { y: 14, scale: 1 },
-            { y: -Math.min(84, Math.round(H * 0.56)), scale: 1.22, scrollTrigger: tie }
+            haze,
+            { y: 0, x: 0, opacity: clamp(palette.hazeOp, 0, 1) * 0.4 },
+            { y: H * 0.16, x: 10 * drift, opacity: clamp(palette.hazeOp, 0, 1), scrollTrigger: tie }
           );
         }
         if (glow) {
           gsap.fromTo(
             glow,
-            { y: 0, scale: 1, opacity: 0.7 },
-            { y: -Math.min(64, Math.round(H * 0.42)), scale: 1.3, opacity: 1, scrollTrigger: tie }
-          );
-        }
-        if (curve) {
-          gsap.fromTo(
-            curve,
-            { y: 0, scaleX: 1 },
-            { y: -Math.min(74, Math.round(H * 0.5)), scaleX: 1.07, scrollTrigger: tie }
+            { y: 0, scale: 1, opacity: 0.45 },
+            { y: -H * 0.3 * drift, scale: 1.26, opacity: 1, scrollTrigger: tie }
           );
         }
       }, root);
     }
 
+    // --- Dust particles -----------------------------------------------------
     let raf = 0;
     let running = false;
 
     if (particles && canvas) {
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const budget =
-        window.innerWidth < 768 ? 22 : window.innerWidth < 1280 ? 34 : 46;
+      const base = window.innerWidth < 768 ? 22 : window.innerWidth < 1280 ? 34 : 46;
+      const budget = Math.round(clamp(base * density, 0, 140));
+      const bokehCount = palette.bokeh ? Math.max(2, Math.round(budget * 0.14)) : 0;
       const part = Array.from({ length: budget }, () => ({
         x: Math.random(),
         y: Math.random(),
         size: 0.3 + Math.random() * 1.4,
+        soft: false,
         speed: 0.02 + Math.random() * 0.07,
-        alpha: 0.1 + Math.random() * (variant === "light-light" ? 0.3 : 0.4),
+        alpha: 0.1 + Math.random() * palette.particleMax,
         drift: (Math.random() - 0.5) * 0.05,
       }));
+      for (let i = 0; i < bokehCount; i++) {
+        part[i].size = 2.4 + Math.random() * 2.6;
+        part[i].soft = true;
+        part[i].alpha *= 0.4;
+      }
 
       const draw = () => {
         const w = canvas.clientWidth;
-        const h = canvas.clientHeight;
+        const hh = canvas.clientHeight;
         if (canvas.width !== Math.round(w * dpr)) canvas.width = Math.round(w * dpr);
-        if (canvas.height !== Math.round(h * dpr)) canvas.height = Math.round(h * dpr);
+        if (canvas.height !== Math.round(hh * dpr)) canvas.height = Math.round(hh * dpr);
         const c = canvas.getContext("2d");
         if (!c) return;
         c.clearRect(0, 0, canvas.width, canvas.height);
@@ -279,11 +360,9 @@ export default function AtmosTransition({
             p.y = 1.02;
             p.x = Math.random();
           }
-          const px = p.x * canvas.width;
-          const py = p.y * canvas.height;
           c.globalAlpha = p.alpha;
           c.beginPath();
-          c.arc(px, py, p.size * dpr, 0, Math.PI * 2);
+          c.arc(p.x * canvas.width, p.y * canvas.height, p.size * dpr, 0, Math.PI * 2);
           c.fill();
         }
         c.globalAlpha = 1;
@@ -307,12 +386,12 @@ export default function AtmosTransition({
 
       if (reduce) {
         const w = canvas.clientWidth;
-        const h = canvas.clientHeight;
+        const hh = canvas.clientHeight;
         canvas.width = Math.round(w * dpr);
-        canvas.height = Math.round(h * dpr);
+        canvas.height = Math.round(hh * dpr);
         const c = canvas.getContext("2d");
         if (c) {
-          c.fillStyle = `rgba(${palette.particle.r},${palette.particle.g},${palette.particle.b},0.5)`;
+          c.fillStyle = `rgba(${palette.particle.r},${palette.particle.g},${palette.particle.b},1)`;
           for (const p of part) {
             c.globalAlpha = p.alpha * 0.6;
             c.beginPath();
@@ -323,12 +402,11 @@ export default function AtmosTransition({
         }
       }
 
-      const cleanupIo = () => io.disconnect();
       return () => {
         ctx?.revert();
         cancelAnimationFrame(raf);
         running = false;
-        cleanupIo();
+        io.disconnect();
       };
     }
 
@@ -338,7 +416,7 @@ export default function AtmosTransition({
       running = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variantProp, fromProp, toProp, height, particles]);
+  }, [h, variantProp, fromProp, toProp, height, particles, intensity, density, scrub, drift]);
 
   return (
     <div
@@ -347,61 +425,55 @@ export default function AtmosTransition({
       className={className}
       style={{
         position: "relative",
-        height: Math.max(height, 90),
-        marginTop: -Math.max(height, 90),
+        height: h,
+        marginTop: -h,
         zIndex: 30,
         pointerEvents: "none",
+        overflow: "hidden",
+        isolation: "isolate",
         ...style,
       }}
     >
-      <div className="absolute inset-0 overflow-hidden">
+      {/* Faint pale-ice glow — the only blue allowed, a whisper behind the clouds */}
+      <div
+        ref={glowRef}
+        style={{
+          position: "absolute",
+          left: "-15%",
+          width: "130%",
+          filter: "blur(60px)",
+          willChange: "transform, opacity",
+        }}
+      />
+      {/* Ground haze: merges seamlessly into the light section below */}
+      <div
+        ref={hazeRef}
+        style={{
+          position: "absolute",
+          left: "-25%",
+          width: "150%",
+          filter: "blur(46px)",
+          willChange: "transform, opacity",
+        }}
+      />
+      {/* Volumetric white mist layers — irregular, asymmetric, no solid shape */}
+      {MIST.map((spec, i) => (
         <div
-          ref={glowRef}
+          key={spec.left + i}
+          ref={(el) => {
+            layerRefs.current[i] = el;
+          }}
           style={{
             position: "absolute",
-            left: "50%",
-            width: "92%",
-            transform: "translateX(-50%)",
-            filter: "blur(38px)",
+            left: spec.left,
+            width: spec.width,
+            borderRadius: "50%",
+            filter: `blur(${spec.blur}px)`,
             willChange: "transform, opacity",
           }}
         />
-        <div
-          ref={mist1Ref}
-          style={{
-            position: "absolute",
-            left: "-16%",
-            width: "132%",
-            borderRadius: "50%",
-            filter: "blur(26px)",
-            willChange: "transform",
-          }}
-        />
-        <div
-          ref={mist2Ref}
-          style={{
-            position: "absolute",
-            left: "-10%",
-            width: "120%",
-            borderRadius: "50%",
-            filter: "blur(22px)",
-            willChange: "transform",
-          }}
-        />
-        <div
-          ref={curveRef}
-          style={{
-            position: "absolute",
-            left: "50%",
-            width: "135%",
-            transform: "translateX(-48%) rotate(-1.8deg)",
-            transformOrigin: "50% 0%",
-            borderRadius: "50% 50% 0 0",
-            willChange: "transform",
-          }}
-        />
-        <canvas ref={canvasRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
-      </div>
+      ))}
+      <canvas ref={canvasRef} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />
     </div>
   );
 }

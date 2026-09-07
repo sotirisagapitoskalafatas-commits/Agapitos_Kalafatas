@@ -36,7 +36,8 @@
     "p2": "With over 16 years of professional experience, I specialize in designing and developing scalable B2B SaaS platforms — from initial concept to final production. My goal is to create digital products that transform entire industries.",
     "p3": "",
     "linkedin": "LinkedIn Profile",
-    "countries": "Countries covered by RED-AI intelligence"
+    "countries": "Countries covered by RED-AI intelligence",
+    "role": "Founder & Chief SaaS Architect"
   },
   "services": {
     "badge": "Capabilities",
@@ -1424,6 +1425,32 @@
     "en": "English",
     "el": "Ελληνικά",
     "fr": "Français"
+  },
+  "home": {
+    "pillarsLabel": "Our Services",
+    "pillars": {
+      "digital": ["E-shop", "Sites", "Custom Apps", "SEO"],
+      "energy": ["Electricity", "Gas", "Solar", "EV"],
+      "insurance": ["Health BEWELL", "Home", "Auto"]
+    },
+    "learnMore": "Learn more"
+  },
+  "aboutPage": {
+    "badge": "Who We Are",
+    "title2": "Who we are",
+    "intro": "A Greece-based SaaS engineer who unites digital development, energy, insurance and artificial intelligence into solutions that work in practice — for businesses that want results, not buzzwords.",
+    "linkedin": "LinkedIn",
+    "contact": "Contact",
+    "recipeBadge": "Our Recipe",
+    "recipe": [
+      { "title": "Understand", "desc": "We listen to your goal, your market and your users. Without deep understanding we build nothing." },
+      { "title": "Design", "desc": "Architecture, user experience and technology — all designed to scale." },
+      { "title": "Build", "desc": "Built with modern web stacks, AI and automations. Fast, measurable, reliable." },
+      { "title": "Execute", "desc": "Launch, optimize and measure with data — results keep improving." }
+    ],
+    "ctaTitle": "Let's build your next step",
+    "ctaDesc": "Whether it's an e-shop, an energy solution or personal insurance — we start with a conversation.",
+    "ctaButton": "Talk to Atlas AI"
   },
   "serviceGrid": [
     {

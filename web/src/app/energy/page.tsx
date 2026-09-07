@@ -20,6 +20,7 @@ import {
 import Navbar from "@/components/Navbar";
 import EnergyCinematicBackground from "@/components/EnergyCinematicBackground";
 import AtmosSphere from "@/components/AtmosSphere";
+import AtmosTransition from "@/components/AtmosTransition";
 import { useLocale } from "@/contexts/LanguageContext";
 
 const iconMap: Record<string, React.ElementType> = {
@@ -148,6 +149,9 @@ export default function EnergyPage() {
           Scroll
         </div>
       </section>
+
+      {/* Breaking through the cloud deck into the energy sector */}
+      <AtmosTransition variant="dark-dark" height={200} intensity={0.85} />
 
       {/* TRUST VALUES */}
       <section className="relative z-10 px-5 sm:px-10 lg:px-20 pb-20">

@@ -27,26 +27,29 @@ import { Laptop, Zap, ShieldCheck, ArrowRight } from "lucide-react";
 gsap.registerPlugin(ScrollTrigger);
 ScrollTrigger.config({ ignoreMobileResize: true });
 
-const pillars = [
+const pillarDefs: {
+  key: "digital" | "energy" | "insurance";
+  href: string;
+  icon: typeof Laptop;
+  chip: string;
+  linkColor: string;
+}[] = [
   {
-    title: "Ψηφιακές Λύσεις",
-    items: ["E-shop", "Sites", "Custom Apps", "SEO"],
+    key: "digital",
     href: "/services",
     icon: Laptop,
     chip: "bg-sky-50 border-sky-100 text-sky-600",
     linkColor: "text-sky-700 hover:text-sky-900",
   },
   {
-    title: "Ενέργεια",
-    items: ["Ρεύμα", "Αέριο", "Φωτοβολταϊκά", "EV"],
+    key: "energy",
     href: "/energy",
     icon: Zap,
     chip: "bg-amber-50 border-amber-100 text-amber-600",
     linkColor: "text-amber-700 hover:text-amber-900",
   },
   {
-    title: "Ασφάλιση",
-    items: ["Υγεία BEWELL", "Κατοικία", "Αυτοκίνητο"],
+    key: "insurance",
     href: "/insurance",
     icon: ShieldCheck,
     chip: "bg-violet-50 border-violet-100 text-violet-600",
@@ -57,6 +60,18 @@ const pillars = [
 export default function Home() {
   const { t } = useLocale();
   const rootRef = useRef<HTMLElement>(null);
+
+  const sectorTitles: Record<"digital" | "energy" | "insurance", string> = {
+    digital: t.sectors?.digitalSolutions || "Digital Solutions",
+    energy: t.sectors?.energy || "Energy",
+    insurance: t.sectors?.insurance || "Insurance",
+  };
+  const homePills = t.home?.pillars;
+  const pillars = pillarDefs.map((d) => ({
+    ...d,
+    title: sectorTitles[d.key],
+    items: homePills?.[d.key] || [],
+  }));
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -191,7 +206,7 @@ export default function Home() {
               <div className="space-y-5 leading-relaxed text-slate-600">
                 <p>
                   <strong className="text-slate-900">
-                    Founder &amp; Chief SaaS Architect
+                    {t.about.role || "Founder & Chief SaaS Architect"}
                   </strong>{" "}
                   — {t.about.p1}
                 </p>
@@ -233,14 +248,14 @@ export default function Home() {
           {/* Services pillars — Ψηφιακές Λύσεις / Ενέργεια / Ασφάλιση */}
           <div className="mt-24 md:mt-28">
             <p className="mb-8 text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-              Οι Υπηρεσίες μας
+              {t.home?.pillarsLabel || "Our Services"}
             </p>
             <div className="grid gap-6 md:grid-cols-3">
               {pillars.map((p) => {
                 const Icon = p.icon;
                 return (
                   <div
-                    key={p.title}
+                    key={p.key}
                     className="group flex flex-col rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-200/60"
                   >
                     <div
@@ -265,7 +280,7 @@ export default function Home() {
                       href={p.href}
                       className={`mt-6 inline-flex items-center gap-1 text-sm font-semibold transition-all ${p.linkColor}`}
                     >
-                      Μάθετε περισσότερα
+                      {t.home?.learnMore || "Learn more"}
                       <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                     </Link>
                   </div>

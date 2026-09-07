@@ -5,39 +5,36 @@ import { Lightbulb, PenTool, Rocket, LineChart, ArrowRight } from "lucide-react"
 import Navbar from "@/components/Navbar";
 import SiteFooter from "@/components/SiteFooter";
 import AtmosTransition from "@/components/AtmosTransition";
+import { useLocale } from "@/contexts/LanguageContext";
 
-const recipe = [
+const recipeUi = [
   {
-    step: "01",
-    title: "Κατανοούμε",
-    desc: "Ακούμε τον στόχο σου, την αγορά και τους χρήστες. Χωρίς βαθιά κατανόηση δεν χτίζουμε τίποτα.",
     icon: Lightbulb,
     color: "bg-amber-50 border-amber-100 text-amber-600",
   },
   {
-    step: "02",
-    title: "Σχεδιάζουμε",
-    desc: "Αρχιτεκτονική, εμπειρία χρήστη και τεχνολογία — όλα σχεδιασμένα ώστε να κλιμακώνονται.",
     icon: PenTool,
     color: "bg-sky-50 border-sky-100 text-sky-600",
   },
   {
-    step: "03",
-    title: "Χτίζουμε",
-    desc: "Κατασκευή με σύγχρονα web stacks, AI και αυτοματισμούς. Γρήγορα, μετρίσιμα, αξιόπιστα.",
     icon: Rocket,
     color: "bg-violet-50 border-violet-100 text-violet-600",
   },
   {
-    step: "04",
-    title: "Εκτελούμε",
-    desc: "Λανσάρισμα, βελτιστοποίηση και μέτρηση με δεδομένα — το αποτέλεσμα βελτιώνεται συνέχεια.",
     icon: LineChart,
     color: "bg-emerald-50 border-emerald-100 text-emerald-600",
   },
 ];
 
 export default function AboutPage() {
+  const { t } = useLocale();
+  const tAP = t.aboutPage;
+  const recipe = (tAP.recipe || []).map((step, i) => ({
+    step: String(i + 1).padStart(2, "0"),
+    ...step,
+    ...(recipeUi[i] || recipeUi[0]),
+  }));
+
   return (
     <>
       <Navbar />
@@ -47,19 +44,17 @@ export default function AboutPage() {
           <div className="pointer-events-none absolute bottom-0 left-1/4 h-[350px] w-[350px] rounded-full bg-violet-500/10 blur-3xl" />
           <div className="relative z-10 mx-auto max-w-4xl px-6 text-center">
             <span className="mb-6 inline-block rounded-full border border-violet-200 bg-violet-50 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-700">
-              Ποιοι Είμαστε
+              {tAP.badge}
             </span>
             <h1 className="text-4xl font-black leading-tight md:text-6xl">
               Agapitos Kalafatas
               <br />
               <span className="bg-gradient-to-br from-amber-600 via-amber-500 to-amber-400 bg-clip-text text-transparent">
-                Who we are
+                {tAP.title2}
               </span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-600">
-              Ένας μηχανικός SaaS με έδρα την Ελλάδα, που ενώνει ψηφιακή ανάπτυξη,
-              ενέργεια, ασφάλιση και τεχνητή νοημοσύνη σε λύσεις που δουλεύουν στην
-              πράξη — για επιχειρήσεις που θέλουν αποτελέσματα, όχι buzzwords.
+              {tAP.intro}
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
               <a
@@ -73,13 +68,13 @@ export default function AboutPage() {
                   alt="LinkedIn"
                   className="h-5 w-5 rounded object-cover"
                 />
-                LinkedIn
+                {tAP.linkedin}
               </a>
               <Link
                 href="/contact"
                 className="inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-amber-600 to-amber-500 px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-amber-200 transition-all hover:from-amber-700 hover:to-amber-600"
               >
-                Επικοινωνία
+                {tAP.contact}
               </Link>
             </div>
           </div>
@@ -90,7 +85,7 @@ export default function AboutPage() {
         <section className="py-20">
           <div className="mx-auto max-w-6xl px-6">
             <p className="mb-10 text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-400">
-              Our Recipe
+              {tAP.recipeBadge}
             </p>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {recipe.map((item) => {
@@ -125,17 +120,16 @@ export default function AboutPage() {
           <div className="mx-auto max-w-5xl px-6">
             <div className="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 via-white to-violet-50 p-10 md:p-14 text-center shadow-sm">
               <h2 className="text-3xl font-black text-slate-900 md:text-4xl">
-                Ας χτίσουμε το επόμενο βήμα σου
+                {tAP.ctaTitle}
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-slate-600">
-                Είτε είναι ένα e-shop, μια ενεργειακή λύση ή ασφάλιση με προσωπική
-                φροντίδα — ξεκινάμε με μια συζήτηση.
+                {tAP.ctaDesc}
               </p>
               <Link
                 href="/contact"
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-violet-600 to-violet-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-200 transition-all hover:from-violet-700 hover:to-violet-600"
               >
-                Μίλησε με τον Atlas AI
+                {tAP.ctaButton}
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>

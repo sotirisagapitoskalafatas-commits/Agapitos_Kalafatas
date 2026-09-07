@@ -36,7 +36,8 @@
     "p2": "Avec plus de 16 ans d'expérience professionnelle, je me spécialise dans la conception et le développement de plateformes B2B SaaS évolutives — du concept initial à la production finale. Mon objectif est de créer des produits numériques qui transforment des secteurs entiers.",
     "p3": "",
     "linkedin": "Profil LinkedIn",
-    "countries": "Pays couverts par l'intelligence RED-AI"
+    "countries": "Pays couverts par l'intelligence RED-AI",
+    "role": "Fondateur & Architecte SaaS en chef"
   },
   "services": {
     "badge": "Capacités",
@@ -1424,6 +1425,32 @@
     "en": "English",
     "el": "Ελληνικά",
     "fr": "Français"
+  },
+  "home": {
+    "pillarsLabel": "Nos Services",
+    "pillars": {
+      "digital": ["E-shop", "Sites web", "Applications sur mesure", "SEO"],
+      "energy": ["Électricité", "Gaz", "Solaire", "VE"],
+      "insurance": ["Santé BEWELL", "Habitation", "Auto"]
+    },
+    "learnMore": "En savoir plus"
+  },
+  "aboutPage": {
+    "badge": "Qui Sommes-Nous",
+    "title2": "Qui nous sommes",
+    "intro": "Un ingénieur SaaS basé en Grèce, qui unit développement numérique, énergie, assurance et intelligence artificielle en solutions qui fonctionnent concrètement — pour des entreprises qui veulent des résultats, pas des mots creux.",
+    "linkedin": "LinkedIn",
+    "contact": "Contact",
+    "recipeBadge": "Notre Recette",
+    "recipe": [
+      { "title": "Comprendre", "desc": "Nous écoutons votre objectif, votre marché et vos utilisateurs. Sans compréhension profonde, nous ne construisons rien." },
+      { "title": "Concevoir", "desc": "Architecture, expérience utilisateur et technologie — tout est conçu pour évoluer." },
+      { "title": "Construire", "desc": "Construction avec des stacks web modernes, IA et automatisations. Rapide, mesurable, fiable." },
+      { "title": "Exécuter", "desc": "Lancement, optimisation et mesure par les données — les résultats s'améliorent en continu." }
+    ],
+    "ctaTitle": "Construisons votre prochaine étape",
+    "ctaDesc": "Qu'il s'agisse d'un e-shop, d'une solution énergétique ou d'une assurance sur mesure — nous commençons par une conversation.",
+    "ctaButton": "Parler à Atlas AI"
   },
   "serviceGrid": [
     {
