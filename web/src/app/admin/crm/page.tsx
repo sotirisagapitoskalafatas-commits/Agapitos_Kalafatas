@@ -476,7 +476,17 @@ export default function CRMDashboard() {
 
       {/* Lead Folder Drawer */}
       {selectedLead && (
-        <LeadDrawer lead={selectedLead} onClose={() => setSelectedLead(null)} updateFields={updateLeadFields} comms={comms} events={events} />
+        <LeadDrawer
+          lead={selectedLead}
+          onClose={() => setSelectedLead(null)}
+          onErased={(id) => {
+            setSelectedLead(null);
+            setLeads((prev) => prev.filter((l) => l.id !== id));
+          }}
+          updateFields={updateLeadFields}
+          comms={comms}
+          events={events}
+        />
       )}
 
       {/* Modals */}
@@ -1230,9 +1240,10 @@ function Timeline({ lead, comms, events, docCount }: { lead: Lead; comms: CommRe
 /* ─── LEAD FOLDER (tabbed drawer) ─── */
 type FolderTab = "genika" | "paroxes" | "synergates" | "eggrafa" | "prosfores" | "istoriko";
 
-function LeadDrawer({ lead, onClose, updateFields, comms, events }: {
+function LeadDrawer({ lead, onClose, onErased, updateFields, comms, events }: {
   lead: Lead;
   onClose: () => void;
+  onErased: (id: string) => void;
   updateFields: (id: string, patch: Partial<Lead>) => void;
   comms: CommRecord[];
   events: CalendarEvent[];
@@ -1241,6 +1252,9 @@ function LeadDrawer({ lead, onClose, updateFields, comms, events }: {
   const [groups, setGroups] = useState<Record<string, { name: string; url: string; path: string; type: string }[]>>({});
   const [supplies, setSupplies] = useState<Supply[]>(lead.supplies || []);
   const suppliesRef = useRef<Supply[]>(lead.supplies || []);
+  // GDPR: export erases only on typed confirmation; export downloads a JSON bundle.
+  const [gdprBusy, setGdprBusy] = useState("");
+  const [gdprConfirm, setGdprConfirm] = useState("");
 
   useEffect(() => {
     setSupplies(lead.supplies || []);
@@ -1286,6 +1300,44 @@ function LeadDrawer({ lead, onClose, updateFields, comms, events }: {
       body: JSON.stringify({ path }),
     });
     loadDocs();
+  };
+
+  // GDPR: full export bundle → downloadable JSON. Signed doc URLs expire in 7 days.
+  const exportData = async () => {
+    setGdprBusy("export");
+    try {
+      const res = await fetch(`/api/gdpr?lead_id=${lead.id}`, { headers: getAuthHeaders() });
+      if (!res.ok) throw new Error("Export failed");
+      const bundle = await res.json();
+      const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lead-${lead.id}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setGdprBusy("");
+    }
+  };
+
+  // GDPR: erase the person's data (documents, communications, calendar events,
+  // lead row). Requires typing ΔΙΑΓΡΑΦΗ to arm. Financial rows (deals, invoices)
+  // keep their records — their lead_id is SET NULL in prod.
+  const eraseData = async () => {
+    if (gdprConfirm !== "ΔΙΑΓΡΑΦΗ") return;
+    setGdprBusy("erase");
+    try {
+      const res = await fetch("/api/gdpr", {
+        method: "DELETE",
+        headers: getAuthHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({ lead_id: lead.id, confirm: true }),
+      });
+      if (!res.ok) throw new Error("Erase failed");
+      onErased(lead.id);
+    } finally {
+      setGdprBusy("");
+    }
   };
 
   const TABS: { key: FolderTab; label: string; icon: string }[] = [
@@ -1375,6 +1427,38 @@ function LeadDrawer({ lead, onClose, updateFields, comms, events }: {
 
               <Section title="Σημειώσεις">
                 <textarea rows={4} className={inputCls + " resize-none"} placeholder="Σημειώσεις για το lead..." defaultValue={lead.notes || ""} onBlur={(e) => save({ notes: e.target.value })} />
+              </Section>
+
+              <Section title="Ζώνη Δεδομένων (GDPR)">
+                <div className="space-y-3">
+                  <div>
+                    <button
+                      onClick={exportData}
+                      disabled={gdprBusy === "erase"}
+                      className="w-full p-2.5 rounded-xl text-sm font-semibold bg-white/70 border border-slate-200 text-indigo-600 hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                    >
+                      {gdprBusy === "export" ? "Δημιουργία export…" : "⬇ Εξαγωγή δεδομένων (JSON)"}
+                    </button>
+                    <p className="text-[10px] text-slate-500 mt-1">Πλήρες αντίγραφο του φακέλου (στοιχεία, επικοινωνίες, ραντεβού, τιμολόγια, αρχεία με συνδέσμους 7 ημερών).</p>
+                  </div>
+                  <div className="border-t border-slate-200 pt-3">
+                    <label className="text-xs font-semibold text-red-600">Διαγραφή δεδομένων</label>
+                    <input
+                      className={inputCls + " mt-1"}
+                      placeholder='Πληκτρολογήστε "ΔΙΑΓΡΑΦΗ" για να ενεργοποιηθεί'
+                      value={gdprConfirm}
+                      onChange={(e) => setGdprConfirm(e.target.value)}
+                    />
+                    <button
+                      onClick={eraseData}
+                      disabled={gdprConfirm !== "ΔΙΑΓΡΑΦΗ" || gdprBusy === "export"}
+                      className={`w-full p-2.5 rounded-xl text-sm font-semibold mt-2 transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${gdprConfirm === "ΔΙΑΓΡΑΦΗ" && gdprBusy !== "export" ? "bg-red-600 text-white hover:bg-red-700" : "bg-slate-100 text-slate-400"}`}
+                    >
+                      {gdprBusy === "erase" ? "Διαγραφή…" : "🗑 Μόνιμη διαγραφή (GDPR)"}
+                    </button>
+                    <p className="text-[10px] text-slate-500 mt-1">Διαγράφει οριστικά το φάκελο, τα αρχεία, τις επικοινωνίες και τα ραντεβού. Οι προσφορές/τιμολόγια παραμένουν (νομική υποχρέωση), μόνο η σύνδεση με το φάκελο αφαιρείται.</p>
+                  </div>
+                </div>
               </Section>
             </div>
           )}
