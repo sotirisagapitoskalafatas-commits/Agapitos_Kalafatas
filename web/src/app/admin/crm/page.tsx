@@ -22,6 +22,27 @@ interface Lead {
   status: string;
   gdpr_consent: boolean;
   notes: string;
+  // ── Energy "folder" fields (2026-09-07 migration) ──
+  company?: string | null;
+  address?: string | null;
+  id_number?: string | null;      // Α.Τ.
+  provider?: string | null;       // Πάροχος
+  program?: string | null;        // Πρόγραμμα
+  source?: string | null;         // Πηγή
+  lead_type?: string | null;      // Τύπος
+  partner?: string | null;        // Συνεργάτης
+  partner_notes?: string | null;
+  assigned_agent?: string | null; // Ανάθεση σε AI agent
+  renewal_date?: string | null;   // Ημ. ανανέωσης
+  supplies?: Supply[];
+}
+
+interface Supply {
+  supply_number: string; // Αριθμός Παροχής ΔΕΔΔΗΕ
+  type: string;          // Ρεύμα / Φυσικό Αέριο
+  address: string;
+  provider: string;
+  notes: string;
 }
 
 interface Deal {
@@ -139,12 +160,36 @@ const STAGES = [
   { key: "closed_lost", label: "Lost", color: "bg-red-50 border-red-300" },
 ];
 
-const STATUS_COLORS: Record<string, string> = {
-  new_lead: "bg-blue-100 text-blue-700",
-  contacted: "bg-yellow-100 text-yellow-700",
-  customer: "bg-green-100 text-green-700",
-  archived: "bg-slate-100 text-slate-500",
-};
+// ── Lead pipeline statuses (Greek labels + emoji + chip colors) ──
+const LEAD_STATUSES = [
+  { key: "new_lead",  label: "Νέα",            emoji: "🆕", color: "bg-blue-100 text-blue-700" },
+  { key: "contacted", label: "Επικοινωνήθηκε", emoji: "📞", color: "bg-yellow-100 text-yellow-700" },
+  { key: "qualified", label: "Qualified",      emoji: "✅", color: "bg-cyan-100 text-cyan-700" },
+  { key: "customer",  label: "Μετατράπηκε",    emoji: "🎉", color: "bg-green-100 text-green-700" },
+  { key: "lost",      label: "Χαμένα",         emoji: "❌", color: "bg-red-100 text-red-700" },
+  { key: "archived",  label: "Διαγραμμένα",    emoji: "🗑️", color: "bg-slate-100 text-slate-500" },
+];
+const STATUS_META: Record<string, { label: string; emoji: string; color: string }> =
+  Object.fromEntries(LEAD_STATUSES.map((s) => [s.key, s]));
+
+// ── Dropdown option lists (Greek market) ──
+const SERVICES = ["Ρεύμα", "Φυσικό Αέριο", "Φωτοβολταϊκά", "EV Charging", "Ενεργειακή Αποθήκευση", "Ασφάλεια Ζωής", "Ασφάλεια Υγείας", "Ασφάλεια Αυτοκινήτου", "Ασφάλεια Κατοικίας", "Web / Software"];
+const PROVIDERS = ["ΔΕΗ", "Protergia", "ΗΡΩΝ", "Elpedison", "NRG", "Volton", "Ζενίθ", "Φυσικό Αέριο Ελλάδος", "Watt+Volt", "Elin", "Solar", "Άλλος"];
+const PROGRAMS = ["Σταθερό", "Κυμαινόμενο", "Μπλε", "Πράσινο", "Οικιακό", "Επαγγελματικό", "Νυχτερινό", "Άλλο"];
+const SOURCES = ["Ιστότοπος", "Facebook", "Instagram", "Google", "Σύσταση", "Τηλέφωνο", "Walk-in", "Συνεργάτης", "Άλλο"];
+const LEAD_TYPES = ["Οικιακό", "Επαγγελματικό", "Βιομηχανικό"];
+const AGENTS = ["Ενέργεια", "Ασφάλειες", "Web & Software", "—"];
+const SUPPLY_TYPES = ["Ρεύμα", "Φυσικό Αέριο"];
+
+// ── Document slots (typed uploads stored at leadId/<key>/file) ──
+const DOC_SLOTS: { key: string; label: string }[] = [
+  { key: "taftotita",           label: "Ταυτότητα" },
+  { key: "e9",                  label: "Ε9" },
+  { key: "misthotirio",         label: "Μισθωτήριο" },
+  { key: "symvolaio",           label: "Συμβόλαιο" },
+  { key: "logariasmos_current", label: "Τρέχων Λογαριασμός" },
+  { key: "logariasmos_prev",    label: "Προηγούμενος Λογαριασμός" },
+];
 
 const COMM_ICONS: Record<string, string> = {
   email: " ", phone: " ", sms: " ", whatsapp: " ", meeting: " ", note: " ",
@@ -178,6 +223,7 @@ export default function CRMDashboard() {
   const [showNewEvent, setShowNewEvent] = useState(false);
   const [showNewComm, setShowNewComm] = useState(false);
   const [showNewInvoice, setShowNewInvoice] = useState(false);
+  const [showNewLead, setShowNewLead] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -256,23 +302,30 @@ export default function CRMDashboard() {
     if (isLoggedIn) fetchAll();
   }, [isLoggedIn, fetchAll]);
 
-  const updateLeadStatus = async (id: string, status: string) => {
+  // Generalized field updater — PATCHes any subset of lead columns and updates
+  // local state optimistically (no full refetch, so drawer inputs keep focus).
+  const updateLeadFields = async (id: string, patch: Partial<Lead>) => {
+    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+    setSelectedLead((prev) => (prev && prev.id === id ? { ...prev, ...patch } : prev));
     await fetch("/api/crm/leads", {
       method: "PATCH",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ id, status }),
+      body: JSON.stringify({ id, ...patch }),
     });
-    fetchAll();
-    if (selectedLead) setSelectedLead({ ...selectedLead, status });
   };
 
-  const updateLeadNotes = async (id: string, notes: string) => {
-    await fetch("/api/crm/leads", {
-      method: "PATCH",
+  const createLead = async (data: Partial<Lead>) => {
+    const res = await fetch("/api/crm/leads", {
+      method: "POST",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ id, notes }),
+      body: JSON.stringify(data),
     });
-    if (selectedLead) setSelectedLead({ ...selectedLead, notes });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || "create failed");
+    }
+    setShowNewLead(false);
+    fetchAll();
   };
 
   const moveDeal = async (id: string, stage: string) => {
@@ -408,7 +461,7 @@ export default function CRMDashboard() {
         ) : (
           <>
             {tab === "dashboard" && <DashboardView data={dashboard} formatCurrency={formatCurrency} />}
-            {tab === "leads" && <LeadsView leads={leads} onSelect={setSelectedLead} updateStatus={updateLeadStatus} />}
+            {tab === "leads" && <LeadsView leads={leads} onSelect={setSelectedLead} onNew={() => setShowNewLead(true)} updateFields={updateLeadFields} />}
             {tab === "pipeline" && <PipelineView deals={deals} onMove={moveDeal} onNewDeal={() => setShowNewDeal(true)} />}
             {tab === "calendar" && <CalendarView events={events} onToggle={toggleEventComplete} onNew={() => setShowNewEvent(true)} />}
             {tab === "comms" && <CommsView comms={comms} onNew={() => setShowNewComm(true)} />}
@@ -421,12 +474,13 @@ export default function CRMDashboard() {
         )}
       </div>
 
-      {/* Lead Detail Drawer */}
+      {/* Lead Folder Drawer */}
       {selectedLead && (
-        <LeadDrawer lead={selectedLead} onClose={() => setSelectedLead(null)} updateStatus={updateLeadStatus} updateNotes={updateLeadNotes} />
+        <LeadDrawer lead={selectedLead} onClose={() => setSelectedLead(null)} updateFields={updateLeadFields} comms={comms} events={events} />
       )}
 
       {/* Modals */}
+      {showNewLead && <NewLeadModal onClose={() => setShowNewLead(false)} onCreate={createLead} />}
       {showNewDeal && <NewDealModal leads={leads} onClose={() => setShowNewDeal(false)} onSaved={() => { setShowNewDeal(false); fetchAll(); }} />}
       {showNewEvent && <NewEventModal leads={leads} onClose={() => setShowNewEvent(false)} onSaved={() => { setShowNewEvent(false); fetchAll(); }} />}
       {showNewComm && <NewCommModal leads={leads} onClose={() => setShowNewComm(false)} onSaved={() => { setShowNewComm(false); fetchAll(); }} />}
@@ -552,78 +606,149 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
   );
 }
 
-/* ─── LEADS VIEW ─── */
-function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect: (l: Lead) => void; updateStatus: (id: string, s: string) => void }) {
-  const [filter, setFilter] = useState<string>("all");
+/* ─── LEADS VIEW (Διαχείριση Leads) ─── */
+function LeadsView({ leads, onSelect, onNew, updateFields }: {
+  leads: Lead[];
+  onSelect: (l: Lead) => void;
+  onNew: () => void;
+  updateFields: (id: string, patch: Partial<Lead>) => void;
+}) {
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
+  const [serviceFilter, setServiceFilter] = useState("all");
+  const [providerFilter, setProviderFilter] = useState("all");
+  const [sourceFilter, setSourceFilter] = useState("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  const filtered = leads.filter(l => {
-    if (filter !== "all" && l.status !== filter) return false;
-    const q = search.toLowerCase();
-    if (q && !`${l.first_name} ${l.last_name} ${l.phone} ${l.email} ${l.service_category}`.toLowerCase().includes(q)) return false;
+  const resetFilters = () => {
+    setStatusFilter("all"); setSearch(""); setServiceFilter("all");
+    setProviderFilter("all"); setSourceFilter("all"); setDateFrom(""); setDateTo("");
+  };
+
+  const filtered = leads.filter((l) => {
+    if (statusFilter !== "all" && l.status !== statusFilter) return false;
+    if (serviceFilter !== "all" && l.service_category !== serviceFilter) return false;
+    if (providerFilter !== "all" && (l.provider || "") !== providerFilter) return false;
+    if (sourceFilter !== "all" && (l.source || "") !== sourceFilter) return false;
+    if (dateFrom && new Date(l.created_at) < new Date(dateFrom)) return false;
+    if (dateTo && new Date(l.created_at) > new Date(dateTo + "T23:59:59")) return false;
+    const q = search.toLowerCase().trim();
+    if (q && !`${l.first_name} ${l.last_name} ${l.phone} ${l.email ?? ""} ${l.region ?? ""}`.toLowerCase().includes(q)) return false;
     return true;
   });
 
+  const countFor = (key: string) => (key === "all" ? leads.length : leads.filter((l) => l.status === key).length);
+  const selectCls = "text-xs px-3 py-2 rounded-xl bg-white/80 border border-slate-200 text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500";
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          type="text"
-          placeholder="Search leads..."
-          className="flex-1 min-w-[200px] p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {["all", "new_lead", "contacted", "customer", "archived"].map((s) => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            className={`text-xs px-4 py-2 rounded-xl font-medium transition-all ${
-              filter === s ? "bg-indigo-500 text-white" : "bg-white/80 text-slate-500 hover:bg-slate-200"
-            }`}
-          >
-            {s === "all" ? "All" : s === "new_lead" ? "New" : s === "contacted" ? "Contacted" : s === "customer" ? "Customers" : "Archived"} ({s === "all" ? leads.length : leads.filter(l => l.status === s).length})
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <p className="text-sm text-slate-500">Διαχείριση Leads — αναζήτηση, φίλτρα, ανάθεση σε AI agents.</p>
+        <div className="flex gap-2">
+          <button onClick={resetFilters} className="text-xs px-4 py-2 rounded-xl font-medium bg-white/80 text-slate-600 border border-slate-200 hover:bg-slate-100 transition-all">Επαναφορά Φίλτρων</button>
+          <button onClick={onNew} className="text-sm bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-5 py-2.5 rounded-xl transition-all shadow-lg shadow-indigo-500/25">+ Νέο Lead</button>
+        </div>
+      </div>
+
+      {/* Status chips */}
+      <div className="flex flex-wrap gap-2">
+        <button onClick={() => setStatusFilter("all")} className={`text-xs px-4 py-2 rounded-xl font-medium transition-all ${statusFilter === "all" ? "bg-indigo-500 text-white" : "bg-white/80 text-slate-500 hover:bg-slate-200"}`}>📁 Όλα {countFor("all")}</button>
+        {LEAD_STATUSES.map((s) => (
+          <button key={s.key} onClick={() => setStatusFilter(s.key)} className={`text-xs px-4 py-2 rounded-xl font-medium transition-all ${statusFilter === s.key ? "bg-indigo-500 text-white" : "bg-white/80 text-slate-500 hover:bg-slate-200"}`}>
+            {s.emoji} {s.label} {countFor(s.key)}
           </button>
         ))}
       </div>
 
+      {/* Search + date range */}
+      <div className="flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Αναζήτηση με όνομα, email, τηλέφωνο ή περιοχή..."
+          className="flex-1 min-w-[220px] p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <input type="date" className={selectCls} value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} />
+          <span>—</span>
+          <input type="date" className={selectCls} value={dateTo} onChange={(e) => setDateTo(e.target.value)} />
+        </div>
+      </div>
+
+      {/* Dropdown filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <select className={selectCls} value={serviceFilter} onChange={(e) => setServiceFilter(e.target.value)}>
+          <option value="all">Υπηρεσία: Όλες</option>
+          {SERVICES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select className={selectCls} value={providerFilter} onChange={(e) => setProviderFilter(e.target.value)}>
+          <option value="all">Πάροχος: Όλοι</option>
+          {PROVIDERS.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select className={selectCls} value={sourceFilter} onChange={(e) => setSourceFilter(e.target.value)}>
+          <option value="all">Πηγή: Όλες</option>
+          {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <select className={selectCls} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <option value="all">Κατάσταση: Όλες</option>
+          {LEAD_STATUSES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+        </select>
+      </div>
+
+      {/* Table */}
       <div className="crm-card-3d rounded-2xl overflow-hidden">
         {filtered.length === 0 ? (
-          <div className="p-12 text-center text-slate-500">No leads found.</div>
+          <div className="p-12 text-center text-slate-500">Δεν βρέθηκαν leads.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-100/80 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold">
                 <tr>
-                  <th className="p-4">Date</th>
-                  <th className="p-4">Name</th>
-                  <th className="p-4">Phone</th>
-                  <th className="p-4">Email</th>
-                  <th className="p-4">Service</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Action</th>
+                  <th className="p-4">Ημ/νία</th>
+                  <th className="p-4">Όνομα</th>
+                  <th className="p-4">Τηλέφωνο</th>
+                  <th className="p-4">Περιοχή</th>
+                  <th className="p-4">Υπηρεσία</th>
+                  <th className="p-4">Πάροχος</th>
+                  <th className="p-4">Κατάσταση</th>
+                  <th className="p-4">AI Agent</th>
+                  <th className="p-4"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/50">
-                {filtered.map((lead) => (
-                  <tr key={lead.id} className="hover:bg-slate-100/50 cursor-pointer transition-all" onClick={() => onSelect(lead)}>
-                    <td className="p-4 text-slate-500 text-xs">{new Date(lead.created_at).toLocaleDateString("el-GR")}</td>
-                    <td className="p-4 font-semibold text-slate-900">{lead.first_name} {lead.last_name}</td>
-                    <td className="p-4 font-mono text-indigo-600 text-xs">{lead.phone}</td>
-                    <td className="p-4 text-slate-500 text-xs">{lead.email || "—"}</td>
-                    <td className="p-4"><span className="text-xs px-2.5 py-1 rounded-lg bg-white/80 text-slate-600">{lead.service_category}</span></td>
-                    <td className="p-4">
-                      <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${STATUS_COLORS[lead.status] || ""}`}>
-                        {lead.status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <button className="text-xs bg-indigo-500/10 text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-500/20 transition-colors">
-                        Open
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-slate-200/70">
+                {filtered.map((lead) => {
+                  const meta = STATUS_META[lead.status];
+                  return (
+                    <tr key={lead.id} className="hover:bg-slate-100/50 transition-all">
+                      <td className="p-4 text-slate-500 text-xs">{new Date(lead.created_at).toLocaleDateString("el-GR")}</td>
+                      <td className="p-4 font-semibold text-slate-900 cursor-pointer" onClick={() => onSelect(lead)}>{lead.first_name} {lead.last_name}</td>
+                      <td className="p-4 font-mono text-indigo-600 text-xs">{lead.phone}</td>
+                      <td className="p-4 text-slate-500 text-xs">{lead.region || "—"}</td>
+                      <td className="p-4"><span className="text-xs px-2.5 py-1 rounded-lg bg-white/80 text-slate-600">{lead.service_category}</span></td>
+                      <td className="p-4 text-slate-500 text-xs">{lead.provider || "—"}</td>
+                      <td className="p-4">
+                        <span className={`text-xs px-2.5 py-1 rounded-lg font-medium ${meta?.color || ""}`}>{meta ? `${meta.emoji} ${meta.label}` : lead.status}</span>
+                      </td>
+                      <td className="p-4">
+                        <select
+                          className="text-[11px] bg-white/80 text-slate-600 rounded-lg px-2 py-1.5 border border-slate-200 outline-none cursor-pointer"
+                          value={lead.assigned_agent || ""}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={(e) => updateFields(lead.id, { assigned_agent: e.target.value })}
+                        >
+                          <option value="">— Ανάθεση —</option>
+                          {AGENTS.map((a) => <option key={a} value={a}>{a}</option>)}
+                        </select>
+                      </td>
+                      <td className="p-4">
+                        <button onClick={() => onSelect(lead)} className="text-xs bg-indigo-500/10 text-indigo-600 font-semibold px-3 py-1.5 rounded-lg hover:bg-indigo-500/20 transition-colors">📁 Άνοιγμα</button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -632,7 +757,6 @@ function LeadsView({ leads, onSelect, updateStatus }: { leads: Lead[]; onSelect:
     </div>
   );
 }
-
 /* ─── PIPELINE VIEW ─── */
 function PipelineView({ deals, onMove, onNewDeal }: { deals: Deal[]; onMove: (id: string, stage: string) => void; onNewDeal: () => void }) {
   return (
@@ -969,194 +1093,442 @@ function AnalyticsView({ dashboard, leads, deals, invoices, formatCurrency }: { 
   );
 }
 
-/* ─── LEAD DRAWER ─── */
-function LeadDrawer({ lead, onClose, updateStatus, updateNotes }: { lead: Lead; onClose: () => void; updateStatus: (id: string, s: string) => void; updateNotes: (id: string, n: string) => void }) {
-  const [leadDocuments, setLeadDocuments] = useState<{name: string; url: string; path: string}[]>([]);
+/* ─── FOLDER HELPERS ─── */
+function Section({ title, action, children }: { title: string; action?: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-xs font-bold uppercase text-slate-500">{title}</h3>
+        {action}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label className="block text-[10px] text-slate-500 uppercase font-bold mb-1">{label}</label>
+      {children}
+    </div>
+  );
+}
+
+function FolderSelect({ value, opts, onChange, placeholder }: { value: string; opts: string[]; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <select
+      className="w-full p-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    >
+      {placeholder !== undefined && <option value="">{placeholder}</option>}
+      {opts.map((o) => <option key={o} value={o}>{o}</option>)}
+    </select>
+  );
+}
+
+function DocSlot({ slot, docs, multiple, onUpload, onDelete }: {
+  slot: { key: string; label: string };
+  docs: { name: string; url: string; path: string; type: string }[];
+  multiple?: boolean;
+  onUpload: (f: File) => void;
+  onDelete: (path: string) => void;
+}) {
+  const inputId = `doc-${slot.key}`;
+  const has = docs.length > 0;
+  return (
+    <div className="border border-slate-200 rounded-xl p-3 bg-white/60">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm font-semibold text-slate-800">{slot.label}</span>
+        {has && <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">✓ {docs.length}</span>}
+      </div>
+
+      {has && (
+        <div className="space-y-1 mb-2">
+          {docs.map((d, i) => (
+            <div key={i} className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/60">
+              <span className="text-xs text-slate-700 truncate font-medium">{d.name}</span>
+              <div className="flex gap-1.5 shrink-0">
+                <a href={d.url} target="_blank" rel="noopener noreferrer" className="px-2 py-1 text-[11px] font-semibold bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Προβολή</a>
+                <a href={d.url} download={d.name} className="px-2 py-1 text-[11px] font-semibold bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">⬇</a>
+                <button onClick={() => onDelete(d.path)} className="px-2 py-1 text-[11px] font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200">✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(!has || multiple) && (
+        <div
+          className="border-2 border-dashed border-slate-200 rounded-lg p-4 text-center hover:border-indigo-300 transition-colors cursor-pointer"
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onDrop={(e) => { e.preventDefault(); e.stopPropagation(); Array.from(e.dataTransfer.files).forEach(onUpload); }}
+          onClick={() => document.getElementById(inputId)?.click()}
+        >
+          <input
+            type="file"
+            id={inputId}
+            multiple={multiple}
+            className="hidden"
+            onChange={(e) => { Array.from(e.target.files || []).forEach(onUpload); (e.target as HTMLInputElement).value = ""; }}
+          />
+          <p className="text-xs text-slate-500">Μεταφορά ή κλικ για μεταφόρτωση</p>
+          <p className="text-[10px] text-slate-400">PDF, JPG, PNG, DOC έως 25MB</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Stat({ n, label }: { n: number; label: string }) {
+  return (
+    <div className="bg-white/70 border border-slate-200/60 rounded-xl p-3 text-center">
+      <p className="text-xl font-bold text-slate-900">{n}</p>
+      <p className="text-[10px] text-slate-500">{label}</p>
+    </div>
+  );
+}
+
+function Timeline({ lead, comms, events, docCount }: { lead: Lead; comms: CommRecord[]; events: CalendarEvent[]; docCount: number }) {
+  type Item = { when: string; icon: string; title: string; sub?: string };
+  const items: Item[] = [];
+  items.push({ when: lead.created_at, icon: "🆕", title: "Δημιουργία lead", sub: lead.service_category });
+  for (const c of comms) items.push({ when: c.created_at, icon: "✉️", title: `${c.comm_type} · ${c.direction}`, sub: c.subject || (c.body ? c.body.slice(0, 60) : "") });
+  for (const e of events) items.push({ when: e.start_time, icon: "📅", title: e.title, sub: e.event_type });
+  items.sort((a, b) => new Date(b.when).getTime() - new Date(a.when).getTime());
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-2">
+        <Stat n={comms.length} label="Επικοινωνίες" />
+        <Stat n={events.length} label="Ραντεβού" />
+        <Stat n={docCount} label="Έγγραφα" />
+      </div>
+      <Section title="Χρονολόγιο">
+        {items.length === 0 ? (
+          <p className="text-xs text-slate-500">Καμία δραστηριότητα.</p>
+        ) : (
+          <div className="space-y-2">
+            {items.map((it, i) => (
+              <div key={i} className="flex items-start gap-3 p-3 bg-slate-100/70 rounded-xl">
+                <span className="text-base">{it.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-900">{it.title}</p>
+                  {it.sub && <p className="text-xs text-slate-500 truncate">{it.sub}</p>}
+                </div>
+                <span className="text-[10px] text-slate-500 shrink-0">{new Date(it.when).toLocaleString("el-GR")}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Section>
+    </div>
+  );
+}
+
+/* ─── LEAD FOLDER (tabbed drawer) ─── */
+type FolderTab = "genika" | "paroxes" | "synergates" | "eggrafa" | "prosfores" | "istoriko";
+
+function LeadDrawer({ lead, onClose, updateFields, comms, events }: {
+  lead: Lead;
+  onClose: () => void;
+  updateFields: (id: string, patch: Partial<Lead>) => void;
+  comms: CommRecord[];
+  events: CalendarEvent[];
+}) {
+  const [tab, setTab] = useState<FolderTab>("genika");
+  const [groups, setGroups] = useState<Record<string, { name: string; url: string; path: string; type: string }[]>>({});
+  const [supplies, setSupplies] = useState<Supply[]>(lead.supplies || []);
+  const suppliesRef = useRef<Supply[]>(lead.supplies || []);
 
   useEffect(() => {
-    if (lead?.id) {
-      fetch(`/api/documents?lead_id=${lead.id}`, { headers: getAuthHeaders() })
-        .then(r => r.json())
-        .then(data => setLeadDocuments(data.documents || []))
-        .catch(() => {});
-    }
-  }, [lead?.id]);
+    setSupplies(lead.supplies || []);
+    suppliesRef.current = lead.supplies || [];
+    setTab("genika");
+  }, [lead.id]);
 
-  const uploadDocument = async (leadId: string, file: File) => {
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("lead_id", leadId);
-    const res = await fetch("/api/documents", {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: formData,
-    });
-    if (res.ok) {
-      const data = await res.json();
-      setLeadDocuments(prev => [...prev, data.document]);
-    }
+  const loadDocs = useCallback(() => {
+    fetch(`/api/documents?lead_id=${lead.id}`, { headers: getAuthHeaders() })
+      .then((r) => r.json())
+      .then((data) => setGroups(data.groups || {}))
+      .catch(() => {});
+  }, [lead.id]);
+
+  useEffect(() => { if (lead?.id) loadDocs(); }, [lead.id, loadDocs]);
+
+  const save = (patch: Partial<Lead>) => updateFields(lead.id, patch);
+
+  const commitSupplies = (next: Supply[]) => { suppliesRef.current = next; setSupplies(next); save({ supplies: next }); };
+  const addSupply = () => commitSupplies([...suppliesRef.current, { supply_number: "", type: "Ρεύμα", address: "", provider: "", notes: "" }]);
+  const removeSupply = (i: number) => commitSupplies(suppliesRef.current.filter((_, j) => j !== i));
+  // Controlled edit: update local state on each keystroke (correct display after
+  // a row is removed), persist to the DB only on blur / select change.
+  const setSupplyLocal = (i: number, field: keyof Supply, val: string) => {
+    const next = suppliesRef.current.map((s, j) => (j === i ? { ...s, [field]: val } : s));
+    suppliesRef.current = next;
+    setSupplies(next);
   };
+  const persistSupplies = () => save({ supplies: suppliesRef.current });
 
-  const deleteDocument = async (doc: {path: string}) => {
+  const uploadDoc = async (docType: string, file: File) => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("lead_id", lead.id);
+    fd.append("doc_type", docType);
+    const res = await fetch("/api/documents", { method: "POST", headers: getAuthHeaders(), body: fd });
+    if (res.ok) loadDocs();
+  };
+  const deleteDoc = async (path: string) => {
     await fetch("/api/documents", {
       method: "DELETE",
       headers: getAuthHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ path: doc.path }),
+      body: JSON.stringify({ path }),
     });
-    setLeadDocuments(prev => prev.filter(d => d.path !== doc.path));
+    loadDocs();
   };
+
+  const TABS: { key: FolderTab; label: string; icon: string }[] = [
+    { key: "genika",     label: "Γενικά",     icon: "🧾" },
+    { key: "paroxes",    label: "Παροχές",    icon: "⚡" },
+    { key: "synergates", label: "Συνεργάτες", icon: "🤝" },
+    { key: "eggrafa",    label: "Έγγραφα",    icon: "📄" },
+    { key: "prosfores",  label: "Προσφορές",  icon: "💶" },
+    { key: "istoriko",   label: "Ιστορικό",   icon: "🕓" },
+  ];
+
+  const inputCls = "w-full p-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-end z-50" onClick={onClose}>
-      <div className="bg-white/60 backdrop-blur-xl w-full max-w-xl h-full shadow-2xl overflow-y-auto border-l border-slate-200/60" onClick={(e) => e.stopPropagation()}>
-        <div className="p-8 space-y-6">
-          <div className="flex justify-between items-start border-b border-slate-200/60 pb-4">
+      <div className="bg-white/70 backdrop-blur-xl w-full max-w-2xl h-full shadow-2xl overflow-y-auto border-l border-slate-200/60" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="p-6 border-b border-slate-200/60 sticky top-0 bg-white/80 backdrop-blur-xl z-10">
+          <div className="flex justify-between items-start">
             <div>
-              <span className="text-[10px] font-semibold uppercase text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-lg">Lead #{lead.id.substring(0, 8)}</span>
+              <span className="text-[10px] font-semibold uppercase text-indigo-500 bg-indigo-500/10 px-2.5 py-1 rounded-lg">📁 Φάκελος #{lead.id.substring(0, 8)}</span>
               <h2 className="text-2xl font-bold mt-2 text-slate-900">{lead.first_name} {lead.last_name}</h2>
-              <p className="text-xs text-slate-500 mt-1">{new Date(lead.created_at).toLocaleString("el-GR")}</p>
+              <p className="text-xs text-slate-500 mt-1">Δημιουργήθηκε {new Date(lead.created_at).toLocaleString("el-GR")}</p>
             </div>
             <button onClick={onClose} className="text-slate-500 hover:text-slate-900 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200 transition-colors">✕</button>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-100/80 p-3 rounded-xl border border-slate-200/80">
-            <span className="text-xs font-bold text-slate-500">Status:</span>
-            {["new_lead", "contacted", "customer", "archived"].map(s => (
+          {/* Status pills */}
+          <div className="flex flex-wrap items-center gap-1.5 mt-4">
+            <span className="text-[10px] font-bold text-slate-500 mr-1">Κατάσταση:</span>
+            {LEAD_STATUSES.map((s) => (
               <button
-                key={s}
-                onClick={() => updateStatus(lead.id, s)}
-                className={`text-xs px-3 py-1.5 rounded-lg font-medium transition-all ${
-                  lead.status === s ? "bg-indigo-500 text-white" : "bg-white/70 text-slate-600 border border-slate-200 hover:bg-slate-100"
-                }`}
+                key={s.key}
+                onClick={() => save({ status: s.key })}
+                className={`text-[11px] px-2.5 py-1 rounded-lg font-medium transition-all ${lead.status === s.key ? "bg-indigo-500 text-white" : "bg-white/70 text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
               >
-                {s.replace("_", " ")}
+                {s.emoji} {s.label}
               </button>
             ))}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
-              <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Phone</span>
-              <span className="font-semibold text-sm text-slate-900">{lead.phone}</span>
-            </div>
-            <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
-              <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Email</span>
-              <span className="font-semibold text-sm text-slate-900">{lead.email || "Not provided"}</span>
-            </div>
+          {/* Tabs */}
+          <div className="flex flex-wrap gap-1 mt-4">
+            {TABS.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={`text-xs px-3 py-2 rounded-xl font-medium transition-all ${tab === t.key ? "bg-indigo-600 text-white shadow" : "bg-white/70 text-slate-600 border border-slate-200 hover:bg-slate-100"}`}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
           </div>
+        </div>
 
-          <div className="bg-slate-100/80 p-3.5 rounded-xl border border-slate-200/30">
-            <span className="block text-[10px] text-slate-500 uppercase font-bold mb-1">Service</span>
-            <span className="text-xs px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700">{lead.service_category}</span>
-          </div>
+        <div className="p-6 space-y-6">
+          {/* ── ΓΕΝΙΚΑ ── */}
+          {tab === "genika" && (
+            <div className="space-y-5">
+              <Section title="Στοιχεία Πελάτη">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Όνομα"><input className={inputCls} defaultValue={lead.first_name} onBlur={(e) => save({ first_name: e.target.value })} /></Field>
+                  <Field label="Επώνυμο"><input className={inputCls} defaultValue={lead.last_name} onBlur={(e) => save({ last_name: e.target.value })} /></Field>
+                  <Field label="Τηλέφωνο"><input className={inputCls} defaultValue={lead.phone} onBlur={(e) => save({ phone: e.target.value })} /></Field>
+                  <Field label="Email"><input className={inputCls} defaultValue={lead.email || ""} onBlur={(e) => save({ email: e.target.value })} /></Field>
+                  <Field label="Περιοχή"><input className={inputCls} defaultValue={lead.region || ""} onBlur={(e) => save({ region: e.target.value })} /></Field>
+                  <Field label="Εταιρεία"><input className={inputCls} defaultValue={lead.company || ""} onBlur={(e) => save({ company: e.target.value })} /></Field>
+                  <Field label="Διεύθυνση"><input className={inputCls} defaultValue={lead.address || ""} onBlur={(e) => save({ address: e.target.value })} /></Field>
+                  <Field label="Α.Τ. (Ταυτότητα)"><input className={inputCls} defaultValue={lead.id_number || ""} onBlur={(e) => save({ id_number: e.target.value })} /></Field>
+                </div>
+              </Section>
 
-          {lead.attached_files?.length > 0 && (
-            <div>
-              <h3 className="font-bold mb-3 text-xs uppercase text-slate-500">Attached Files</h3>
-              <div className="space-y-2">
-                {lead.attached_files.map((f, i) => (
-                  <div key={i} className="flex items-center justify-between p-3 bg-indigo-500/5 border border-indigo-500/20 rounded-xl">
-                    <a href={f.url} target="_blank" rel="noreferrer" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 break-all">{f.name}</a>
-                    <div className="flex gap-1.5 ml-2 shrink-0">
-                      <a href={f.url} target="_blank" rel="noreferrer" className="px-2 py-1 text-[11px] font-semibold bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Open</a>
-                      <a href={f.url} download={f.name} className="px-2 py-1 text-[11px] font-semibold bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300">⬇</a>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <Section title="Κατηγοριοποίηση">
+                <div className="grid grid-cols-2 gap-3">
+                  <Field label="Υπηρεσία"><FolderSelect value={lead.service_category} opts={SERVICES} onChange={(v) => save({ service_category: v })} /></Field>
+                  <Field label="Πάροχος"><FolderSelect value={lead.provider || ""} opts={PROVIDERS} placeholder="—" onChange={(v) => save({ provider: v })} /></Field>
+                  <Field label="Πρόγραμμα"><FolderSelect value={lead.program || ""} opts={PROGRAMS} placeholder="—" onChange={(v) => save({ program: v })} /></Field>
+                  <Field label="Πηγή"><FolderSelect value={lead.source || ""} opts={SOURCES} placeholder="—" onChange={(v) => save({ source: v })} /></Field>
+                  <Field label="Τύπος"><FolderSelect value={lead.lead_type || ""} opts={LEAD_TYPES} placeholder="—" onChange={(v) => save({ lead_type: v })} /></Field>
+                  <Field label="Ανάθεση σε AI Agent"><FolderSelect value={lead.assigned_agent || ""} opts={AGENTS} placeholder="—" onChange={(v) => save({ assigned_agent: v })} /></Field>
+                  <Field label="Ημ. Ανανέωσης Συμβολαίου"><input type="date" className={inputCls} defaultValue={lead.renewal_date || ""} onBlur={(e) => save({ renewal_date: e.target.value || null })} /></Field>
+                  <Field label="GDPR">
+                    <span className={`inline-block text-xs px-2.5 py-2 rounded-lg font-medium ${lead.gdpr_consent ? "bg-green-100 text-green-700" : "bg-slate-100 text-slate-500"}`}>{lead.gdpr_consent ? "✓ Συναίνεση" : "Χωρίς συναίνεση"}</span>
+                  </Field>
+                </div>
+              </Section>
+
+              <Section title="Σημειώσεις">
+                <textarea rows={4} className={inputCls + " resize-none"} placeholder="Σημειώσεις για το lead..." defaultValue={lead.notes || ""} onBlur={(e) => save({ notes: e.target.value })} />
+              </Section>
             </div>
           )}
 
-          <div>
-            <h3 className="font-bold mb-2 text-xs uppercase text-slate-500">Notes</h3>
-            <textarea
-              rows={4}
-              className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900 resize-none"
-              placeholder="Add notes about this lead..."
-              defaultValue={lead.notes || ""}
-              onBlur={(e) => updateNotes(lead.id, e.target.value)}
-            />
-          </div>
-
-          {/* Document Vault */}
-          <div className="border-t border-slate-200/60 pt-4">
-            <h4 className="text-sm font-bold text-slate-900 mb-3">  Documents</h4>
-            <div 
-              className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center hover:border-indigo-300 transition-colors cursor-pointer"
-              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-              onDrop={async (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const files = Array.from(e.dataTransfer.files);
-                for (const file of files) {
-                  await uploadDocument(lead.id, file);
-                }
-              }}
-              onClick={() => document.getElementById(`doc-upload-${lead.id}`)?.click()}
+          {/* ── ΠΑΡΟΧΕΣ ── */}
+          {tab === "paroxes" && (
+            <Section
+              title="Αριθμοί Παροχής ΔΕΔΔΗΕ"
+              action={<button onClick={addSupply} className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold">+ Προσθήκη Παροχής</button>}
             >
-              <input 
-                type="file" 
-                id={`doc-upload-${lead.id}`}
-                multiple 
-                className="hidden"
-                onChange={async (e) => {
-                  const files = Array.from(e.target.files || []);
-                  for (const file of files) {
-                    await uploadDocument(lead.id, file);
-                  }
-                }}
-              />
-              <div className="text-2xl mb-1"> </div>
-              <p className="text-xs text-slate-500">Drag & drop or click to upload</p>
-              <p className="text-[10px] text-slate-500">PDF, JPG, PNG, DOC up to 25MB</p>
-            </div>
-            
-            {/* Uploaded files list */}
-            {leadDocuments.length > 0 && (
-              <div className="mt-3 space-y-1">
-                {leadDocuments.map((doc, i) => (
-                  <div key={i} className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/60">
-                    <div className="min-w-0">
-                      <span className="text-xs text-slate-700 truncate block font-medium">{doc.name}</span>
-                      <span className="text-[10px] text-slate-500">{doc.url.split("?").slice(0, 2).join("").length > 60 ? "uploaded file" : ""}</span>
+              {supplies.length === 0 ? (
+                <p className="text-xs text-slate-500">Καμία παροχή. Πατήστε «+ Προσθήκη Παροχής».</p>
+              ) : (
+                <div className="space-y-3">
+                  {supplies.map((s, i) => (
+                    <div key={i} className="bg-slate-100/70 border border-slate-200 rounded-xl p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase">Παροχή #{i + 1}</span>
+                        <button onClick={() => removeSupply(i)} className="text-red-500 hover:text-red-700 text-xs">Διαγραφή ✕</button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input className={inputCls} placeholder="Αριθμός Παροχής" value={s.supply_number} onChange={(e) => setSupplyLocal(i, "supply_number", e.target.value)} onBlur={persistSupplies} />
+                        <select className={inputCls} value={s.type} onChange={(e) => { setSupplyLocal(i, "type", e.target.value); persistSupplies(); }}>
+                          {SUPPLY_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <input className={inputCls} placeholder="Διεύθυνση παροχής" value={s.address} onChange={(e) => setSupplyLocal(i, "address", e.target.value)} onBlur={persistSupplies} />
+                        <input className={inputCls} placeholder="Πάροχος" value={s.provider} onChange={(e) => setSupplyLocal(i, "provider", e.target.value)} onBlur={persistSupplies} />
+                      </div>
+                      <input className={inputCls} placeholder="Σημειώσεις" value={s.notes} onChange={(e) => setSupplyLocal(i, "notes", e.target.value)} onBlur={persistSupplies} />
                     </div>
-                    <div className="flex gap-1.5 shrink-0">
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Open full view in new tab"
-                        className="px-2 py-1 text-[11px] font-semibold bg-indigo-500 text-white rounded-lg hover:bg-indigo-600"
-                      >
-                        Full View
-                      </a>
-                      <a
-                        href={doc.url}
-                        download={doc.name}
-                        title="Download file"
-                        className="px-2 py-1 text-[11px] font-semibold bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"
-                      >
-                        ⬇
-                      </a>
-                      <button
-                        onClick={() => deleteDocument(doc)}
-                        title="Delete file"
-                        className="px-2 py-1 text-[11px] font-semibold bg-red-100 text-red-600 rounded-lg hover:bg-red-200"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </Section>
+          )}
+
+          {/* ── ΣΥΝΕΡΓΑΤΕΣ ── */}
+          {tab === "synergates" && (
+            <Section title="Συνεργάτης / Σύσταση">
+              <div className="space-y-3">
+                <Field label="Συνεργάτης"><input className={inputCls} defaultValue={lead.partner || ""} onBlur={(e) => save({ partner: e.target.value })} /></Field>
+                <Field label="Σημειώσεις συνεργάτη"><textarea rows={4} className={inputCls + " resize-none"} defaultValue={lead.partner_notes || ""} onBlur={(e) => save({ partner_notes: e.target.value })} /></Field>
               </div>
-            )}
-          </div>
+            </Section>
+          )}
+
+          {/* ── ΕΓΓΡΑΦΑ ── */}
+          {tab === "eggrafa" && (
+            <div className="space-y-3">
+              {DOC_SLOTS.map((slot) => (
+                <DocSlot key={slot.key} slot={slot} docs={groups[slot.key] || []} onUpload={(f) => uploadDoc(slot.key, f)} onDelete={deleteDoc} />
+              ))}
+              <DocSlot slot={{ key: "other", label: "Άλλα Έγγραφα" }} docs={groups["other"] || []} multiple onUpload={(f) => uploadDoc("other", f)} onDelete={deleteDoc} />
+
+              {lead.attached_files?.length > 0 && (
+                <div className="border border-slate-200 rounded-xl p-3 bg-white/60">
+                  <span className="text-sm font-semibold text-slate-800">Συνημμένα από φόρμα</span>
+                  <div className="space-y-1 mt-2">
+                    {lead.attached_files.map((f, i) => (
+                      <div key={i} className="flex items-center justify-between gap-2 p-2 bg-slate-50 rounded-lg border border-slate-200/60">
+                        <span className="text-xs text-slate-700 truncate font-medium">{f.name}</span>
+                        <a href={f.url} target="_blank" rel="noreferrer" className="px-2 py-1 text-[11px] font-semibold bg-indigo-500 text-white rounded-lg hover:bg-indigo-600">Προβολή</a>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── ΠΡΟΣΦΟΡΕΣ ── */}
+          {tab === "prosfores" && (
+            <DocSlot slot={{ key: "prosfores", label: "Προσφορές" }} docs={groups["prosfores"] || []} multiple onUpload={(f) => uploadDoc("prosfores", f)} onDelete={deleteDoc} />
+          )}
+
+          {/* ── ΙΣΤΟΡΙΚΟ ── */}
+          {tab === "istoriko" && (
+            <Timeline
+              lead={lead}
+              comms={comms.filter((c) => c.lead_id === lead.id)}
+              events={events.filter((e) => e.lead_id === lead.id)}
+              docCount={Object.values(groups).reduce((n, arr) => n + arr.length, 0)}
+            />
+          )}
         </div>
       </div>
     </div>
   );
 }
 
+/* ─── NEW LEAD MODAL ─── */
+function NewLeadModal({ onClose, onCreate }: { onClose: () => void; onCreate: (data: Partial<Lead>) => Promise<void> }) {
+  const [form, setForm] = useState({ first_name: "", last_name: "", phone: "", email: "", region: "", service_category: "Ρεύμα", provider: "", source: "", notes: "" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.first_name.trim() || !form.phone.trim()) { setError("Όνομα και τηλέφωνο είναι υποχρεωτικά."); return; }
+    setSaving(true); setError("");
+    try {
+      await onCreate(form);
+    } catch {
+      setError("Σφάλμα δημιουργίας. Δοκιμάστε ξανά.");
+      setSaving(false);
+    }
+  };
+
+  const inputCls = "w-full p-3 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500";
+  const labelCls = "block text-xs font-semibold text-slate-500 mb-1";
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
+      <div className="bg-white/70 backdrop-blur-xl border border-slate-200 rounded-2xl p-8 w-full max-w-[min(95vw,36rem)] max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-xl font-bold text-slate-900 mb-6">Νέο Lead</h2>
+        {error && <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl">{error}</div>}
+        <form onSubmit={submit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div><label className={labelCls}>Όνομα *</label><input className={inputCls} value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} /></div>
+            <div><label className={labelCls}>Επώνυμο</label><input className={inputCls} value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} /></div>
+            <div><label className={labelCls}>Τηλέφωνο *</label><input className={inputCls} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div><label className={labelCls}>Email</label><input className={inputCls} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+            <div><label className={labelCls}>Περιοχή</label><input className={inputCls} value={form.region} onChange={(e) => setForm({ ...form, region: e.target.value })} /></div>
+            <div>
+              <label className={labelCls}>Υπηρεσία</label>
+              <select className={inputCls} value={form.service_category} onChange={(e) => setForm({ ...form, service_category: e.target.value })}>
+                {SERVICES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Πάροχος</label>
+              <select className={inputCls} value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
+                <option value="">—</option>
+                {PROVIDERS.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Πηγή</label>
+              <select className={inputCls} value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })}>
+                <option value="">—</option>
+                {SOURCES.map((s) => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+          </div>
+          <div><label className={labelCls}>Σημειώσεις</label><textarea rows={3} className={inputCls + " resize-none"} value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 py-3 bg-white/80 text-slate-500 rounded-xl font-medium hover:bg-slate-200">Άκυρο</button>
+            <button type="submit" disabled={saving} className="flex-1 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-xl transition-all disabled:opacity-50">{saving ? "Αποθήκευση..." : "Δημιουργία"}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 /* ─── AI AGENT VIEW (embedded) ─── */
 function AgentView() {
   const [input, setInput] = useState("");
