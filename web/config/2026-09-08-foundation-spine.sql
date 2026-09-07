@@ -96,6 +96,7 @@ as $$
 declare
   w int;
   v_inserted int := 0;
+  v_rows int := 0;
 begin
   foreach w in array active_days loop
     if w <= 0 then
@@ -115,11 +116,16 @@ begin
       and l.renewal_date is not null
       and l.renewal_date between current_date and current_date + w
     on conflict (lead_id, renewal_date, window_days) do nothing;
-    v_inserted := v_inserted + row_count;
+    get diagnostics v_rows = row_count;
+    v_inserted := v_inserted + v_rows;
   end loop;
   return v_inserted;
 end;
 $$;
+
+-- Only the service role may run the scan (anon/authenticated cannot RPC it).
+revoke execute on function public.run_renewal_scan(integer[]) from public, anon, authenticated;
+grant execute on function public.run_renewal_scan(integer[]) to service_role;
 
 -- ── 4) events/tasks foundation ─────────────────────────────────────────────
 create index if not exists calendar_events_tasks_idx
@@ -143,3 +149,6 @@ select
   created_at
 from public.calendar_events
 where event_type in ('task', 'reminder');
+
+-- Security invoker so RLS on calendar_events applies to view users.
+alter view public.tasks set (security_invoker = true);
