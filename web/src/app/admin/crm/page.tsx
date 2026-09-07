@@ -1881,8 +1881,10 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
 }
 
 function SettingsView() {
-  const [settingsTab, setSettingsTab] = useState<"profile" | "company" | "integrations" | "crm_ai">("profile");
+  const [active, setActive] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
   const [settings, setSettings] = useState({
     company_name: "Agapitos Kalafatas",
@@ -1891,11 +1893,43 @@ function SettingsView() {
     address: "",
     bank_iban: "",
     slack_webhook_url: "",
+    supabase_webhook_secret: "",
     notify_email: "kalafatasagapitos@gmail.com",
-    ga_measurement_id: "G-V73CT9GT6W",
+    ga_measurement_id: "",
     ai_system_prompt: "You are Atlas, an AI agent created by Agapitos Kalafatas. You are a helpful, knowledgeable assistant specialized in full-stack development, SaaS architecture, AI/ML, cloud computing, and digital operations.",
     pipeline_stages: ["New", "Qualified", "Proposal", "Negotiation", "Won", "Lost"],
   });
+
+  const loadSettings = async () => {
+    setLoading(true);
+    setSaveMsg("");
+    try {
+      const res = await fetch("/api/settings", { headers: getAuthHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setSettings({
+          company_name: data.company_name || settings.company_name,
+          vat_number: data.vat_number || "",
+          tax_office: data.tax_office || "",
+          address: data.address || "",
+          bank_iban: data.bank_iban || "",
+          slack_webhook_url: data.slack_webhook_url || "",
+          supabase_webhook_secret: data.supabase_webhook_secret || "",
+          notify_email: data.notify_email || settings.notify_email,
+          ga_measurement_id: data.ga_measurement_id || "",
+          ai_system_prompt: data.ai_system_prompt || settings.ai_system_prompt,
+          pipeline_stages: Array.isArray(data.pipeline_stages) && data.pipeline_stages.length ? data.pipeline_stages : settings.pipeline_stages,
+        });
+      }
+    } catch {
+      // keep local values
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
 
   const handleSave = async () => {
     setSaving(true);
@@ -1914,95 +1948,173 @@ function SettingsView() {
     setSaving(false);
   };
 
-  const tabs = [
-    { key: "profile" as const, label: "Προφίλ", icon: " " },
-    { key: "company" as const, label: "Εταιρεία & Τιμολόγηση", icon: " " },
-    { key: "integrations" as const, label: "Διασυνδέσεις", icon: " " },
-    { key: "crm_ai" as const, label: "CRM & AI", icon: " " },
-  ];
-
   const inputCls = "w-full p-3 bg-white/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900";
   const labelCls = "block text-xs font-semibold uppercase text-slate-500 mb-2";
 
+  const groups = [
+    { key: "company", icon: "🏢", title: "Εταιρεία & Εμφάνιση", subtitle: "Στοιχεία, branding, χρήστες, GDPR", count: 4 },
+    { key: "documents", icon: "📄", title: "Έγγραφα & Πρότυπα", subtitle: "Πρότυπα PDF προσφορών & εγγράφων", count: 1 },
+    { key: "ai", icon: "🤖", title: "AI & Αυτοματισμοί", subtitle: "Agents, Orchestrator, Hub, Scraper", count: 3 },
+    { key: "leads", icon: "💬", title: "Leads & Επικοινωνία", subtitle: "Pipelines, Email, SMS, Campaigns, Voice", count: 2 },
+    { key: "data", icon: "📊", title: "Δεδομένα & Αναφορές", subtitle: "General, Τιμολόγια, Analytics", count: 1 },
+  ];
+
+  const filteredGroups = groups.filter((g) =>
+    !query.trim() || (g.title + " " + g.subtitle).toLowerCase().includes(query.trim().toLowerCase())
+  );
+
+  const group = groups.find((g) => g.key === active);
+
   return (
     <div className="space-y-6">
-      <div className="flex gap-2 flex-wrap">
-        {tabs.map((t) => (
-          <button key={t.key} onClick={() => setSettingsTab(t.key)}
-            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${settingsTab === t.key ? "bg-indigo-600 text-white shadow-md" : "bg-white/70 text-slate-600 hover:bg-white border border-slate-200/80"}`}>
-            {t.icon} {t.label}
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-slate-900">Ρυθμίσεις & Integrations</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Διαχείριση εταιρείας, προτύπων, AI, επικοινωνίας & αναφορών</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" /> Live
+          </span>
+          <button onClick={loadSettings} disabled={loading}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-medium text-slate-600 bg-white/70 hover:bg-white border border-slate-200/80 transition disabled:opacity-50">
+            <span className={`inline-block ${loading ? "animate-spin" : ""}`}>↻</span> Reload
           </button>
-        ))}
-      </div>
-
-      <div className="crm-card-3d rounded-2xl p-6 space-y-4">
-        {settingsTab === "profile" && (
-          <>
-            <h3 className="text-lg font-bold text-slate-900">Προφίλ & Ασφάλεια</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className={labelCls}>Όνομα</label><input className={inputCls} value="Αγαπητός Καλαφάτας" readOnly /></div>
-              <div><label className={labelCls}>Email</label><input className={inputCls} value="kalafatasagapitos@gmail.com" readOnly /></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className={labelCls}>Τρέχων Κωδικός</label><input type="password" className={inputCls} placeholder="••••••••" /></div>
-              <div><label className={labelCls}>Νέος Κωδικός</label><input type="password" className={inputCls} placeholder="Νέος κωδικός" /></div>
-            </div>
-          </>
-        )}
-
-        {settingsTab === "company" && (
-          <>
-            <h3 className="text-lg font-bold text-slate-900">Εταιρεία & Τιμολόγηση</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className={labelCls}>Επωνυμία Εταιρείας</label><input className={inputCls} value={settings.company_name} onChange={(e) => setSettings({...settings, company_name: e.target.value})} /></div>
-              <div><label className={labelCls}>ΑΦΜ</label><input className={inputCls} value={settings.vat_number} onChange={(e) => setSettings({...settings, vat_number: e.target.value})} placeholder="Εισάγετε ΑΦΜ" /></div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div><label className={labelCls}>ΔΟΥ</label><input className={inputCls} value={settings.tax_office} onChange={(e) => setSettings({...settings, tax_office: e.target.value})} placeholder="Εισάγετε ΔΟΥ" /></div>
-              <div><label className={labelCls}>Διεύθυνση</label><input className={inputCls} value={settings.address} onChange={(e) => setSettings({...settings, address: e.target.value})} placeholder="Εισάγετε διεύθυνση" /></div>
-            </div>
-            <div><label className={labelCls}>IBAN Τράπεζας</label><input className={inputCls} value={settings.bank_iban} onChange={(e) => setSettings({...settings, bank_iban: e.target.value})} placeholder="GR00 0000 0000 0000 0000 0000 000" /></div>
-          </>
-        )}
-
-        {settingsTab === "integrations" && (
-          <>
-            <h3 className="text-lg font-bold text-slate-900">Διασυνδέσεις & Ειδοποιήσεις</h3>
-            <div><label className={labelCls}>Slack Webhook URL</label><input className={inputCls} value={settings.slack_webhook_url} onChange={(e) => setSettings({...settings, slack_webhook_url: e.target.value})} placeholder="https://hooks.slack.com/services/..." /></div>
-            <div><label className={labelCls}>Email Ειδοποιήσεων (Resend)</label><input className={inputCls} type="email" value={settings.notify_email} onChange={(e) => setSettings({...settings, notify_email: e.target.value})} /></div>
-            <div><label className={labelCls}>Google Analytics ID</label><input className={inputCls} value={settings.ga_measurement_id} onChange={(e) => setSettings({...settings, ga_measurement_id: e.target.value})} placeholder="G-XXXXXXXXXX" /></div>
-          </>
-        )}
-
-        {settingsTab === "crm_ai" && (
-          <>
-            <h3 className="text-lg font-bold text-slate-900">CRM & AI Προτιμήσεις</h3>
-            <div>
-              <label className={labelCls}>AI System Prompt</label>
-              <textarea rows={6} className={inputCls + " resize-none"} value={settings.ai_system_prompt} onChange={(e) => setSettings({...settings, ai_system_prompt: e.target.value})} />
-            </div>
-            <div>
-              <label className={labelCls}>Pipeline Stages</label>
-              <div className="flex flex-wrap gap-2">
-                {settings.pipeline_stages.map((stage, i) => (
-                  <div key={i} className="flex items-center gap-1 bg-slate-100 rounded-lg px-3 py-1.5">
-                    <input className="bg-transparent text-sm text-slate-700 outline-none w-28" value={stage} onChange={(e) => { const s = [...settings.pipeline_stages]; s[i] = e.target.value; setSettings({...settings, pipeline_stages: s}); }} />
-                    <button onClick={() => setSettings({...settings, pipeline_stages: settings.pipeline_stages.filter((_, j) => j !== i)})} className="text-red-500 hover:text-red-700 text-xs">×</button>
-                  </div>
-                ))}
-                <button onClick={() => setSettings({...settings, pipeline_stages: [...settings.pipeline_stages, "New Stage"]})} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">+ Add Stage</button>
-              </div>
-            </div>
-          </>
-        )}
-
-        <div className="flex items-center gap-4 pt-4 border-t border-slate-200/60">
-          <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-medium rounded-xl shadow-md hover:shadow-lg transition-all disabled:opacity-50">
-            {saving ? "Saving..." : "Save Settings"}
+          <button onClick={handleSave} disabled={saving} className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-md hover:shadow-lg transition disabled:opacity-50">
+            {saving ? "Saving..." : "Save"}
           </button>
-          {saveMsg && <span className="text-sm text-green-600 font-medium">{saveMsg}</span>}
         </div>
       </div>
+
+      {saveMsg && <div className="text-sm font-medium text-green-600">{saveMsg}</div>}
+
+      {!group ? (
+        <>
+          {/* Search */}
+          <div className="relative max-w-xl">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm">🔍</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search settings…"
+              className="w-full pl-11 pr-4 py-3.5 crm-card-3d rounded-2xl outline-none text-sm text-slate-900 placeholder:text-slate-400"
+            />
+          </div>
+
+          {/* Category cards */}
+          {filteredGroups.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+              {filteredGroups.map((g) => (
+                <button key={g.key} onClick={() => { setActive(g.key); setQuery(""); }}
+                  className="crm-card-3d rounded-2xl p-5 text-left transition-transform hover:-translate-y-0.5">
+                  <div className="flex items-start justify-between">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-200/60 flex items-center justify-center text-xl">{g.icon}</div>
+                    <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 rounded-full px-2.5 py-1">{g.count} settings</span>
+                  </div>
+                  <h3 className="mt-4 text-base font-bold text-slate-900">{g.title}</h3>
+                  <p className="mt-1 text-xs text-slate-500 leading-relaxed">{g.subtitle}</p>
+                  <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600">Άνοιγμα <span aria-hidden>→</span></span>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="crm-card-3d rounded-2xl p-10 text-center text-sm text-slate-500">Δεν βρέθηκαν ρυθμίσεις για «{query}»</div>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Group detail */}
+          <button onClick={() => { setActive(null); setSaveMsg(""); }}
+            className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition">
+            ← Επιστροφή
+          </button>
+
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-200/60 flex items-center justify-center text-2xl">{group.icon}</div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">{group.title}</h3>
+              <p className="text-sm text-slate-500">{group.subtitle}</p>
+            </div>
+          </div>
+
+          <div className="crm-card-3d rounded-2xl p-6 space-y-5">
+            {active === "company" && (
+              <>
+                <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Στοιχεία Εταιρείας</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div><label className={labelCls}>Επωνυμία Εταιρείας</label><input className={inputCls} value={settings.company_name} onChange={(e) => setSettings({...settings, company_name: e.target.value})} /></div>
+                  <div><label className={labelCls}>ΑΦΜ</label><input className={inputCls} value={settings.vat_number} onChange={(e) => setSettings({...settings, vat_number: e.target.value})} placeholder="Εισάγετε ΑΦΜ" /></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div><label className={labelCls}>ΔΟΥ</label><input className={inputCls} value={settings.tax_office} onChange={(e) => setSettings({...settings, tax_office: e.target.value})} placeholder="Εισάγετε ΔΟΥ" /></div>
+                  <div><label className={labelCls}>Διεύθυνση</label><input className={inputCls} value={settings.address} onChange={(e) => setSettings({...settings, address: e.target.value})} placeholder="Εισάγετε διεύθυνση" /></div>
+                </div>
+              </>
+            )}
+
+            {active === "documents" && (
+              <>
+                <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Πρότυπα Εγγράφων</h4>
+                <div><label className={labelCls}>IBAN Τράπεζας (προσφορές & τιμολόγια)</label><input className={inputCls} value={settings.bank_iban} onChange={(e) => setSettings({...settings, bank_iban: e.target.value})} placeholder="GR00 0000 0000 0000 0000 0000 000" /></div>
+              </>
+            )}
+
+            {active === "ai" && (
+              <>
+                <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Agents & Αυτοματισμοί</h4>
+                <div>
+                  <label className={labelCls}>AI System Prompt</label>
+                  <textarea rows={6} className={inputCls + " resize-none"} value={settings.ai_system_prompt} onChange={(e) => setSettings({...settings, ai_system_prompt: e.target.value})} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div><label className={labelCls}>Slack Webhook URL</label><input className={inputCls} value={settings.slack_webhook_url} onChange={(e) => setSettings({...settings, slack_webhook_url: e.target.value})} placeholder="https://hooks.slack.com/services/..." /></div>
+                  <div><label className={labelCls}>Supabase Webhook Secret</label><input type="password" className={inputCls} value={settings.supabase_webhook_secret} onChange={(e) => setSettings({...settings, supabase_webhook_secret: e.target.value})} placeholder="••••••••••••" /></div>
+                </div>
+              </>
+            )}
+
+            {active === "leads" && (
+              <>
+                <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Email & Pipelines</h4>
+                <div>
+                  <label className={labelCls}>Email Ειδοποιήσεων (Resend)</label>
+                  <input className={inputCls} type="email" value={settings.notify_email} onChange={(e) => setSettings({...settings, notify_email: e.target.value})} />
+                </div>
+                <div>
+                  <label className={labelCls}>Pipeline Stages</label>
+                  <div className="flex flex-wrap gap-2">
+                    {settings.pipeline_stages.map((stage, i) => (
+                      <div key={i} className="flex items-center gap-1 bg-slate-100 rounded-lg px-3 py-1.5">
+                        <input className="bg-transparent text-sm text-slate-700 outline-none w-28" value={stage} onChange={(e) => { const s = [...settings.pipeline_stages]; s[i] = e.target.value; setSettings({...settings, pipeline_stages: s}); }} />
+                        <button onClick={() => setSettings({...settings, pipeline_stages: settings.pipeline_stages.filter((_, j) => j !== i)})} className="text-red-500 hover:text-red-700 text-xs">×</button>
+                      </div>
+                    ))}
+                    <button onClick={() => setSettings({...settings, pipeline_stages: [...settings.pipeline_stages, "New Stage"]})} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">+ Add Stage</button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {active === "data" && (
+              <>
+                <h4 className="text-sm font-bold uppercase tracking-wide text-slate-500">Analytics</h4>
+                <div><label className={labelCls}>Google Analytics ID</label><input className={inputCls} value={settings.ga_measurement_id} onChange={(e) => setSettings({...settings, ga_measurement_id: e.target.value})} placeholder="G-XXXXXXXXXX" /></div>
+              </>
+            )}
+          </div>
+
+          <div className="flex items-center gap-4">
+            <button onClick={handleSave} disabled={saving} className="px-6 py-2.5 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-md hover:shadow-lg transition disabled:opacity-50">
+              {saving ? "Saving..." : "Save Settings"}
+            </button>
+            <button onClick={loadSettings} disabled={loading} className="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 bg-white/70 hover:bg-white border border-slate-200/80 transition disabled:opacity-50">
+              Reload
+            </button>
+            {saveMsg && <span className="text-sm text-green-600 font-medium">{saveMsg}</span>}
+          </div>
+        </>
+      )}
     </div>
   );
 }
