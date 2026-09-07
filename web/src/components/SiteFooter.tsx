@@ -57,6 +57,12 @@ export default function SiteFooter({
           <Link href="/policy" className="transition-colors hover:text-slate-900">
             Policy
           </Link>
+          <Link
+            href="/admin/crm"
+            className="font-medium text-slate-700 transition-colors hover:text-slate-900"
+          >
+            My CRM
+          </Link>
         </div>
       </div>
       <div className="mx-auto mt-10 flex max-w-7xl flex-col items-center justify-between gap-4 border-t border-slate-100 px-6 pt-6 md:flex-row">

@@ -189,6 +189,100 @@ async function callOpenAICompatible(
   return { content: msg.content, toolCalls };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Image generation (Gemini image models, e.g. gemini-2.0-flash-exp-image-generation).
+// Optional reference images (product/brand shot) + N variations via candidateCount.
+// Set CREATIVE_IMAGE_MODEL in .env to override the default model.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ReferenceImage = { mimeType: string; dataBase64: string };
+export type GeneratedImage = { mimeType: string; dataBase64: string };
+export type ImageGenerationResult = {
+  images: GeneratedImage[];
+  caption: string | null;
+  model: string;
+};
+
+const CREATIVE_IMAGE_MODEL =
+  process.env.CREATIVE_IMAGE_MODEL || "gemini-2.0-flash-exp-image-generation";
+
+async function callGeminiImage(
+  prompt: string,
+  referenceImages: ReferenceImage[],
+  count: number,
+  aspectRatio: string | undefined,
+  model: string
+): Promise<{ images: GeneratedImage[]; caption: string | null }> {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) throw new Error("GEMINI_API_KEY not configured");
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+  const parts: any[] = [{ text: prompt }];
+  for (const ref of referenceImages) {
+    parts.push({ inlineData: { mimeType: ref.mimeType, data: ref.dataBase64 } });
+  }
+
+  const generationConfig: Record<string, any> = {
+    responseModalities: ["IMAGE", "TEXT"],
+    candidateCount: Math.max(1, Math.min(4, count)),
+  };
+  if (aspectRatio && /^[0-9]+:[0-9]+$/.test(aspectRatio)) {
+    generationConfig.imageConfig = { aspectRatio };
+  }
+
+  const res = await fetch(`${url}?key=${apiKey}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ contents: [{ role: "user", parts }], generationConfig }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Image API error (${res.status}): ${errText.slice(0, 500)}`);
+  }
+
+  const data = await res.json();
+  const images: GeneratedImage[] = [];
+  let caption: string | null = null;
+
+  for (const candidate of data.candidates || []) {
+    for (const part of candidate?.content?.parts || []) {
+      if (part.inlineData?.data) {
+        const mimeType: string = part.inlineData.mimeType || "image/png";
+        if (!images.some((i) => i.dataBase64 === part.inlineData.data)) {
+          images.push({ mimeType, dataBase64: part.inlineData.data });
+        }
+      } else if (part.text && caption === null) {
+        caption = part.text;
+      }
+    }
+  }
+
+  if (images.length === 0) {
+    throw new Error("Image model returned no images. Check CREATIVE_IMAGE_MODEL / GEMINI_API_KEY.");
+  }
+  return { images, caption };
+}
+
+export async function generateImage(opts: {
+  prompt: string;
+  referenceImages?: ReferenceImage[];
+  count?: number;
+  aspectRatio?: string;
+  model?: string;
+}): Promise<ImageGenerationResult> {
+  const model = opts.model || CREATIVE_IMAGE_MODEL;
+  const { images, caption } = await callGeminiImage(
+    opts.prompt,
+    opts.referenceImages || [],
+    opts.count || 1,
+    opts.aspectRatio,
+    model
+  );
+  return { images, caption, model };
+}
+
 export function getModelClient(tier: "small" | "medium" | "large" = "medium"): ModelClient {
   const provider = (process.env.LLM_PROVIDER || "gemini").toLowerCase();
 
