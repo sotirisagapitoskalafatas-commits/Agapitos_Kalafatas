@@ -7,6 +7,20 @@
 -- which contained OPEN policies ( `USING (true)` ) that let any anon visitor
 -- read/update/delete every lead, deal, invoice, and file — the CRM's entire PII.
 --
+-- COMPANION TABLES (app queries these but they're NOT defined here — they live
+-- in the root config/*.sql files and must be applied alongside this schema):
+--   config/settings-table.sql         → system_settings
+--   config/notifications-table.sql    → notifications
+--   config/agent-approvals.sql        → agent_action_approvals
+--   config/agent-audit.sql            → agent_audit
+--   config/agent-commands.sql         → integration_credentials
+--   config/apply-security-migration.sql → agent_sessions, chat_messages (also
+--        re-creates deals/invoices/communications/calendar_events/activity_log/
+--        notifications — do NOT apply that file to a fresh project; schema.sql
+--        already provides those CRM tables. It is a historical upgrade script.)
+-- Do NOT re-create unified-crm-schema.sql or knowledge_vectors; this file is
+-- canonical.
+--
 -- SECURITY MODEL
 --   • RLS enabled on every table.
 --   • Only the `service_role` key can read/write CRM data.

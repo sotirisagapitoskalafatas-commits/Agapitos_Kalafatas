@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -10,6 +11,11 @@ function getSupabase() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 5 submissions / minute / IP — this route uses the service role,
+  // so it must never become an unthrottled public insert path.
+  const limited = rateLimit(request, "leads", 5, 60_000);
+  if (limited) return limited;
+
   try {
     const { clientName, clientContact, projectDetails } = await request.json();
 
