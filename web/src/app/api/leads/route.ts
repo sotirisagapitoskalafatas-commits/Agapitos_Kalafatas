@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 import { rateLimit } from "@/lib/rate-limit";
+import { escapeHtml } from "@/lib/html";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -67,14 +68,14 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             from: "Atlas AI <onboarding@resend.dev>",
             to: "kalafatasagapitos@gmail.com",
-            subject: `🚨 New Lead: ${clientName} via Website Chat`,
+            subject: `🚨 New Lead: ${escapeHtml(clientName)} via Website Chat`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <h2 style="color: #3b82f6;">New Client Inquiry</h2>
                 <div style="background: #f8fafc; border-radius: 8px; padding: 16px; margin: 16px 0;">
-                  <p><strong>Name:</strong> ${clientName}</p>
-                  <p><strong>Contact:</strong> ${clientContact}</p>
-                  <p><strong>Project:</strong> ${projectDetails || "Not specified"}</p>
+                  <p><strong>Name:</strong> ${escapeHtml(clientName)}</p>
+                  <p><strong>Contact:</strong> ${escapeHtml(clientContact)}</p>
+                  <p><strong>Project:</strong> ${escapeHtml(projectDetails || "Not specified")}</p>
                 </div>
                 <p style="color: #64748b; font-size: 12px;">Sent by Atlas AI • Agapitos Kalafatas Website</p>
               </div>

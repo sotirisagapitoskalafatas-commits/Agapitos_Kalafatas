@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { timingSafeEqual } from "crypto";
+import { escapeHtml, safeUrl } from "@/lib/html";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// Constant-time comparison for the shared webhook secret so the header check
+// does not leak timing information about a guessed prefix.
+function secretsMatch(a: string, b: string): boolean {
+  const ba = Buffer.from(a, "utf8");
+  const bb = Buffer.from(b, "utf8");
+  if (ba.length !== bb.length) return false;
+  return timingSafeEqual(ba, bb);
+}
 
 async function logNotification(type: string, status: string, message: string, details: any = {}) {
   try {
@@ -29,7 +40,7 @@ export async function POST(req: Request) {
         { status: 501 }
       );
     }
-    if (secret !== process.env.SUPABASE_WEBHOOK_SECRET) {
+    if (!secret || !secretsMatch(secret, process.env.SUPABASE_WEBHOOK_SECRET)) {
       return NextResponse.json(
         { error: "Unauthorized webhook request" },
         { status: 401 }
@@ -96,20 +107,20 @@ export async function POST(req: Request) {
           body: JSON.stringify({
             from: "Agapitos Innovation Hub <onboarding@resend.dev>",
             to: [process.env.NOTIFY_EMAIL_TO],
-            subject: `⚡ New Lead: ${leadName}`,
+            subject: `⚡ New Lead: ${escapeHtml(leadName)}`,
             html: `
               <div style="font-family:sans-serif;max-width:600px;padding:20px;border:1px solid #eee;border-radius:8px;">
                 <h2 style="color:#00E699;margin-top:0;">🚀 New CRM Lead</h2>
-                <p><strong>Name:</strong> ${leadName}</p>
-                <p><strong>Email:</strong> <a href="mailto:${leadEmail}">${leadEmail}</a></p>
-                <p><strong>Service:</strong> ${service_type || record.service_category || "N/A"}</p>
-                <p><strong>Budget:</strong> ${budget || "N/A"}</p>
-                <p><strong>Status:</strong> ${status || record.status}</p>
+                <p><strong>Name:</strong> ${escapeHtml(leadName)}</p>
+                <p><strong>Email:</strong> <a href="${safeUrl(`mailto:${leadEmail}`)}">${escapeHtml(leadEmail)}</a></p>
+                <p><strong>Service:</strong> ${escapeHtml(service_type || record.service_category || "N/A")}</p>
+                <p><strong>Budget:</strong> ${escapeHtml(budget || "N/A")}</p>
+                <p><strong>Status:</strong> ${escapeHtml(status || record.status)}</p>
                 <p><strong>Time:</strong> ${new Date(created_at).toLocaleString("el-GR")}</p>
                 <hr style="border:0;border-top:1px solid #eee;margin:20px 0;" />
                 <p><strong>Notes:</strong></p>
                 <blockquote style="background:#f9f9f9;padding:12px;border-left:4px solid #00E699;margin:0;">
-                  ${notes || record.comments || "No message provided."}
+                  ${escapeHtml(notes || record.comments || "No message provided.")}
                 </blockquote>
               </div>
             `,

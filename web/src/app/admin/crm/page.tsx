@@ -1675,51 +1675,51 @@ function AgentView() {
 
     try {
       const isCommand = text.startsWith("/");
-      const res = await fetch(isCommand ? "/api/agent/command" : "/api/agent", {
-        method: "POST",
-        headers: isCommand
-          ? { "Content-Type": "application/json", ...getAuthHeaders() }
-          : { "Content-Type": "application/json" },
-        body: JSON.stringify(isCommand ? { command: text } : { message: text }),
-      });
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        setMessages((m) => {
-          const next = [...m];
-          next[next.length - 1] = { role: "agent", content: data.error || "Something went wrong. Please try again.", error: true };
-          return next;
+      if (isCommand) {
+        const res = await fetch("/api/agent/command", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+          body: JSON.stringify({ command: text }),
         });
-      } else if (data.command) {
-        const cmdResult = data as any;
-        const stagedNote =
-          cmdResult.staged?.count > 0
-            ? `\n\n✍️ ${cmdResult.staged.count} action(s) staged as ${cmdResult.staged.actionType} — pending your approval in the panel. Nothing was sent yet.`
-            : "";
-        const missingNote =
-          cmdResult.connectorsMissing?.length
-            ? `\n\n_Note: connectors not yet connected — ${cmdResult.connectorsMissing.join(", ")} (stub data shown)._`
-            : "";
-        setMessages((m) => {
-          const next = [...m];
-          next[next.length - 1] = {
-            role: "agent",
-            content: cmdResult.response + stagedNote + missingNote,
-            result: {
-              finalAnswer: cmdResult.response,
-              steps: [{ agent: `command:${cmdResult.command}`, input: text, result: cmdResult.response, durationMs: 0 }],
-              provider: "plugin",
-              model: "stub",
-              requestId: cmdResult.requestId || "local",
-            },
-          };
-          return next;
-        });
-        fetchApprovals();
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          setMessages((m) => {
+            const next = [...m];
+            next[next.length - 1] = { role: "agent", content: data.error || "Something went wrong. Please try again.", error: true };
+            return next;
+          });
+        } else {
+          const cmdResult = data as any;
+          const stagedNote =
+            cmdResult.staged?.count > 0
+              ? `\n\n✍️ ${cmdResult.staged.count} action(s) staged as ${cmdResult.staged.actionType} — pending your approval in the panel. Nothing was sent yet.`
+              : "";
+          const missingNote =
+            cmdResult.connectorsMissing?.length
+              ? `\n\n_Note: connectors not yet connected — ${cmdResult.connectorsMissing.join(", ")} (stub data shown)._`
+              : "";
+          setMessages((m) => {
+            const next = [...m];
+            next[next.length - 1] = {
+              role: "agent",
+              content: cmdResult.response + stagedNote + missingNote,
+              result: {
+                finalAnswer: cmdResult.response,
+                steps: [{ agent: `command:${cmdResult.command}`, input: text, result: cmdResult.response, durationMs: 0 }],
+                provider: "plugin",
+                model: "stub",
+                requestId: cmdResult.requestId || "local",
+              },
+            };
+            return next;
+          });
+          fetchApprovals();
+        }
       } else {
         // Streaming branch: consume NDJSON from /api/agent/stream and update progress live.
         const res = await fetch("/api/agent/stream", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...getAuthHeaders() },
           body: JSON.stringify({ message: text }),
         });
         if (!res.ok || !res.body) {
@@ -2281,7 +2281,7 @@ function NotificationsView({ notifications, onRefresh }: { notifications: any[];
                 <li>Go to <span className="text-slate-600">Supabase Dashboard → Integrations → Webhooks</span></li>
                 <li>Create webhook: Table <span className="text-slate-600">public.leads</span>, Event <span className="text-slate-600">INSERT</span></li>
                 <li>URL: <span className="text-slate-600">https://www.agapitoskalafatas.com/api/webhooks/lead-notification</span></li>
-                <li>Header: <span className="text-slate-600">x-webhook-secret</span> = <span className="text-slate-600">xir6PAcW7OxlD80pN8N-Ohh6D8TDYJIpti8QsbH70lo</span></li>
+                <li>Header: <span className="text-slate-600">x-webhook-secret</span> = <span className="text-slate-600">(value set server-side in env <code>SUPABASE_WEBHOOK_SECRET</code>)</span></li>
               </ol>
             </div>
           </div>

@@ -4,8 +4,14 @@ import {
   generateSessionToken,
   getAdminCredentials,
 } from "@/lib/admin-auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
+  // Brute-force guard: credential verification is SHA-256 based, so bound the
+  // attempts per IP. 10/min is generous for a single operator, hostile to bots.
+  const limited = rateLimit(request, "login", 10, 60_000);
+  if (limited) return limited;
+
   try {
     let username = "";
     let password = "";
