@@ -129,7 +129,7 @@ export default function AboutPage() {
                 φροντίδα — ξεκινάμε με μια συζήτηση.
               </p>
               <Link
-                href="/chat"
+                href="/contact"
                 className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-br from-violet-600 to-violet-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-violet-200 transition-all hover:from-violet-700 hover:to-violet-600"
               >
                 Μίλησε με τον Atlas AI
