@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
           body: JSON.stringify({
             from: "Atlas AI <onboarding@resend.dev>",
             to: "kalafatasagapitos@gmail.com",
-            subject: `🚨 New Lead: ${escapeHtml(clientName)} via Website Chat`,
+            subject: `🚨 New Lead: ${clientName} via Website Chat`,
             html: `
               <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
                 <h2 style="color: #3b82f6;">New Client Inquiry</h2>

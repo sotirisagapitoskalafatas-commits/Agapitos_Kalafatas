@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
         await resend.emails.send({
           from: "Atlas AI <leads@agapitoskalafatas.com>",
           to: NOTIFY_EMAIL,
-          subject: `🤖 New Atlas Chat lead: ${escapeHtml(firstName)} ${escapeHtml(record.last_name)} (${escapeHtml(record.service_category)})`,
+          subject: `🤖 New Atlas Chat lead: ${firstName} ${record.last_name} (${record.service_category})`,
           html: `<div style="font-family:sans-serif;padding:20px;background:#f8f9fa;border-radius:12px;">
               <h2 style="color:#2563eb;">New Lead via Atlas AI Chat</h2>
               <p><strong>Name:</strong> ${escapeHtml(firstName)} ${escapeHtml(record.last_name)}</p>

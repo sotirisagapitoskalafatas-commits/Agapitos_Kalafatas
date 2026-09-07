@@ -107,7 +107,7 @@ export async function POST(req: Request) {
           body: JSON.stringify({
             from: "Agapitos Innovation Hub <onboarding@resend.dev>",
             to: [process.env.NOTIFY_EMAIL_TO],
-            subject: `⚡ New Lead: ${escapeHtml(leadName)}`,
+            subject: `⚡ New Lead: ${leadName}`,
             html: `
               <div style="font-family:sans-serif;max-width:600px;padding:20px;border:1px solid #eee;border-radius:8px;">
                 <h2 style="color:#00E699;margin-top:0;">🚀 New CRM Lead</h2>
