@@ -202,6 +202,10 @@ export function computeDiagnostic(s: FunnelSnapshot): DiagnosticResult {
     ],
   };
 
+  // leaks/biggestLeak surface yourRate as a percentage, matching `rates`.
+  // Note: must happen AFTER uplift/target math above, which uses the raw ratio.
+  const leaksPct = leaks.map((l) => ({ ...l, yourRate: pct(l.yourRate) }));
+
   return {
     score,
     grade,
@@ -212,8 +216,8 @@ export function computeDiagnostic(s: FunnelSnapshot): DiagnosticResult {
       closeRate: pct(rates.closeRate),
       leadToCustomerRate: pct(rates.leadToCustomerRate),
     },
-    leaks,
-    biggestLeak,
+    leaks: leaksPct,
+    biggestLeak: leaksPct[0] ?? null,
     opportunity: { target, upliftRevenue, existingRevenue, scenarios },
     funnel,
     warnings,
