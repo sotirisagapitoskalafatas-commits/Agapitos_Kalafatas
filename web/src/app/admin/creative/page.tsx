@@ -1,6 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
+import AdminShell from "@/components/admin/AdminShell";
+import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
+import { useUrlTab } from "@/components/admin/useUrlTab";
 import {
   Sparkles,
   Image as ImageIcon,
@@ -88,6 +91,8 @@ const TAB = [
   { id: "campaigns", label: "Campaigns", icon: ShieldCheck },
 ] as const;
 
+const TAB_IDS = TAB.map((t) => t.id);
+
 function Badge({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <span
@@ -105,13 +110,17 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function CreativeStudioPage() {
-  const [token, setToken] = useState<string | null>(null);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [loginLoading, setLoginLoading] = useState(false);
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-slate-50" />}>
+      <CreativeStudioInner />
+    </Suspense>
+  );
+}
 
-  const [tab, setTab] = useState<(typeof TAB)[number]["id"]>("generate");
+function CreativeStudioInner() {
+  const { token } = useAdminAuth();
+
+  const [tab, setTab] = useUrlTab<(typeof TAB)[number]["id"]>(TAB_IDS, "generate");
 
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
   const [assets, setAssets] = useState<AssetRow[]>([]);
@@ -195,49 +204,10 @@ export default function CreativeStudioPage() {
   }, [api, token, filterType, filterStatus, filterQ]);
 
   useEffect(() => {
-    const t = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-    if (t) {
-      setToken(t);
-      setCampaigns([]);
-    }
-  }, []);
-
-  useEffect(() => {
     if (!token) return;
     loadCampaigns();
     loadAssets();
   }, [token, loadCampaigns, loadAssets]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginLoading(true);
-    setLoginError("");
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      if (data.success && data.token) {
-        localStorage.setItem("crm_token", data.token);
-        setToken(data.token);
-      } else {
-        setLoginError(data.error || "Login failed");
-      }
-    } catch {
-      setLoginError("Connection error");
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("crm_token");
-    setToken(null);
-    setAssets([]);
-    setCampaigns([]);
-  };
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -388,69 +358,21 @@ export default function CreativeStudioPage() {
     setter(list.includes(value) ? list.filter((x) => x !== value) : [...list, value]);
   };
 
-  if (!token) {
-    return (
-      <main className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8">
-            <div className="text-center mb-8">
-              <div className="w-14 h-14 bg-brand-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-brand-500/25">
-                <Sparkles className="text-white" size={24} />
-              </div>
-              <h1 className="text-2xl font-bold text-slate-900">Creative Studio</h1>
-              <p className="text-sm text-slate-500 mt-1">
-                AI image + ad copy generation, review, and approval
-              </p>
-            </div>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Username</label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter username"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
-                  required
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-slate-700 mb-1.5 block">Password</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter password"
-                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 transition-all"
-                  required
-                />
-              </div>
-              {loginError && <p className="text-sm text-red-600">{loginError}</p>}
-              <button
-                type="submit"
-                disabled={loginLoading}
-                className="w-full py-3 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-all disabled:opacity-60"
-              >
-                {loginLoading ? "Signing in…" : "Sign in"}
-              </button>
-            </form>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-slate-50">
-      <div className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-              <Sparkles className="text-white" size={16} />
-            </div>
-            <h1 className="text-lg font-bold text-slate-900">Creative Studio</h1>
-          </div>
-          <nav className="flex flex-wrap items-center gap-1">
+    <AdminShell
+      breadcrumbs={[
+        { label: "Atlas", href: "/admin/crm" },
+        { label: "Marketing" },
+        { label: "Creative Studio" },
+      ]}
+      headerRight={
+        <span className="hidden md:block text-xs text-slate-400">
+          Publishing disabled until platform connections are verified
+        </span>
+      }
+    >
+      <div className="mx-auto max-w-6xl space-y-6">
+        <nav className="flex flex-wrap items-center gap-1 bg-white/70 backdrop-blur rounded-2xl border border-slate-200 p-2 w-fit">
             {TAB.map((t) => (
               <button
                 key={t.id}
@@ -466,19 +388,6 @@ export default function CreativeStudioPage() {
               </button>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-slate-400">Publishing disabled until platform connections are verified</span>
-            <button
-              onClick={handleLogout}
-              className="px-2.5 py-1 text-xs text-slate-500 hover:text-slate-900"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="mx-auto max-w-6xl px-4 py-6 space-y-6">
         {notice && (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800 flex items-start justify-between gap-3">
             <span>{notice}</span>
@@ -1014,7 +923,7 @@ export default function CreativeStudioPage() {
           </div>
         )}
       </div>
-    </main>
+    </AdminShell>
   );
 }
 

@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, Suspense } from "react";
+import AdminShell from "@/components/admin/AdminShell";
+import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
 import {
   Link2,
   Plus,
@@ -77,11 +79,15 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default function SocialSettingsPage() {
-  const [token, setToken] = useState<string | null>(null);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
-  const [loginLoading, setLoginLoading] = useState(false);
+  return (
+    <Suspense fallback={<main className="min-h-screen bg-slate-50" />}>
+      <SocialSettingsInner />
+    </Suspense>
+  );
+}
+
+function SocialSettingsInner() {
+  const { token } = useAdminAuth();
 
   const [connections, setConnections] = useState<ConnectionRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -139,11 +145,6 @@ export default function SocialSettingsPage() {
   }, [api, token]);
 
   useEffect(() => {
-    const t = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-    if (t) setToken(t);
-  }, []);
-
-  useEffect(() => {
     if (!token) {
       loadMatrix();
       return;
@@ -156,36 +157,6 @@ export default function SocialSettingsPage() {
     const caps = matrix[platform] || [];
     setSelectedCaps((prev) => prev.filter((id) => caps.some((c) => c.id === id)));
   }, [platform, matrix]);
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoginLoading(true);
-    setLoginError("");
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json();
-      if (data.success && data.token) {
-        localStorage.setItem("crm_token", data.token);
-        setToken(data.token);
-      } else {
-        setLoginError(data.error || "Login failed");
-      }
-    } catch {
-      setLoginError("Connection error");
-    } finally {
-      setLoginLoading(false);
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("crm_token");
-    setToken(null);
-    setConnections([]);
-  };
 
   const toggleCap = (id: string) => {
     setSelectedCaps((prev) =>
@@ -268,68 +239,29 @@ export default function SocialSettingsPage() {
     }
   };
 
-  if (!token) {
-    return (
-      <div className="min-h-screen bg-slate-50 text-slate-900">
-        <main className="max-w-md mx-auto pt-24 px-4">
-          <div className="bg-white rounded-2xl p-8 shadow-sm border border-slate-200">
-            <div className="flex items-center gap-2 mb-6">
-              <Link2 className="w-5 h-5 text-blue-600" />
-              <h1 className="text-xl font-semibold">Social Connections</h1>
-            </div>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <input
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-              <input
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm"
-                placeholder="Password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              {loginError && <p className="text-sm text-red-600">{loginError}</p>}
-              <button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-lg py-2 text-sm font-medium disabled:opacity-50"
-                disabled={loginLoading}
-              >
-                {loginLoading ? "Signing in…" : "Sign in"}
-              </button>
-            </form>
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <main className="max-w-5xl mx-auto pt-8 px-4 pb-20">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Social Connections</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Capability-first account connections. Publish stays disabled until a platform
-              adapter is built and a read probe verifies authorization.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => loadConnections()}
-              className="inline-flex items-center gap-1.5 text-sm px-3 py-2 border border-slate-300 bg-white rounded-lg hover:bg-slate-50"
-            >
-              <RefreshCw className="w-4 h-4" /> Refresh
-            </button>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center gap-1.5 text-sm px-3 py-2 border border-slate-300 bg-white rounded-lg hover:bg-slate-50"
-            >
-              <X className="w-4 h-4" /> Logout
-            </button>
-          </div>
+    <AdminShell
+      breadcrumbs={[
+        { label: "Atlas", href: "/admin/crm" },
+        { label: "Marketing" },
+        { label: "Social Accounts" },
+      ]}
+      headerRight={
+        <button
+          onClick={() => loadConnections()}
+          className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 border border-slate-300 bg-white rounded-lg hover:bg-slate-50"
+        >
+          <RefreshCw className="w-4 h-4" /> Refresh
+        </button>
+      }
+    >
+      <div className="mx-auto max-w-5xl space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Social Connections</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Capability-first account connections. Publish stays disabled until a platform
+            adapter is built and a read probe verifies authorization.
+          </p>
         </div>
 
         {notice && (
@@ -592,7 +524,7 @@ export default function SocialSettingsPage() {
             );
           })}
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminShell>
   );
 }

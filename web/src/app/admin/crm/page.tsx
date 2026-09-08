@@ -1,6 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import AdminShell from "@/components/admin/AdminShell";
+import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
+import { resolveCrmTab, plannedModuleByKey, type CrmTab } from "@/components/admin/nav";
 
 function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
@@ -125,182 +129,6 @@ interface DashboardData {
   recentActivity: { id: string; entity_type: string; action: string; details: any; created_at: string }[];
 }
 
-type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics" | "notifications" | "renewals" | "ai" | "settings" | "planned";
-
-// ── Atlas IA navigation model ──
-// Groups mirror the master architecture. Each item carries an honest module
-// state so JARVIS and the owner are never tricked into thinking a module works
-// when it does not. LIVE items route to real working surfaces; PLANNED items
-// open an informative placeholder panel (no fake counts or dashboards).
-type ModState = "live" | "beta" | "planned" | "disabled";
-interface NavItem {
-  key: string;
-  label: string;
-  state: ModState;
-  tab?: Tab;               // in-page CRM tab
-  href?: string;           // separate admin route
-  description: string;     // shown on planned placeholder + hover
-}
-interface NavGroup {
-  id: string;
-  label: string;
-  items: NavItem[];
-}
-
-const PLANNED_EXAMPLE = "Not built yet — no fabricated data is displayed here.";
-
-const NAV_GROUPS: NavGroup[] = [
-  {
-    id: "command",
-    label: "Command Center",
-    items: [
-      { key: "dashboard", label: "Dashboard", state: "live", tab: "dashboard", description: "Σύνοψη των KPIs του CRM με πραγματικά δεδομένα." },
-    ],
-  },
-  {
-    id: "crm",
-    label: "CRM",
-    items: [
-      { key: "leads", label: "Leads", state: "live", tab: "leads", description: "Διαχείριση leads με πραγματικά δεδομένα." },
-      { key: "people", label: "People", state: "planned", description: "Μελλοντική ενοποίηση πελατών/επαφών. " + PLANNED_EXAMPLE },
-      { key: "companies", label: "Companies", state: "planned", description: "Επιχειρήσεις & οργανισμοί ως οντότητες. " + PLANNED_EXAMPLE },
-      { key: "customers", label: "Customers", state: "planned", description: "Καρτέλα 360° πελάτη. " + PLANNED_EXAMPLE },
-      { key: "referrals", label: "Referrals", state: "planned", description: "Παραπομπές. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "sales",
-    label: "Sales",
-    items: [
-      { key: "pipeline", label: "Pipeline", state: "live", tab: "pipeline", description: "Pipeline πραγματικών deals." },
-      { key: "quotes", label: "Quotes", state: "planned", description: "Προσφορές. " + PLANNED_EXAMPLE },
-      { key: "contracts", label: "Contracts", state: "planned", description: "Συμβόλαια. " + PLANNED_EXAMPLE },
-      { key: "forecast", label: "Forecast", state: "planned", description: "Πρόβλεψη εσόδων. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "energy",
-    label: "Energy",
-    items: [
-      { key: "renewals", label: "Renewals", state: "live", tab: "renewals", description: "Ανανεώσεις συμβολαίων — πραγματικά δεδομένα από το σύστημα ανανεώσεων." },
-      { key: "customers-energy", label: "Customers", state: "planned", description: "Ενεργειακοί πελάτες. " + PLANNED_EXAMPLE },
-      { key: "bills", label: "Bills", state: "planned", description: "Λογαριασμοί. " + PLANNED_EXAMPLE },
-      { key: "providers", label: "Providers", state: "planned", description: "Πάροχοι. " + PLANNED_EXAMPLE },
-      { key: "comparisons", label: "Comparisons", state: "planned", description: "Συγκρίσεις. " + PLANNED_EXAMPLE },
-      { key: "switches", label: "Switches", state: "planned", description: "Αλλαγές παρόχου. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "insurance",
-    label: "Insurance",
-    items: [
-      { key: "policies", label: "Policies", state: "planned", description: "Ασφαλιστικά συμβόλαια. " + PLANNED_EXAMPLE },
-      { key: "insurance-products", label: "Products", state: "planned", description: "Ασφαλιστικά προϊόντα. " + PLANNED_EXAMPLE },
-      { key: "insurance-renewals", label: "Renewals", state: "planned", description: "Ανανεώσεις ασφαλειών. " + PLANNED_EXAMPLE },
-      { key: "compliance", label: "Compliance", state: "planned", description: "Ρυθμιστική συμμόρφωση. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "web",
-    label: "Web & Digital",
-    items: [
-      { key: "projects", label: "Projects", state: "planned", description: "Web έργα. " + PLANNED_EXAMPLE },
-      { key: "hosting", label: "Hosting", state: "planned", description: "Hosting & domains. " + PLANNED_EXAMPLE },
-      { key: "maintenance", label: "Maintenance", state: "planned", description: "Συντήρηση. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "marketing",
-    label: "Marketing",
-    items: [
-      { key: "creative", label: "Creative Studio", state: "live", href: "/admin/creative", description: "Δημιουργία εικόνων + κειμένων με AI (πραγματικές ροές)." },
-      { key: "campaigns", label: "Campaigns", state: "planned", description: "Καμπάνιες. " + PLANNED_EXAMPLE },
-      { key: "media", label: "Media Library", state: "planned", description: "Βιβλιοθήκη μέσων. " + PLANNED_EXAMPLE },
-      { key: "content-calendar", label: "Content Calendar", state: "planned", description: "Ημερολόγιο περιεχομένου. " + PLANNED_EXAMPLE },
-      { key: "social-inbox", label: "Social Inbox", state: "planned", description: "Κοινωνικά μηνύματα & σχόλια. " + PLANNED_EXAMPLE },
-      { key: "seo", label: "SEO", state: "planned", description: "SEO. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "comms",
-    label: "Communications",
-    items: [
-      { key: "comms", label: "Communications", state: "live", tab: "comms", description: "Χρονολόγιο επικοινωνιών (email/κλήσεις/σημειώσεις)." },
-      { key: "inbox", label: "Unified Inbox", state: "planned", description: "Ενοποιημένο inbox. " + PLANNED_EXAMPLE },
-      { key: "whatsapp", label: "WhatsApp", state: "planned", description: "WhatsApp. " + PLANNED_EXAMPLE },
-      { key: "viber", label: "Viber", state: "planned", description: "Viber. " + PLANNED_EXAMPLE },
-      { key: "sms", label: "SMS", state: "planned", description: "SMS. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "ops",
-    label: "Operations",
-    items: [
-      { key: "calendar", label: "Calendar & Tasks", state: "live", tab: "calendar", description: "Ημερολόγιο + εργασίες (tasks/reminders)." },
-      { key: "documents", label: "Documents", state: "planned", description: "Έγγραφα. " + PLANNED_EXAMPLE },
-      { key: "workflows", label: "Workflows", state: "planned", description: "Ροές εργασίας. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "finance",
-    label: "Finance",
-    items: [
-      { key: "invoices", label: "Invoices", state: "live", tab: "invoices", description: "Τιμολόγια με πραγματικά δεδομένα." },
-      { key: "payments", label: "Payments", state: "planned", description: "Πληρωμές. " + PLANNED_EXAMPLE },
-      { key: "commissions", label: "Commissions", state: "planned", description: "Προμήθειες. " + PLANNED_EXAMPLE },
-      { key: "revenue", label: "Revenue", state: "planned", description: "Έσοδα. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "ai",
-    label: "AI / JARVIS",
-    items: [
-      { key: "ai", label: "JARVIS", state: "live", tab: "ai", description: "Ο βοηθός AI με πραγματικές εντολές και εγκρίσεις." },
-      { key: "agent-runs", label: "Agent Runs", state: "planned", description: "Εκτελέσεις agents. " + PLANNED_EXAMPLE },
-      { key: "approvals", label: "Approvals", state: "planned", description: "Εγκρίσεις με βάση πολιτικών. " + PLANNED_EXAMPLE },
-      { key: "knowledge", label: "Knowledge", state: "planned", description: "Γνωσιακή βάση. " + PLANNED_EXAMPLE },
-      { key: "policies", label: "Policies", state: "planned", description: "Πολιτικές. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "intelligence",
-    label: "Intelligence",
-    items: [
-      { key: "analytics", label: "Analytics", state: "live", tab: "analytics", description: "Αναλυτικά από πραγματικά δεδομένα." },
-      { key: "kpis", label: "KPIs", state: "planned", description: "Στόχοι & KPI. " + PLANNED_EXAMPLE },
-      { key: "forecasts", label: "Forecasts", state: "planned", description: "Προβλέψεις. " + PLANNED_EXAMPLE },
-      { key: "customer-health", label: "Customer Health", state: "planned", description: "Υγεία πελατών. " + PLANNED_EXAMPLE },
-      { key: "churn-risk", label: "Churn Risk", state: "planned", description: "Κίνδυνος απώλειας. " + PLANNED_EXAMPLE },
-    ],
-  },
-  {
-    id: "admin",
-    label: "Administration",
-    items: [
-      { key: "notifications", label: "Notifications", state: "live", tab: "notifications", description: "Ειδοποιήσεις συστήματος." },
-      { key: "social-accounts", label: "Social Accounts", state: "live", href: "/admin/social", description: "Συνδεδεμένοι λογαριασμοί social media." },
-      { key: "settings", label: "Settings", state: "live", tab: "settings", description: "Ρυθμίσεις συστήματος." },
-      { key: "users", label: "Users", state: "planned", description: "Χρήστες. " + PLANNED_EXAMPLE },
-      { key: "integrations", label: "Integrations", state: "planned", description: "Ενσωματώσεις. " + PLANNED_EXAMPLE },
-      { key: "audit-log", label: "Audit Log", state: "planned", description: "Ημερολόγιο ενεργειών. " + PLANNED_EXAMPLE },
-      { key: "system-health", label: "System Health", state: "planned", description: "Υγεία συστήματος. " + PLANNED_EXAMPLE },
-    ],
-  },
-];
-
-const NAV_KEY_TO_TAB: Record<string, Tab> = {};
-for (const g of NAV_GROUPS) for (const it of g.items) if (it.tab) NAV_KEY_TO_TAB[it.key] = it.tab;
-
-function liveTabItems(): string[] {
-  const out: string[] = [];
-  for (const g of NAV_GROUPS) {
-    for (const it of g.items) {
-      if (it.state === "live" && it.tab) out.push(it.tab);
-    }
-  }
-  return out;
-}
-
 interface StepCall {
   agent: string;
   input: string;
@@ -369,19 +197,44 @@ const COMM_ICONS: Record<string, string> = {
   email: " ", phone: " ", sms: " ", whatsapp: " ", meeting: " ", note: " ",
 };
 
+function ShellFallback() {
+  return (
+    <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+    </main>
+  );
+}
+
 export default function CRMDashboard() {
-  const [tab, setTab] = useState<Tab>(() => {
-    if (typeof window !== "undefined") {
-      const t = new URLSearchParams(window.location.search).get("tab");
-      const live = liveTabItems();
-      if (t && live.includes(t)) return t as Tab;
-    }
-    return "dashboard";
-  });
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginUser, setLoginUser] = useState("");
-  const [loginPass, setLoginPass] = useState("");
-  const [loginError, setLoginError] = useState("");
+  return (
+    <Suspense fallback={<ShellFallback />}>
+      <CRMDashboardInner />
+    </Suspense>
+  );
+}
+
+function CRMDashboardInner() {
+  const { token, logout } = useAdminAuth();
+  const isLoggedIn = !!token;
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawTab = searchParams.get("tab");
+  const moduleKey = searchParams.get("module");
+  const tab: CrmTab = resolveCrmTab(rawTab, moduleKey);
+  const plannedModule = plannedModuleByKey(moduleKey);
+  const setTab = useCallback(
+    (next: CrmTab) => {
+      const sp = new URLSearchParams();
+      sp.set("tab", next);
+      if (next === "planned") {
+        const m = searchParams.get("module");
+        if (m) sp.set("module", m);
+      }
+      router.replace(`/admin/crm?${sp.toString()}`);
+    },
+    [router, searchParams]
+  );
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -398,26 +251,6 @@ export default function CRMDashboard() {
   const [showNewComm, setShowNewComm] = useState(false);
   const [showNewInvoice, setShowNewInvoice] = useState(false);
   const [showNewLead, setShowNewLead] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  // ── Atlas IA nav shell state ──
-  const [plannedModule, setPlannedModule] = useState<{ label: string; description: string } | null>(null);
-  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const raw = localStorage.getItem("atlas_nav_collapsed");
-        return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
-      } catch { /* ignore */ }
-    }
-    return {};
-  });
-  const toggleGroup = (id: string) => {
-    setCollapsedGroups((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try { localStorage.setItem("atlas_nav_collapsed", JSON.stringify(next)); } catch { /* ignore */ }
-      return next;
-    });
-  };
 
   // ── Renewals (materialized tasks + upcoming + overdue) ──
   const [renewals, setRenewals] = useState<any[]>([]);
@@ -482,38 +315,6 @@ export default function CRMDashboard() {
     fetchAll();
   };
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: getAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ username: loginUser, password: loginPass }),
-      });
-      const data = await res.json();
-      if (res.ok && data.token) {
-        setAuthToken(data.token);
-        setIsLoggedIn(true);
-      } else {
-        setLoginError(data.error || "Invalid credentials");
-      }
-    } catch {
-      setLoginError("Unable to reach authentication service");
-    }
-  };
-
-  const setAuthToken = (token: string) => {
-    if (typeof window !== "undefined") localStorage.setItem("crm_token", token);
-  };
-
-  useEffect(() => {
-    const token = typeof window !== "undefined" && localStorage.getItem("crm_token");
-    if (token) {
-      setAuthToken(token);
-      setIsLoggedIn(true);
-    }
-  }, []);
-
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
@@ -534,8 +335,7 @@ export default function CRMDashboard() {
 
     // If the stored token is rejected (401), it is stale/invalid — force a fresh login.
     if (results.some(r => r.status === 401)) {
-      if (typeof window !== "undefined") localStorage.removeItem("crm_token");
-      setIsLoggedIn(false);
+      logout();
       setLoading(false);
       return;
     }
@@ -604,146 +404,15 @@ export default function CRMDashboard() {
 
   const formatCurrency = (n: number) => `€${n.toLocaleString("el-GR", { minimumFractionDigits: 0 })}`;
 
-  if (!isLoggedIn) {
-    return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center p-6">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
-              <span className="text-white font-bold text-xl">A</span>
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">Atlas</h1>
-            <p className="text-sm text-slate-500 mt-1">Agapitos Kalafatas</p>
-          </div>
-          <form onSubmit={handleLogin} className="crm-card-3d rounded-3xl p-8 space-y-4">
-            {loginError && <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl">{loginError}</div>}
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Username</label>
-              <input type="text" required className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900" value={loginUser} onChange={(e) => setLoginUser(e.target.value)} />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Password</label>
-              <input type="password" required className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900" value={loginPass} onChange={(e) => setLoginPass(e.target.value)} />
-            </div>
-            <button type="submit" className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25">
-              Login
-            </button>
-          </form>
-        </div>
-      </main>
-    );
-  }
-
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex">
-      {/* Sidebar */}
-      <aside className={`crm-glass-sidebar w-64 flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0 md:sticky md:top-0`}>
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <span className="text-white font-bold text-sm">A</span>
-            </div>
-            <div>
-              <h1 className="text-sm font-bold text-white">Atlas</h1>
-              <p className="text-[10px] text-blue-100/70">Agapitos Kalafatas</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-          {NAV_GROUPS.map((group) => {
-            const collapsed = collapsedGroups[group.id] ?? false;
-            return (
-              <div key={group.id} className="mb-1">
-                <button
-                  onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-300/70 hover:text-white transition-colors"
-                >
-                  <span>{group.label}</span>
-                  <span className="text-[10px]">{collapsed ? "▸" : "▾"}</span>
-                </button>
-                {!collapsed && (
-                  <div className="space-y-0.5 mt-0.5">
-                    {group.items.map((item) => {
-                      const isActive = item.tab === tab;
-                      if (item.state === "planned") {
-                        return (
-                          <button
-                            key={item.key}
-                            title={item.description}
-                            onClick={() => {
-                              setPlannedModule({ label: item.label, description: item.description });
-                              setTab("planned");
-                              setSidebarOpen(false);
-                            }}
-                            className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                              tab === "planned" && plannedModule?.label === item.label
-                                ? "bg-white/15 text-white"
-                                : "text-slate-300/60 hover:text-white hover:bg-white/5"
-                            }`}
-                          >
-                            <span className="text-xs text-slate-400">◌</span>
-                            {item.label}
-                            <span className="ml-auto text-[9px] uppercase tracking-wide bg-white/10 text-slate-300/60 rounded px-1.5 py-0.5">planned</span>
-                          </button>
-                        );
-                      }
-                      if (item.href) {
-                        return (
-                          <a
-                            key={item.key}
-                            href={item.href}
-                            onClick={() => setSidebarOpen(false)}
-                            className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-200/80 hover:text-white hover:bg-white/10"
-                          >
-                            <span className="text-base">●</span>
-                            {item.label}
-                          </a>
-                        );
-                      }
-                      return (
-                        <button
-                          key={item.key}
-                          onClick={() => { setTab(item.tab as Tab); setSidebarOpen(false); }}
-                          className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                            isActive
-                              ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                              : "text-slate-200/80 hover:text-white hover:bg-white/10"
-                          }`}
-                        >
-                          <span className="text-base">●</span>
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        <div className="p-3 border-t border-white/10">
-          <button
-            onClick={() => { setIsLoggedIn(false); localStorage.removeItem("crm_token"); }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-200/70 hover:text-red-300 hover:bg-white/10 transition-all"
-          >
-            <span>🚪</span> Logout
-          </button>
-        </div>
-      </aside>
-
-      {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
-
-      {/* Main Content */}
-      <div className="flex-1 md:ml-64 ml-0 p-8 min-w-0">
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="md:hidden fixed top-4 left-4 z-50 p-2 bg-white/80 backdrop-blur-md rounded-xl shadow-lg border border-slate-200/80">
-          <svg className="w-6 h-6 text-slate-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            {sidebarOpen ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /> : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />}
-          </svg>
-        </button>
-        <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-2 md:gap-0">
+    <AdminShell
+      breadcrumbs={[
+        { label: "Atlas", href: "/admin/crm" },
+        { label: "CRM" },
+      ]}
+    >
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
           <div>
             <h2 className="text-2xl font-bold text-slate-900 capitalize">
               {tab === "planned" ? (plannedModule?.label ?? "Planned") : tab === "renewals" ? "Renewals" : tab}
@@ -793,7 +462,7 @@ export default function CRMDashboard() {
             )}
             {tab === "ai" && <AgentView />}
             {tab === "settings" && <SettingsView />}
-            {tab === "planned" && <PlannedModuleView module={plannedModule} onBack={() => { setTab("dashboard"); setPlannedModule(null); }} />}
+            {tab === "planned" && <PlannedModuleView module={plannedModule} onBack={() => setTab("dashboard")} />}
           </>
         )}
       </div>
@@ -819,7 +488,7 @@ export default function CRMDashboard() {
       {showNewEvent && <NewEventModal leads={leads} onClose={() => setShowNewEvent(false)} onSaved={() => { setShowNewEvent(false); fetchAll(); }} />}
       {showNewComm && <NewCommModal leads={leads} onClose={() => setShowNewComm(false)} onSaved={() => { setShowNewComm(false); fetchAll(); }} />}
       {showNewInvoice && <NewInvoiceModal leads={leads} onClose={() => setShowNewInvoice(false)} onSaved={() => { setShowNewInvoice(false); fetchAll(); }} />}
-    </main>
+    </AdminShell>
   );
 }
 
