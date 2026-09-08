@@ -5,6 +5,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
 import { resolveCrmTab, plannedModuleByKey, type CrmTab } from "@/components/admin/nav";
+import type {
+  AttentionAction,
+  AttentionItem,
+  CommandCenterData,
+  Severity,
+} from "@/lib/spine/command";
 
 function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
@@ -197,6 +203,38 @@ const COMM_ICONS: Record<string, string> = {
   email: " ", phone: " ", sms: " ", whatsapp: " ", meeting: " ", note: " ",
 };
 
+// ── Command Center / My Attention presentation helpers ──
+const ATTENTION_KIND_LABELS: Record<string, string> = {
+  renewal_overdue: "Ανανέωση",
+  renewal_due: "Ανανέωση",
+  invoice_overdue: "Τιμολόγιο",
+  hot_lead: "Hot lead",
+  overdue_task: "Εργασία",
+  approval: "Έγκριση",
+  notification: "Ειδοποίηση",
+  incident: "Incident",
+  agent_failure: "JARVIS",
+};
+
+const SEVERITY_META: Record<Severity, { label: string; chip: string; dot: string }> = {
+  critical: { label: "Κρίσιμο", chip: "bg-red-100 text-red-700", dot: "bg-red-500" },
+  high: { label: "Υψηλό", chip: "bg-orange-100 text-orange-700", dot: "bg-orange-500" },
+  medium: { label: "Μέτριο", chip: "bg-amber-100 text-amber-700", dot: "bg-amber-500" },
+  low: { label: "Χαμηλό", chip: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
+};
+
+function relTime(iso: string | null): string {
+  if (!iso) return "";
+  const diff = Date.now() - new Date(iso).getTime();
+  if (diff < 0) return "πρόσφατα";
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `πριν ${mins} λεπτά`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 48) return `πριν ${hrs} ώρες`;
+  const days = Math.floor(hrs / 24);
+  return `πριν ${days} ημέρες`;
+}
+
 function ShellFallback() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center">
@@ -236,6 +274,17 @@ function CRMDashboardInner() {
     [router, searchParams]
   );
 
+  const goAction = useCallback(
+    (action: AttentionAction) => {
+      if (action.kind === "href") {
+        window.location.href = action.target;
+        return;
+      }
+      setTab(action.target as CrmTab);
+    },
+    [setTab]
+  );
+
   const [leads, setLeads] = useState<Lead[]>([]);
   const [deals, setDeals] = useState<Deal[]>([]);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -243,6 +292,8 @@ function CRMDashboardInner() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [command, setCommand] = useState<CommandCenterData | null>(null);
+  const [commandError, setCommandError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -329,6 +380,7 @@ function CRMDashboardInner() {
       fetch("/api/crm/invoices", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
       fetch("/api/crm/dashboard", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => null) })),
       fetch("/api/crm/notifications", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/command", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => null) })),
     ];
 
     const results = await Promise.all(requests);
@@ -340,7 +392,7 @@ function CRMDashboardInner() {
       return;
     }
 
-    const [leadsRes, dealsRes, eventsRes, commsRes, invRes, dashRes, notifRes] = results.map(r => r.body);
+    const [leadsRes, dealsRes, eventsRes, commsRes, invRes, dashRes, notifRes, commandRes] = results.map(r => r.body);
 
     if (!leadsRes.error && leadsRes.data) setLeads(leadsRes.data as Lead[]);
     else if (Array.isArray(leadsRes)) setLeads(leadsRes as Lead[]);
@@ -349,6 +401,8 @@ function CRMDashboardInner() {
     if (commsRes && !commsRes.error) setComms(commsRes);
     if (invRes && !invRes.error) setInvoices(invRes);
     if (dashRes) setDashboard(dashRes);
+    if (commandRes && !commandRes.error) { setCommand(commandRes); setCommandError(""); }
+    else if (commandRes?.error) setCommandError(commandRes.error);
     if (!notifRes.error && notifRes.data) setNotifications(notifRes.data);
     else if (Array.isArray(notifRes)) setNotifications(notifRes as any[]);
     setLoading(false);
@@ -432,7 +486,8 @@ function CRMDashboardInner() {
           </div>
         ) : (
           <>
-            {tab === "dashboard" && <DashboardView data={dashboard} formatCurrency={formatCurrency} />}
+            {tab === "dashboard" && <DashboardView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} />}
+            {tab === "attention" && <AttentionView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} />}
             {tab === "leads" && <LeadsView leads={leads} onSelect={setSelectedLead} onNew={() => setShowNewLead(true)} updateFields={updateLeadFields} />}
             {tab === "pipeline" && <PipelineView deals={deals} onMove={moveDeal} onNewDeal={() => setShowNewDeal(true)} />}
             {tab === "calendar" && <CalendarView events={events} onToggle={toggleEventComplete} onNew={() => setShowNewEvent(true)} />}
@@ -719,33 +774,155 @@ function PlannedModuleView({ module, onBack }: { module: { label: string; descri
 }
 
 /* ─── DASHBOARD VIEW ─── */
-function DashboardView({ data, formatCurrency }: { data: DashboardData | null; formatCurrency: (n: number) => string }) {
-  if (!data) return <div className="text-slate-500">No dashboard data available. Ensure the CRM tables exist in Supabase.</div>;
-  const k = data.kpis;
+function DashboardView({ data, error, formatCurrency, onAction }: {
+  data: CommandCenterData | null;
+  error: string;
+  formatCurrency: (n: number) => string;
+  onAction: (a: AttentionAction) => void;
+}) {
+  if (!data) {
+    return (
+      <div className="crm-card-3d rounded-2xl p-8 flex items-center justify-center min-h-40 text-sm">
+        {error ? (
+          <span className="text-red-600">Δεν μπόρεσαν να φορτωθούν τα δεδομένα: {error}</span>
+        ) : (
+          <span className="text-slate-500">Φορτώνουμε πραγματικά δεδομένα από το CRM…</span>
+        )}
+      </div>
+    );
+  }
+  const { vitals, attention, jarvis } = data;
+  const next = jarvis.next;
 
-  const cards = [
-    { label: "Total Leads", value: k.totalLeads, icon: " ", color: "from-blue-500 to-cyan-500" },
-    { label: "New Leads", value: k.newLeads, icon: " ", color: "from-indigo-500 to-purple-500" },
-    { label: "Customers", value: k.customers, icon: "⭐", color: "from-green-500 to-emerald-500" },
-    { label: "Conversion", value: `${k.conversionRate}%`, icon: " ", color: "from-amber-500 to-orange-500" },
-    { label: "Pipeline Value", value: formatCurrency(k.pipelineValue), icon: " ", color: "from-violet-500 to-purple-500" },
-    { label: "Won Revenue", value: formatCurrency(k.wonRevenue), icon: " ", color: "from-green-500 to-teal-500" },
-    { label: "Pending Invoices", value: formatCurrency(k.pendingInvoices), icon: " ", color: "from-yellow-500 to-amber-500" },
-    { label: "Paid Invoices", value: formatCurrency(k.paidInvoices), icon: "✅", color: "from-emerald-500 to-green-500" },
-    { label: "Communications", value: k.commsThisMonth, icon: " ", color: "from-pink-500 to-rose-500" },
-    { label: "Upcoming Events", value: k.upcomingEvents, icon: " ", color: "from-cyan-500 to-blue-500" },
+  const vitalsCards = [
+    {
+      label: "Leads",
+      value: vitals.leads.total,
+      sub: Object.entries(vitals.leads.statuses)
+        .filter(([k]) => STATUS_META[k])
+        .slice(0, 3)
+        .map(([k, c]) => `${STATUS_META[k].label} ${c}`)
+        .join(" · ") || "κανένα lead",
+      accent: "from-blue-500 to-cyan-500",
+    },
+    {
+      label: "Pipeline (weighted)",
+      value: formatCurrency(vitals.pipeline.weighted),
+      sub: `${vitals.pipeline.count} ανοιχτά deals`,
+      accent: "from-violet-500 to-purple-500",
+    },
+    {
+      label: "Ανανεώσεις",
+      value: `${vitals.renewals.overdue} εκπρόθεσμες`,
+      sub: `σε 14 ημέρες: ${vitals.renewals.in14} · σε 30: ${vitals.renewals.in30}`,
+      accent: "from-emerald-500 to-teal-500",
+    },
+    {
+      label: "Ανοιχτά τιμολόγια",
+      value: formatCurrency(vitals.finance.openAmount),
+      sub: `${vitals.finance.open} ανοιχτά · ${formatCurrency(vitals.finance.overdueAmount)} εκπρόθεσμα (${vitals.finance.overdue})`,
+      accent: "from-amber-500 to-orange-500",
+    },
+    {
+      label: "Εργασίες σήμερα",
+      value: `${vitals.operations.dueToday}`,
+      sub: `${vitals.operations.overdue} εκπρόθεσμες · ${vitals.operations.doneToday} ολοκληρωμένες`,
+      accent: "from-cyan-500 to-blue-500",
+    },
+    {
+      label: "JARVIS",
+      value: `${vitals.ai.runs24h} εκτελέσεις`,
+      sub: `${vitals.ai.pendingApprovals} εγκρίσεις · ${vitals.ai.failures24h} αποτυχίες (24h)`,
+      accent: "from-indigo-500 to-purple-500",
+    },
+    {
+      label: "Επικοινωνίες μήνα",
+      value: `${vitals.comms.thisMonth}`,
+      sub: `${vitals.comms.inbound} εισερχόμενες`,
+      accent: "from-pink-500 to-rose-500",
+    },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {cards.map((c) => (
+      {/* Attention banner */}
+      {attention.total > 0 && (
+        <div className={`rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 ${attention.critical > 0 ? "bg-red-50 border border-red-200" : "bg-amber-50 border border-amber-200"}`}>
+          <div>
+            <p className="font-bold text-slate-900">
+              {attention.critical > 0
+                ? `${attention.critical} κρίσιμο${attention.critical > 1 ? "α" : ""} θέμα${attention.total > 1 ? "τα" : ""} χρειάζεται${attention.critical === 1 ? "ι" : "ο"}νται την προσοχή σου`
+                : `${attention.total} θέμα${attention.total > 1 ? "τα" : ""} χρειάζεται την προσοχή σου`}
+            </p>
+            <p className="text-sm text-slate-600 mt-1">Από πραγματικά δεδομένα — ανανεώσεις, τιμολόγια, leads, εργασίες, εγκρίσεις.</p>
+          </div>
+          <button onClick={() => onAction({ label: "My Attention", kind: "tab", target: "attention" })} className="text-sm px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium shrink-0">
+            Δες το My Attention →
+          </button>
+        </div>
+      )}
+
+      {/* JARVIS foundation card — honest, no invented intelligence */}
+      <div className="crm-card-3d rounded-2xl p-6 border-l-4 border-indigo-400">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+              JARVIS <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">foundation ready</span>
+            </h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-2xl">{jarvis.note}</p>
+          </div>
+          {next && (
+            <button
+              onClick={() => onAction({ label: next.actionLabel, kind: next.actionKind, target: next.actionTarget })}
+              className="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-medium shrink-0"
+            >
+              {next.actionLabel} → {next.title}
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+          <div className="bg-slate-100/80 rounded-xl p-3">
+            <p className="text-lg font-bold text-slate-900">{vitals.ai.runs24h}</p>
+            <p className="text-[11px] text-slate-500">εκτελέσεις 24h</p>
+          </div>
+          <div className="bg-slate-100/80 rounded-xl p-3">
+            <p className={`text-lg font-bold ${vitals.ai.pendingApprovals > 0 ? "text-amber-600" : "text-slate-900"}`}>{vitals.ai.pendingApprovals}</p>
+            <p className="text-[11px] text-slate-500">εγκρίσεις σε εκκρεμότητα</p>
+          </div>
+          <div className="bg-slate-100/80 rounded-xl p-3">
+            <p className={`text-lg font-bold ${vitals.ai.failures24h > 0 ? "text-red-600" : "text-slate-900"}`}>{vitals.ai.failures24h}</p>
+            <p className="text-[11px] text-slate-500">αποτυχίες 24h</p>
+          </div>
+          <div className="bg-slate-100/80 rounded-xl p-3">
+            <p className="text-lg font-bold text-slate-900">{attention.total}</p>
+            <p className="text-[11px] text-slate-500">θέματα προσοχής</p>
+          </div>
+        </div>
+
+        {jarvis.atRisk.length > 0 && (
+          <div className="mt-4">
+            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">Σε κίνδυνο τώρα</p>
+            <ul className="space-y-1">
+              {jarvis.atRisk.map((r, i) => (
+                <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+                  {r}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Vitals grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {vitalsCards.map((c) => (
           <div key={c.label} className="crm-card-3d rounded-2xl p-5 hover:border-slate-200 transition-all">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.color} flex items-center justify-center text-lg mb-3 shadow-lg`}>
-              {c.icon}
-            </div>
+            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.accent} flex items-center justify-center text-lg mb-3 shadow-lg`}> </div>
             <p className="text-2xl font-bold text-slate-900">{c.value}</p>
             <p className="text-xs text-slate-500 mt-1">{c.label}</p>
+            {c.sub && <p className="text-[11px] text-slate-400 mt-1">{c.sub}</p>}
           </div>
         ))}
       </div>
@@ -782,13 +959,13 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
         {/* Pipeline Stages */}
         <div className="crm-card-3d rounded-2xl p-6">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Pipeline Stages</h3>
-          {Object.entries(data.stageBreakdown).length === 0 ? (
+          {Object.keys(vitals.pipeline.byStage).length === 0 ? (
             <p className="text-slate-600 text-sm">No deals yet</p>
           ) : (
             <div className="space-y-3">
               {STAGES.map((s) => {
-                const count = data.stageBreakdown[s.key] || 0;
-                const max = Math.max(...Object.values(data.stageBreakdown), 1);
+                const count = vitals.pipeline.byStage[s.key] || 0;
+                const max = Math.max(...Object.values(vitals.pipeline.byStage), 1);
                 const pct = (count / max) * 100;
                 return (
                   <div key={s.key}>
@@ -810,18 +987,30 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
         </div>
       </div>
 
-      {/* Recent Activity */}
+      {/* What changed (real activity, not invented) */}
       <div className="crm-card-3d rounded-2xl p-6">
-        <h3 className="text-sm font-bold text-slate-900 mb-4">Recent Activity</h3>
+        <h3 className="text-sm font-bold text-slate-900 mb-4">Τι άλλαξε (πραγματική δραστηριότητα)</h3>
+        {jarvis.changed.length === 0 ? (
+          <p className="text-slate-600 text-sm">Καμία πρόσφατη αλλαγή ακόμα.</p>
+        ) : (
+          <ul className="space-y-2">
+            {jarvis.changed.map((c, i) => (
+              <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
+                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                {c}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <h3 className="text-sm font-bold text-slate-900 mt-6 mb-4">Recent Activity</h3>
         {data.recentActivity.length === 0 ? (
           <p className="text-slate-600 text-sm">No recent activity</p>
         ) : (
           <div className="space-y-3">
             {data.recentActivity.slice(0, 10).map((a) => (
               <div key={a.id} className="flex items-center gap-3 p-3 bg-slate-100/80 rounded-xl">
-                <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center text-xs">
-                  {a.entity_type === "deal" ? " " : a.entity_type === "invoice" ? " " : " "}
-                </div>
+                <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center text-xs"> </div>
                 <div className="flex-1">
                   <p className="text-sm text-slate-900">{a.action} {a.entity_type}</p>
                   <p className="text-[10px] text-slate-500">{new Date(a.created_at).toLocaleString("el-GR")}</p>
@@ -831,6 +1020,97 @@ function DashboardView({ data, formatCurrency }: { data: DashboardData | null; f
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ─── MY ATTENTION VIEW ─── */
+function AttentionView({ data, error, formatCurrency, onAction }: {
+  data: CommandCenterData | null;
+  error: string;
+  formatCurrency: (n: number) => string;
+  onAction: (a: AttentionAction) => void;
+}) {
+  void formatCurrency;
+  if (!data) {
+    return (
+      <div className="crm-card-3d rounded-2xl p-8 flex items-center justify-center min-h-40 text-sm">
+        {error ? (
+          <span className="text-red-600">Δεν μπόρεσαν να φορτωθούν τα θέματα: {error}</span>
+        ) : (
+          <span className="text-slate-500">Φορτώνουμε τι χρειάζεται την προσοχή σου…</span>
+        )}
+      </div>
+    );
+  }
+
+  const items: AttentionItem[] = data.attention.items;
+  const allOk = items.length === 0;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium">
+          {items.length} ανοιχτό θέμα{items.length !== 1 ? "τα" : ""}
+        </span>
+        <span className="px-3 py-1.5 rounded-xl bg-red-100 text-red-700 font-medium">{data.attention.critical} κρίσιμα</span>
+        <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500">
+          Ενημερώθηκε {new Date(data.asOf).toLocaleTimeString("el-GR", { hour: "2-digit", minute: "2-digit" })}
+        </span>
+      </div>
+
+      {allOk ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="text-lg">✓</p>
+          <p className="font-bold text-slate-900 mt-2">Τίποτα δεν χρειάζεται την προσοχή σου τώρα</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Όλες οι ανανεώσεις, τα τιμολόγια, τα leads, οι εργασίες και οι εγκρίσεις είναι εντός πλάνου.
+            Αυτή η λίστα προκύπτει από πραγματικά δεδομένα — κανένα εικονικό στοιχείο.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {items.map((item) => {
+            const sev = SEVERITY_META[item.severity];
+            return (
+              <div key={item.id} className="crm-card-3d rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center gap-4">
+                <div className="flex items-start gap-3 flex-1 min-w-0">
+                  <span className={`mt-1.5 w-2.5 h-2.5 rounded-full ${sev.dot} shrink-0`} />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${sev.chip}`}>{sev.label}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                        {ATTENTION_KIND_LABELS[item.kind] ?? item.kind}
+                      </span>
+                    </div>
+                    <p className="font-bold text-slate-900 mt-1">{item.title}</p>
+                    <p className="text-sm text-slate-500 mt-0.5">{item.reason}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 mt-2">
+                      {item.timestamp && <span>🕒 {relTime(item.timestamp)}</span>}
+                      {item.owner && <span>👤 {item.owner}</span>}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 lg:shrink-0">
+                  {item.actions.map((a, i) => (
+                    <button
+                      key={i}
+                      onClick={() => onAction(a)}
+                      className={`text-sm px-4 py-2 rounded-xl font-medium transition-colors ${
+                        i === 0
+                          ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                          : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+                      }`}
+                    >
+                      {a.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

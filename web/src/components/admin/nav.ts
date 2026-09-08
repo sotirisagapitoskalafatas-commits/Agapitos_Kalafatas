@@ -8,6 +8,7 @@ export type ModState = "live" | "beta" | "planned" | "disabled";
 
 export type CrmTab =
   | "dashboard"
+  | "attention"
   | "leads"
   | "pipeline"
   | "calendar"
@@ -43,7 +44,8 @@ export const NAV_GROUPS: NavGroup[] = [
     id: "command",
     label: "Command Center",
     items: [
-      { key: "dashboard", label: "Dashboard", state: "live", tab: "dashboard", description: "Σύνοψη των KPIs του CRM με πραγματικά δεδομένα." },
+      { key: "dashboard", label: "Dashboard", state: "live", tab: "dashboard", description: "Command Center — ζωντανά KPIs, κίνδυνοι και επόμενη ενέργεια από πραγματικά δεδομένα." },
+      { key: "attention", label: "My Attention", state: "live", tab: "attention", description: "Τι χρειάζεται την προσοχή σου τώρα — από πραγματικά δεδομένα." },
     ],
   },
   {
