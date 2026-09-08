@@ -10,6 +10,7 @@ export type CrmTab =
   | "dashboard"
   | "attention"
   | "leads"
+  | "customers"
   | "pipeline"
   | "calendar"
   | "comms"
@@ -55,7 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "leads", label: "Leads", state: "live", tab: "leads", description: "Διαχείριση leads με πραγματικά δεδομένα." },
       { key: "people", label: "People", state: "planned", description: "Μελλοντική ενοποίηση πελατών/επαφών. " + PLANNED_EXAMPLE },
       { key: "companies", label: "Companies", state: "planned", description: "Επιχειρήσεις & οργανισμοί ως οντότητες. " + PLANNED_EXAMPLE },
-      { key: "customers", label: "Customers", state: "planned", description: "Καρτέλα 360° πελάτη. " + PLANNED_EXAMPLE },
+      { key: "customers", label: "Customers", state: "beta", tab: "customers", description: "Καρτέλα 360° πελάτη — πραγματικά δεδομένα από leads, deals, τιμολόγια, επικοινωνίες." },
       { key: "referrals", label: "Referrals", state: "planned", description: "Παραπομπές. " + PLANNED_EXAMPLE },
     ],
   },
@@ -188,7 +189,7 @@ export function liveTabs(): CrmTab[] {
   const out: CrmTab[] = [];
   for (const g of NAV_GROUPS) {
     for (const it of g.items) {
-      if (it.state === "live" && it.tab) out.push(it.tab);
+      if ((it.state === "live" || it.state === "beta") && it.tab) out.push(it.tab);
     }
   }
   return out;

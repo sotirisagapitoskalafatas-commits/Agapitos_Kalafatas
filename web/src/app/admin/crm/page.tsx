@@ -11,6 +11,12 @@ import type {
   CommandCenterData,
   Severity,
 } from "@/lib/spine/command";
+import type {
+  Customer360Data,
+  CustomerIndexData,
+  CustomerSectionKey,
+} from "@/lib/spine/customers";
+import { CUSTOMER_SECTIONS } from "@/lib/spine/customers";
 
 function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
@@ -295,6 +301,11 @@ function CRMDashboardInner() {
   const [command, setCommand] = useState<CommandCenterData | null>(null);
   const [commandError, setCommandError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [customers, setCustomers] = useState<CustomerIndexData | null>(null);
+  const [customer360, setCustomer360] = useState<Customer360Data | null>(null);
+  const [customersError, setCustomersError] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer360Data | null>(null);
+  const [customersBusy, setCustomersBusy] = useState(false);
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showNewDeal, setShowNewDeal] = useState(false);
@@ -412,6 +423,45 @@ function CRMDashboardInner() {
     if (isLoggedIn) { fetchAll(); fetchRenewals(); }
   }, [isLoggedIn, fetchAll, fetchRenewals]);
 
+  // ── Customer 360 (real data, derived from leads + related rows) ──
+  const fetchCustomers = useCallback(async () => {
+    setCustomersBusy(true);
+    setCustomersError("");
+    try {
+      const res = await fetch("/api/crm/customers", { headers: getAuthHeaders() });
+      const body = await res.json();
+      if (!res.ok) { setCustomersError(body.error || "Failed to load customers"); return; }
+      setCustomers(body.index ?? null);
+      if (body.customer360) setSelectedCustomer(body.customer360);
+    } catch (e: any) {
+      setCustomersError(e?.message ?? "Failed to load customers");
+    } finally {
+      setCustomersBusy(false);
+    }
+  }, []);
+
+  const openCustomer360 = useCallback(async (id: string, placeholder?: Customer360Data) => {
+    if (placeholder) {
+      setSelectedCustomer(placeholder);
+      return;
+    }
+    setCustomersBusy(true);
+    setCustomersError("");
+    try {
+      const res = await fetch(`/api/crm/customers?id=${encodeURIComponent(id)}`, { headers: getAuthHeaders() });
+      const body = await res.json();
+      if (!res.ok) { setCustomersError(body.error || "Failed to load customer"); return; }
+      if (body.customer360) setSelectedCustomer(body.customer360);
+      if (body.index) setCustomers(body.index);
+    } catch (e: any) {
+      setCustomersError(e?.message ?? "Failed to load customer");
+    } finally {
+      setCustomersBusy(false);
+    }
+  }, []);
+
+  const closeCustomer360 = useCallback(() => setSelectedCustomer(null), []);
+
   // Generalized field updater — PATCHes any subset of lead columns and updates
   // local state optimistically (no full refetch, so drawer inputs keep focus).
   const updateLeadFields = async (id: string, patch: Partial<Lead>) => {
@@ -489,6 +539,16 @@ function CRMDashboardInner() {
             {tab === "dashboard" && <DashboardView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} />}
             {tab === "attention" && <AttentionView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} />}
             {tab === "leads" && <LeadsView leads={leads} onSelect={setSelectedLead} onNew={() => setShowNewLead(true)} updateFields={updateLeadFields} />}
+            {tab === "customers" && (
+              <CustomersView
+                data={customers}
+                busy={customersBusy}
+                error={customersError}
+                onRefresh={fetchCustomers}
+                onOpen={(id) => openCustomer360(id)}
+                formatCurrency={formatCurrency}
+              />
+            )}
             {tab === "pipeline" && <PipelineView deals={deals} onMove={moveDeal} onNewDeal={() => setShowNewDeal(true)} />}
             {tab === "calendar" && <CalendarView events={events} onToggle={toggleEventComplete} onNew={() => setShowNewEvent(true)} />}
             {tab === "comms" && <CommsView comms={comms} onNew={() => setShowNewComm(true)} />}
@@ -534,6 +594,18 @@ function CRMDashboardInner() {
           updateFields={updateLeadFields}
           comms={comms}
           events={events}
+          onOpen360={(id) => openCustomer360(id)}
+        />
+      )}
+
+      {/* Customer 360 Drawer (real data, derived from live rows) */}
+      {selectedCustomer && (
+        <Customer360Drawer
+          data={selectedCustomer}
+          busy={customersBusy}
+          onClose={closeCustomer360}
+          onBack={() => openCustomer360(selectedCustomer.key)}
+          formatCurrency={formatCurrency}
         />
       )}
 
@@ -1111,6 +1183,705 @@ function AttentionView({ data, error, formatCurrency, onAction }: {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── CUSTOMERS VIEW (Customer 360 index) ─── */
+const CUST_RENEWAL_META: Record<string, { label: string; chip: string; dot: string }> = {
+  overdue: { label: "Εκπρόθεσμη ανανέωση", chip: "bg-red-100 text-red-700", dot: "bg-red-500" },
+  due: { label: "Ανανέωση ≤14η", chip: "bg-amber-100 text-amber-700", dot: "bg-amber-500" },
+  upcoming: { label: "Ανανέωση σε εξέλιξη", chip: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
+};
+
+function CustomersView({ data, busy, error, onRefresh, onOpen, formatCurrency }: {
+  data: CustomerIndexData | null;
+  busy: boolean;
+  error: string;
+  onRefresh: () => void;
+  onOpen: (id: string) => void;
+  formatCurrency: (n: number) => string;
+}) {
+  void formatCurrency;
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <button onClick={onRefresh} disabled={busy} className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50">
+          {busy ? "Φόρτωση…" : "↻ Ανανέωση"}
+        </button>
+        {error && <span className="text-red-600">{error}</span>}
+      </div>
+
+      {!data ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="font-bold text-slate-900">Καρτέλα 360° πελάτη</p>
+          <p className="text-sm text-slate-500 mt-2 max-w-xl mx-auto">
+            Ένας πελάτης είναι ένα lead που έγινε customer ή έχει πραγματικό deal, τιμολόγιο ή
+            επικοινωνία. Το προφίλ συγκεντρώνει όλες τις υπηρεσίες, τις επικοινωνίες, τα τιμολόγια,
+            τις εργασίες και το ιστορικό σε ένα μέρος — από πραγματικά δεδομένα, χωρίς εικονικές εγγραφές.
+          </p>
+          <button onClick={onRefresh} className="mt-4 text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-medium">
+            Φόρτωσε πελάτες
+          </button>
+        </div>
+      ) : data.records.length === 0 ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="text-sm font-semibold text-slate-400 uppercase tracking-wide">Κανένας πελάτης ακόμα</p>
+          <p className="text-sm text-slate-500 mt-2 max-w-xl mx-auto">{data.rule}</p>
+          <p className="text-[11px] text-slate-400 mt-1">
+            {data.totalLeads} leads συνολικά · {data.activeLeadCount} δεν έχουν ακόμα deal, τιμολόγιο ή επικοινωνία.
+            Αυτό το προφίλ εμφανίζεται μόλις μια εγγραφή γίνει πελάτης.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="crm-card-3d rounded-2xl p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <h3 className="text-sm font-bold text-slate-900">Πελάτες</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{data.records.length} εγγραφές από πραγματικά δεδομένα</p>
+              </div>
+              <span className="text-[10px] text-slate-500 max-w-md text-right">{data.rule}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.records.map((r) => {
+              const rn = r.renewalState ? CUST_RENEWAL_META[r.renewalState] : null;
+              return (
+                <button
+                  key={r.key}
+                  onClick={() => onOpen(r.key)}
+                  className="crm-card-3d rounded-2xl p-5 text-left hover:border-indigo-300 transition-all"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-bold text-slate-900 truncate">{r.name}</p>
+                      <p className="text-xs text-slate-500 mt-0.5 truncate">
+                        {[r.email, r.phone].filter(Boolean).join(" · ") || "Χωρίς email/τηλέφωνο"}
+                      </p>
+                    </div>
+                    <span className="text-[10px] px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold shrink-0">ΠΕΛΑΤΗΣ</span>
+                  </div>
+
+                  {r.services.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-3">
+                      {r.services.map((s) => (
+                        <span key={s} className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{s}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-3 text-[11px] text-slate-500">
+                    <span>{r.counts.deals} deals</span>
+                    <span>{r.counts.invoices} τιμολόγια</span>
+                    <span>{r.counts.payments} πληρωμές</span>
+                    <span>{r.counts.communications} επικοινωνίες</span>
+                    <span>{r.counts.tasks} εργασίες</span>
+                    {r.counts.documents > 0 && <span>{r.counts.documents} έγγραφα</span>}
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    {rn && (
+                      <span className={`flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full font-medium ${rn.chip}`}>
+                        <span className={`w-1.5 h-1.5 rounded-full ${rn.dot}`} /> {rn.label}
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-400">Από {new Date(r.createdAt).toLocaleDateString("el-GR")}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/* ─── CUSTOMER 360 DRAWER (16-section profile, real data) ─── */
+const SECTION_DOTS: Record<string, { dot: string; label: string }> = {
+  live: { dot: "bg-emerald-500", label: "Live" },
+  derived: { dot: "bg-blue-500", label: "Derived" },
+  planned: { dot: "border border-slate-400", label: "Planned" },
+};
+
+function SectionNote({ mode, note }: { mode: string; note?: string }) {
+  const m = SECTION_DOTS[mode] ?? SECTION_DOTS.planned;
+  return (
+    <span className="inline-flex items-center gap-1.5 text-[10px] text-slate-500">
+      <span className={`w-2 h-2 rounded-full shrink-0 ${m.dot}`} />
+      {m.label}
+      {note && <span className="text-slate-400">· {note}</span>}
+    </span>
+  );
+}
+
+function PlannedSection({ label, note }: { label: string; note?: string }) {
+  return (
+    <div className="p-8 text-center">
+      <p className="font-bold text-slate-900">{label}</p>
+      <p className="text-sm text-slate-500 mt-2 max-w-md mx-auto">
+        Δεν υπάρχει ακόμα σύστημα για αυτό τον τομέα. Δεν εμφανίζεται κανένα πλασματικό δεδομένο εδώ.
+      </p>
+      {note && <p className="text-[11px] text-slate-400 mt-2">{note}</p>}
+    </div>
+  );
+}
+
+function Customer360Drawer({ data, busy, onClose, onBack, formatCurrency }: {
+  data: Customer360Data;
+  busy: boolean;
+  onClose: () => void;
+  onBack: () => void;
+  formatCurrency: (n: number) => string;
+}) {
+  const p = data.profile;
+  const [rail, setRail] = useState<CustomerSectionKey>("profile");
+  const rn = p.renewalState ? CUST_RENEWAL_META[p.renewalState] : null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-end z-50" onClick={onClose}>
+      <div className="bg-white/95 backdrop-blur-xl w-full md:max-w-4xl h-full shadow-2xl overflow-hidden flex flex-col border-l border-slate-200/60" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="px-6 pt-5 pb-4 border-b border-slate-200/60 bg-white/90 shrink-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[10px] font-semibold uppercase text-indigo-500 bg-indigo-500/10 px-2.5 py-1 rounded-lg">Καρτέλα 360° πελάτη</span>
+              <h2 className="text-2xl font-bold mt-2 text-slate-900">{p.name}</h2>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500">
+                {p.email && <span>✉ {p.email}</span>}
+                {p.phone && <span>☎ {p.phone}</span>}
+                {p.company && <span>🏢 {p.company}</span>}
+                {(p.address || p.region) && <span>📍 {[p.address, p.region].filter(Boolean).join(", ")}</span>}
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={onBack} disabled={busy} className="text-xs px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50">
+                {busy ? "…" : "↻"}
+              </button>
+              <button onClick={onClose} className="text-slate-500 hover:text-slate-900 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200">✕</button>
+            </div>
+          </div>
+
+          {/* Quick chips */}
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <span className="text-[10px] px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold">
+              {data.isCustomer ? "ΠΕΛΑΤΗΣ" : "Lead"}
+            </span>
+            {p.status && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">{p.status}</span>}
+            {p.serviceCategory && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">{p.serviceCategory}</span>}
+            {p.assignedAgent && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">👤 {p.assignedAgent}</span>}
+            {rn && (
+              <span className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-medium ${rn.chip}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${rn.dot}`} /> {rn.label}
+              </span>
+            )}
+          </div>
+
+          {/* Section rail */}
+          <div className="flex gap-1.5 mt-4 overflow-x-auto pb-1 -mx-1 px-1">
+            {CUSTOMER_SECTIONS.map((s) => {
+              const m = SECTION_DOTS[s.mode];
+              const active = rail === s.key;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => setRail(s.key)}
+                  className={`shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-medium transition-all ${
+                    active ? "bg-indigo-600 text-white shadow" : "bg-white/70 text-slate-600 border border-slate-200 hover:bg-slate-100"
+                  }`}
+                >
+                  <span className={`w-1.5 h-1.5 rounded-full ${m.dot} ${active ? "bg-white" : ""}`} />
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {rail === "profile" && <ProfileSection data={data} formatCurrency={formatCurrency} />}
+          {rail === "leads" && <LeadsSection data={data} />}
+          {rail === "opportunities" && <OpportunitiesSection data={data} formatCurrency={formatCurrency} />}
+          {rail === "services" && <ServicesSection data={data} />}
+          {rail === "energy" && <EnergySection data={data} />}
+          {rail === "documents" && <DocumentsSection data={data} />}
+          {rail === "quotes" && <QuotesSection data={data} formatCurrency={formatCurrency} />}
+          {rail === "renewals" && <RenewalsSection360 data={data} />}
+          {rail === "tasks" && <TasksSection360 data={data} />}
+          {rail === "communications" && <CommsSection data={data} />}
+          {rail === "invoices" && <InvoicesSection data={data} formatCurrency={formatCurrency} />}
+          {rail === "payments" && <PaymentsSection data={data} formatCurrency={formatCurrency} />}
+          {rail === "activity" && <ActivitySection data={data} />}
+          {rail === "insurance" && <PlannedSection label="Ασφάλειες" note="Τα ασφαλιστικά συμβόλαια είναι προγραμματισμένα — καμία εγγραφή πίσω τους ακόμα." />}
+          {rail === "web" && <PlannedSection label="Web Projects" note="Τα web έργα είναι προγραμματισμένα — καμία εγγραφή πίσω τους ακόμα." />}
+          {rail === "contracts" && <PlannedSection label="Συμβόλαια" note="Τα συμβόλαια είναι προγραμματισμένα — καμία εγγραφή πίσω τους ακόμα." />}
+        </div>
+
+        <div className="shrink-0 border-t border-slate-200/60 px-6 py-3 text-[11px] text-slate-400 bg-white/90 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span>Ενημερώθηκε {new Date(data.asOf).toLocaleTimeString("el-GR", { hour: "2-digit", minute: "2-digit" })}</span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className={`w-1.5 h-1.5 rounded-full ${data.isCustomer ? "bg-emerald-500" : "bg-slate-400"}`} />
+            {data.isCustomer ? "Αναγνωρισμένος πελάτης" : "Lead — προεπιλεγμένο προφίλ"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileSection({ data, formatCurrency }: { data: Customer360Data; formatCurrency: (n: number) => string }) {
+  const p = data.profile;
+  void formatCurrency;
+  const rows: [string, string | null][] = [
+    ["Email", p.email],
+    ["Τηλέφωνο", p.phone],
+    ["Εταιρεία", p.company],
+    ["Διεύθυνση", p.address],
+    ["Περιοχή", p.region],
+    ["Κατάσταση", p.status],
+    ["Υπηρεσία", p.serviceCategory],
+    ["Πάροχος", p.provider],
+    ["Πρόγραμμα", p.program],
+    ["Πηγή", p.source],
+    ["Τύπος", p.leadType],
+    ["Συνεργάτης", p.partner],
+    ["Ανάθεση", p.assignedAgent],
+    ["Ημ. ανανέωσης", p.renewalDate],
+    ["Συναίνεση GDPR", p.gdprConsent ? "Ναι" : p.gdprConsent === null ? "—" : "Όχι"],
+    ["Έκδοση συναίνεσης", p.consentVersion],
+    ["Πηγή συναίνεσης", p.consentSource],
+    ["Δημιουργήθηκε", p.createdAt ? new Date(p.createdAt).toLocaleString("el-GR") : null],
+    ["Ενημερώθηκε", p.updatedAt ? new Date(p.updatedAt).toLocaleString("el-GR") : null],
+  ];
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Profile" mode="live" note="Βασικά στοιχεία του lead" />
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          {rows.filter(([, v]) => v).map(([k, v]) => (
+            <div key={k} className="bg-slate-100/70 rounded-xl p-3">
+              <dt className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">{k}</dt>
+              <dd className="text-sm text-slate-800 mt-0.5 break-words">{v}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+
+      {(p.notes || p.comments) && (
+        <div className="crm-card-3d rounded-2xl p-5">
+          <SectionHeader label="Σημειώσεις" mode="live" />
+          {p.notes && <p className="text-sm text-slate-700 whitespace-pre-wrap mt-2">{p.notes}</p>}
+          {p.comments && <p className="text-sm text-slate-600 mt-2">{p.comments}</p>}
+        </div>
+      )}
+
+      {data.relatedLeads.length > 0 && (
+        <div className="crm-card-3d rounded-2xl p-5">
+          <h3 className="text-sm font-bold text-slate-900 mb-3">Πιθανά διπλότυπα (σύγκριση email/τηλ.)</h3>
+          <div className="space-y-2">
+            {data.relatedLeads.map((r) => (
+              <div key={r.key} className="flex items-center justify-between gap-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-800">{r.name}</p>
+                  <p className="text-[11px] text-slate-500">{r.email || r.phone} · αντιστοιχία: {r.matchedBy}</p>
+                </div>
+                <span className="text-[10px] px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-medium shrink-0">ΠΑΡΑΤΗΡΗΣΗ</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-[11px] text-slate-400 mt-2">Η συγχώνευση διπλοτύπων θα έρθει μαζί με τον πίνακα πελατών — κανένα δεδομένο δεν τροποποιήθηκε εδώ.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionHeader({ label, mode, note }: { label: string; mode: string; note?: string }) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <h3 className="text-sm font-bold text-slate-900">{label}</h3>
+      <SectionNote mode={mode} note={note} />
+    </div>
+  );
+}
+
+function LeadsSection({ data }: { data: Customer360Data }) {
+  return (
+    <div className="crm-card-3d rounded-2xl p-5">
+      <SectionHeader label="Leads" mode="live" note={CUSTOMER_SECTIONS.find((s) => s.key === "leads")?.note} />
+      <p className="text-sm text-slate-700 mt-3">
+        Αυτό το προφίλ προέρχεται από το lead με αναγνωριστικό <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{data.key}</code>.
+      </p>
+      <p className="text-sm text-slate-600 mt-1">
+        Προς το παρόν η δομή αποθηκεύει ένα lead ανά εγγραφή, οπότε εδώ εμφανίζεται το ίδιο το προφίλ.
+        Η αντιστοίχιση πολλαπλών leads (π.χ. το ίδιο email/τηλέφωνο) εμφανίζεται στο «Profile» ως πιθανά διπλότυπα.
+      </p>
+    </div>
+  );
+}
+
+function OpportunitiesSection({ data, formatCurrency }: { data: Customer360Data; formatCurrency: (n: number) => string }) {
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Opportunities" mode="live" note="Deals που συνδέονται με αυτό το lead" />
+        <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-sm">
+          <Stat n={data.opportunities.deals.length} label="Deals" />
+          <Stat n={formatCurrency(data.opportunities.deals.reduce((s, d) => s + (d.value ?? 0), 0))} label="Συνολική αξία" />
+        </div>
+      </div>
+      {data.opportunities.deals.length === 0 ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="font-bold text-slate-900">Κανένα deal ακόμα</p>
+          <p className="text-sm text-slate-500 mt-1">Δεν υπάρχει πραγματικό deal για αυτόν τον πελάτη.</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {data.opportunities.deals.map((d) => (
+            <div key={d.id} className="crm-card-3d rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div className="min-w-0">
+                <p className="font-semibold text-slate-900 truncate">{d.title || "Deal"}</p>
+                <p className="text-xs text-slate-500">{d.stage}{d.expectedCloseDate ? ` · κλείσιμο ${d.expectedCloseDate}` : ""}</p>
+              </div>
+              <span className="text-lg font-bold text-slate-900 shrink-0">{formatCurrency(d.value ?? 0)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ServicesSection({ data }: { data: Customer360Data }) {
+  return (
+    <div className="crm-card-3d rounded-2xl p-5">
+      <SectionHeader label="Services" mode="live" note="Υπηρεσίες από κατηγορία, tags και παροχές" />
+      {data.services.length === 0 ? (
+        <p className="text-sm text-slate-500 mt-3">Καμία υπηρεσία καταγεγραμμένη.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2 mt-3">
+          {data.services.map((s) => (
+            <span key={s} className="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-sm font-medium">{s}</span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EnergySection({ data }: { data: Customer360Data }) {
+  const e = data.energy;
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Energy" mode="live" note="Πάροχος, πρόγραμμα, παροχές" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          <KVField label="Πάροχος" value={e.provider} />
+          <KVField label="Πρόγραμμα" value={e.program} />
+        </div>
+      </div>
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Παροχές (supplies)" mode="live" />
+        {e.supplies.length === 0 ? (
+          <p className="text-sm text-slate-500 mt-3">Καμία παροχή καταγεγραμμένη.</p>
+        ) : (
+          <div className="space-y-3 mt-3">
+            {e.supplies.map((s, i) => (
+              <div key={i} className="bg-slate-100/70 rounded-xl p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium text-slate-800 text-sm">{s.type || "Παροχή"}</span>
+                  {s.supply_number && <span className="text-xs text-slate-500 font-mono">{s.supply_number}</span>}
+                </div>
+                {(s.address || s.provider) && (
+                  <p className="text-xs text-slate-500 mt-1">{[s.provider, s.address].filter(Boolean).join(" · ")}</p>
+                )}
+                {s.notes && <p className="text-xs text-slate-500 mt-1">{s.notes}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DocumentsSection({ data }: { data: Customer360Data }) {
+  return (
+    <div className="crm-card-3d rounded-2xl p-5">
+      <SectionHeader label="Documents" mode="live" note="Αρχεία attached_files του lead" />
+      {data.documents.length === 0 ? (
+        <p className="text-sm text-slate-500 mt-3">Κανένα έγγραφο συνημμένο σε αυτό το lead.</p>
+      ) : (
+        <div className="space-y-2 mt-3">
+          {data.documents.map((d, i) => (
+            <div key={i} className="flex items-center gap-3 bg-slate-100/70 rounded-xl p-3">
+              <span className="text-lg">📄</span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm text-slate-800 truncate">{d.name || d.path || "Έγγραφο"}</p>
+                {d.type && <p className="text-[11px] text-slate-500">{d.type}</p>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuotesSection({ data, formatCurrency }: { data: Customer360Data; formatCurrency: (n: number) => string }) {
+  const qs = data.quotes.invoices;
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Quotes" mode="derived" note="Από τιμολόγια τύπου quote — δεν υπάρχει ακόμα ξεχωριστό σύστημα" />
+        <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 mt-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Πραγματικές εγγραφές quote</span>
+      </div>
+      {qs.length === 0 ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="font-bold text-slate-900">Καμία προσφορά ακόμα</p>
+          <p className="text-sm text-slate-500 mt-1">Κανένα τιμολόγιο τύπου quote για αυτόν τον πελάτη.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {qs.map((q) => (
+            <div key={q.id} className="crm-card-3d rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-slate-900">{q.invoiceNumber || "Προσφορά"}</p>
+                <p className="text-xs text-slate-500">{q.status}{q.validUntil ? ` · ισχύει έως ${q.validUntil}` : ""}</p>
+              </div>
+              <span className="font-bold text-slate-900">{formatCurrency(q.total ?? 0)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function RenewalsSection360({ data }: { data: Customer360Data }) {
+  const r = data.renewals;
+  const rn = r.renewalState ? CUST_RENEWAL_META[r.renewalState] : null;
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Renewals" mode="live" note="renewal_date + renewal_reminders" />
+        <div className="flex flex-wrap items-center gap-3 mt-3 text-sm">
+          <span className="text-slate-600">Ημ. ανανέωσης:</span>
+          <span className="font-medium text-slate-900">{r.renewalDate || "—"}</span>
+          {rn && (
+            <span className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-medium ${rn.chip}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${rn.dot}`} /> {rn.label}
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Υπενθυμίσεις" mode="live" />
+        {r.reminders.length === 0 ? (
+          <p className="text-sm text-slate-500 mt-3">Καμία υπενθύμιση ανανέωσης για αυτόν τον πελάτη.</p>
+        ) : (
+          <div className="space-y-2 mt-3">
+            {r.reminders.map((rem) => (
+              <div key={rem.id} className="flex items-center justify-between gap-3 bg-slate-100/70 rounded-xl p-3">
+                <div>
+                  <p className="text-sm text-slate-800">Ανανέωση {rem.renewalDate || ""}</p>
+                  <p className="text-[11px] text-slate-500">{rem.status}{rem.windowDays ? ` · παράθυρο ${rem.windowDays} ημ` : ""}</p>
+                </div>
+                {rem.sentAt && <span className="text-[10px] text-slate-500">στάλθηκε {new Date(rem.sentAt).toLocaleDateString("el-GR")}</span>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TasksSection360({ data }: { data: Customer360Data }) {
+  const items = data.tasks.items;
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Tasks" mode="live" note="Από calendar_events του lead" />
+        <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-sm">
+          <Stat n={items.length} label="Σύνολο εργασιών" />
+          <Stat n={items.filter((t) => t.completed).length} label="Ολοκληρωμένες" />
+        </div>
+      </div>
+      {items.length === 0 ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="font-bold text-slate-900">Καμία εργασία</p>
+          <p className="text-sm text-slate-500 mt-1">Κανένα calendar event συνδεδεμένο με αυτόν τον πελάτη.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map((t) => (
+            <div key={t.id} className="crm-card-3d rounded-2xl p-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <span className={`w-4 h-4 rounded border ${t.completed ? "bg-emerald-500 border-emerald-500" : "border-slate-300"} flex items-center justify-center shrink-0`}>
+                  {t.completed && <span className="text-white text-[10px]">✓</span>}
+                </span>
+                <div className="min-w-0">
+                  <p className={`text-sm ${t.completed ? "text-slate-400 line-through" : "text-slate-800"} truncate`}>{t.title || "Εργασία"}</p>
+                  <p className="text-[11px] text-slate-500">{t.eventType}{t.startTime ? ` · ${new Date(t.startTime).toLocaleString("el-GR")}` : ""}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function CommsSection({ data }: { data: Customer360Data }) {
+  const c = data.communications.items;
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Communications" mode="live" />
+        <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-sm">
+          <Stat n={c.filter((x) => x.direction === "inbound").length} label="Εισερχόμενες" />
+          <Stat n={c.filter((x) => x.direction === "outbound").length} label="Εξερχόμενες" />
+        </div>
+      </div>
+      {c.length === 0 ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="font-bold text-slate-900">Καμία επικοινωνία καταγεγραμμένη</p>
+          <p className="text-sm text-slate-500 mt-1">Κανένα email, κλήση ή σημείωση για αυτόν τον πελάτη.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {c.map((x) => (
+            <div key={x.id} className="crm-card-3d rounded-2xl p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${x.direction === "inbound" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"}`}>{x.direction}</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{x.commType}</span>
+                </div>
+                <span className="text-[11px] text-slate-400 shrink-0">{new Date(x.createdAt).toLocaleString("el-GR")}</span>
+              </div>
+              {x.subject && <p className="text-sm font-medium text-slate-800 mt-2">{x.subject}</p>}
+              {x.body && <p className="text-sm text-slate-600 mt-1 line-clamp-3 whitespace-pre-wrap">{x.body}</p>}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InvoicesSection({ data, formatCurrency }: { data: Customer360Data; formatCurrency: (n: number) => string }) {
+  const inv = data.invoices.invoices;
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Invoices" mode="live" note="Τιμολόγια τύπου invoice" />
+        <div className="flex flex-wrap gap-x-6 gap-y-2 mt-3 text-sm">
+          <Stat n={inv.length} label="Σύνολο" />
+          <Stat n={formatCurrency(inv.reduce((s, i) => s + (i.total ?? 0), 0))} label="Συνολικό ποσό" />
+        </div>
+      </div>
+      {inv.length === 0 ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="font-bold text-slate-900">Κανένα τιμολόγιο</p>
+          <p className="text-sm text-slate-500 mt-1">Κανένα πραγματικό τιμολόγιο για αυτόν τον πελάτη.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {inv.map((i) => (
+            <div key={i.id} className="crm-card-3d rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-slate-900">{i.invoiceNumber || "Τιμολόγιο"}</p>
+                <p className="text-xs text-slate-500">{i.status}{i.createdAt ? ` · ${new Date(i.createdAt).toLocaleDateString("el-GR")}` : ""}</p>
+              </div>
+              <span className="font-bold text-slate-900">{formatCurrency(i.total ?? 0)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PaymentsSection({ data, formatCurrency }: { data: Customer360Data; formatCurrency: (n: number) => string }) {
+  const payments = data.payments.payments;
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Payments" mode="derived" note="Από εξοφλημένα τιμολόγια — δεν υπάρχει ξεχωριστό σύστημα" />
+        <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 mt-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500" /> Πραγματικές πληρωμές</span>
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+          <Stat n={payments.length} label="Πληρωμές" />
+          <Stat n={formatCurrency(payments.reduce((s, p) => s + (p.total ?? 0), 0))} label="Σύνολο εισπράξεων" />
+        </div>
+      </div>
+      {payments.length === 0 ? (
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="font-bold text-slate-900">Καμία πληρωμή ακόμα</p>
+          <p className="text-sm text-slate-500 mt-1">Κανένα εξοφλημένο τιμολόγιο για αυτόν τον πελάτη.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {payments.map((p) => (
+            <div key={p.id} className="crm-card-3d rounded-2xl p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-slate-900">{p.invoiceNumber || "Πληρωμή"}</p>
+                <p className="text-xs text-slate-500">Εξοφλήθηκε {new Date(p.paidAt).toLocaleString("el-GR")}</p>
+              </div>
+              <span className="font-bold text-emerald-600">{formatCurrency(p.total ?? 0)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ActivitySection({ data }: { data: Customer360Data }) {
+  const items = data.activity.items;
+  return (
+    <div className="space-y-4">
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Activity" mode="live" note="activity_log + χρόνοι δημιουργίας/πληρωμής" />
+        <p className="text-[11px] text-slate-500 mt-1">Χρονογραμμή από πραγματικές εγγραφές — τίποτα πλασματικό.</p>
+      </div>
+      <div className="relative">
+        <div className="absolute left-3 top-0 bottom-0 w-px bg-slate-200" />
+        <div className="space-y-3">
+          {items.map((a) => (
+            <div key={a.id} className="relative pl-8">
+              <span className="absolute left-1.5 top-1.5 w-3 h-3 rounded-full bg-indigo-400 ring-4 ring-white" />
+              <div className="crm-card-3d rounded-xl px-4 py-2.5">
+                <p className="text-sm text-slate-800">{a.title}</p>
+                {a.detail && <p className="text-[11px] text-slate-500 mt-0.5">{a.detail}</p>}
+                <p className="text-[10px] text-slate-400 mt-1">{new Date(a.at).toLocaleString("el-GR")}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function KVField({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="bg-slate-100/70 rounded-xl p-3">
+      <dt className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">{label}</dt>
+      <dd className="text-sm text-slate-800 mt-0.5">{value || "—"}</dd>
+    </div>
+  );
+}
+
+function Stat({ n, label }: { n: number | string; label: string }) {
+  return (
+    <div className="bg-slate-100/70 rounded-xl p-3 text-center">
+      <p className="text-xl font-bold text-slate-900">{n}</p>
+      <p className="text-[10px] text-slate-500">{label}</p>
     </div>
   );
 }
@@ -1693,15 +2464,6 @@ function DocSlot({ slot, docs, multiple, onUpload, onDelete }: {
   );
 }
 
-function Stat({ n, label }: { n: number; label: string }) {
-  return (
-    <div className="bg-white/70 border border-slate-200/60 rounded-xl p-3 text-center">
-      <p className="text-xl font-bold text-slate-900">{n}</p>
-      <p className="text-[10px] text-slate-500">{label}</p>
-    </div>
-  );
-}
-
 function Timeline({ lead, comms, events, docCount }: { lead: Lead; comms: CommRecord[]; events: CalendarEvent[]; docCount: number }) {
   type Item = { when: string; icon: string; title: string; sub?: string };
   const items: Item[] = [];
@@ -1742,13 +2504,14 @@ function Timeline({ lead, comms, events, docCount }: { lead: Lead; comms: CommRe
 /* ─── LEAD FOLDER (tabbed drawer) ─── */
 type FolderTab = "genika" | "paroxes" | "synergates" | "eggrafa" | "prosfores" | "istoriko";
 
-function LeadDrawer({ lead, onClose, onErased, updateFields, comms, events }: {
+function LeadDrawer({ lead, onClose, onErased, updateFields, comms, events, onOpen360 }: {
   lead: Lead;
   onClose: () => void;
   onErased: (id: string) => void;
   updateFields: (id: string, patch: Partial<Lead>) => void;
   comms: CommRecord[];
   events: CalendarEvent[];
+  onOpen360: (id: string) => void;
 }) {
   const [tab, setTab] = useState<FolderTab>("genika");
   const [groups, setGroups] = useState<Record<string, { name: string; url: string; path: string; type: string }[]>>({});
@@ -1864,6 +2627,9 @@ function LeadDrawer({ lead, onClose, onErased, updateFields, comms, events }: {
               <h2 className="text-2xl font-bold mt-2 text-slate-900">{lead.first_name} {lead.last_name}</h2>
               <p className="text-xs text-slate-500 mt-1">Δημιουργήθηκε {new Date(lead.created_at).toLocaleString("el-GR")}</p>
             </div>
+            <button onClick={() => { onOpen360(lead.id); }} className="text-xs px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors shrink-0">
+              360° Προφίλ
+            </button>
             <button onClick={onClose} className="text-slate-500 hover:text-slate-900 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200 transition-colors">✕</button>
           </div>
 
