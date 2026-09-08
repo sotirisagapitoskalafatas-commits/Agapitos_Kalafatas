@@ -67,3 +67,86 @@ export function upcomingRenewals(
   }
   return out.sort((a, b) => a.daysLeft - b.daysLeft);
 }
+
+export type OverdueRenewal = {
+  leadId: string;
+  daysOverdue: number;
+  renewalDate: string;
+  name: string | null;
+  email: string | null;
+  service: string | null;
+};
+
+export function overdueRenewals(
+  rows: Array<{
+    id: string;
+    renewal_date: string | null;
+    full_name?: string | null;
+    email?: string | null;
+    service_category?: string | null;
+    status?: string | null;
+  }>,
+  now: Date = new Date()
+): OverdueRenewal[] {
+  const out: OverdueRenewal[] = [];
+  for (const r of rows) {
+    if (!r.renewal_date) continue;
+    const days = daysUntil(r.renewal_date, now);
+    if (days === null || days >= 0) continue; // only strictly past
+    out.push({
+      leadId: r.id,
+      daysOverdue: -days,
+      renewalDate: r.renewal_date,
+      name: r.full_name ?? null,
+      email: r.email ?? null,
+      service: r.service_category ?? null,
+    });
+  }
+  return out.sort((a, b) => b.daysOverdue - a.daysOverdue);
+}
+
+export type OwnerEmailCandidate = {
+  id: string;
+  leadId: string;
+  renewalDate: string;
+  daysLeft: number;
+  windowDays: number;
+  name: string | null;
+};
+
+/**
+ * Pure filter for the optional owner email pass. A reminder qualifies only when
+ * the renewal is still ahead (never re-email after the date has passed), the
+ * window is within 7 days, and the reminder actually got a task. The DB-side
+ * owner_email_sent_at guard (also checked in the query) prevents second sends.
+ */
+export function ownerEmailCandidates(
+  reminders: Array<{
+    id: string;
+    lead_id: string;
+    renewal_date: string | null;
+    window_days: number;
+    task_id: string | null;
+    owner_email_sent_at: string | null;
+    full_name?: string | null;
+  }>,
+  now: Date = new Date()
+): OwnerEmailCandidate[] {
+  const out: OwnerEmailCandidate[] = [];
+  for (const r of reminders) {
+    if (!r.task_id) continue; // must be materialized already
+    if (r.window_days > 7) continue; // only act-now windows
+    if (!r.renewal_date) continue;
+    const days = daysUntil(r.renewal_date, now);
+    if (days === null || days < 0) continue; // overdue never re-emails
+    out.push({
+      id: r.id,
+      leadId: r.lead_id,
+      renewalDate: r.renewal_date,
+      daysLeft: days,
+      windowDays: r.window_days,
+      name: r.full_name ?? null,
+    });
+  }
+  return out;
+}

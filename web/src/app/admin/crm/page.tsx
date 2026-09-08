@@ -125,7 +125,181 @@ interface DashboardData {
   recentActivity: { id: string; entity_type: string; action: string; details: any; created_at: string }[];
 }
 
-type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics" | "notifications" | "ai" | "settings";
+type Tab = "dashboard" | "leads" | "pipeline" | "calendar" | "comms" | "invoices" | "analytics" | "notifications" | "renewals" | "ai" | "settings" | "planned";
+
+// ── Atlas IA navigation model ──
+// Groups mirror the master architecture. Each item carries an honest module
+// state so JARVIS and the owner are never tricked into thinking a module works
+// when it does not. LIVE items route to real working surfaces; PLANNED items
+// open an informative placeholder panel (no fake counts or dashboards).
+type ModState = "live" | "beta" | "planned" | "disabled";
+interface NavItem {
+  key: string;
+  label: string;
+  state: ModState;
+  tab?: Tab;               // in-page CRM tab
+  href?: string;           // separate admin route
+  description: string;     // shown on planned placeholder + hover
+}
+interface NavGroup {
+  id: string;
+  label: string;
+  items: NavItem[];
+}
+
+const PLANNED_EXAMPLE = "Not built yet — no fabricated data is displayed here.";
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    id: "command",
+    label: "Command Center",
+    items: [
+      { key: "dashboard", label: "Dashboard", state: "live", tab: "dashboard", description: "Σύνοψη των KPIs του CRM με πραγματικά δεδομένα." },
+    ],
+  },
+  {
+    id: "crm",
+    label: "CRM",
+    items: [
+      { key: "leads", label: "Leads", state: "live", tab: "leads", description: "Διαχείριση leads με πραγματικά δεδομένα." },
+      { key: "people", label: "People", state: "planned", description: "Μελλοντική ενοποίηση πελατών/επαφών. " + PLANNED_EXAMPLE },
+      { key: "companies", label: "Companies", state: "planned", description: "Επιχειρήσεις & οργανισμοί ως οντότητες. " + PLANNED_EXAMPLE },
+      { key: "customers", label: "Customers", state: "planned", description: "Καρτέλα 360° πελάτη. " + PLANNED_EXAMPLE },
+      { key: "referrals", label: "Referrals", state: "planned", description: "Παραπομπές. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "sales",
+    label: "Sales",
+    items: [
+      { key: "pipeline", label: "Pipeline", state: "live", tab: "pipeline", description: "Pipeline πραγματικών deals." },
+      { key: "quotes", label: "Quotes", state: "planned", description: "Προσφορές. " + PLANNED_EXAMPLE },
+      { key: "contracts", label: "Contracts", state: "planned", description: "Συμβόλαια. " + PLANNED_EXAMPLE },
+      { key: "forecast", label: "Forecast", state: "planned", description: "Πρόβλεψη εσόδων. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "energy",
+    label: "Energy",
+    items: [
+      { key: "renewals", label: "Renewals", state: "live", tab: "renewals", description: "Ανανεώσεις συμβολαίων — πραγματικά δεδομένα από το σύστημα ανανεώσεων." },
+      { key: "customers-energy", label: "Customers", state: "planned", description: "Ενεργειακοί πελάτες. " + PLANNED_EXAMPLE },
+      { key: "bills", label: "Bills", state: "planned", description: "Λογαριασμοί. " + PLANNED_EXAMPLE },
+      { key: "providers", label: "Providers", state: "planned", description: "Πάροχοι. " + PLANNED_EXAMPLE },
+      { key: "comparisons", label: "Comparisons", state: "planned", description: "Συγκρίσεις. " + PLANNED_EXAMPLE },
+      { key: "switches", label: "Switches", state: "planned", description: "Αλλαγές παρόχου. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "insurance",
+    label: "Insurance",
+    items: [
+      { key: "policies", label: "Policies", state: "planned", description: "Ασφαλιστικά συμβόλαια. " + PLANNED_EXAMPLE },
+      { key: "insurance-products", label: "Products", state: "planned", description: "Ασφαλιστικά προϊόντα. " + PLANNED_EXAMPLE },
+      { key: "insurance-renewals", label: "Renewals", state: "planned", description: "Ανανεώσεις ασφαλειών. " + PLANNED_EXAMPLE },
+      { key: "compliance", label: "Compliance", state: "planned", description: "Ρυθμιστική συμμόρφωση. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "web",
+    label: "Web & Digital",
+    items: [
+      { key: "projects", label: "Projects", state: "planned", description: "Web έργα. " + PLANNED_EXAMPLE },
+      { key: "hosting", label: "Hosting", state: "planned", description: "Hosting & domains. " + PLANNED_EXAMPLE },
+      { key: "maintenance", label: "Maintenance", state: "planned", description: "Συντήρηση. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "marketing",
+    label: "Marketing",
+    items: [
+      { key: "creative", label: "Creative Studio", state: "live", href: "/admin/creative", description: "Δημιουργία εικόνων + κειμένων με AI (πραγματικές ροές)." },
+      { key: "campaigns", label: "Campaigns", state: "planned", description: "Καμπάνιες. " + PLANNED_EXAMPLE },
+      { key: "media", label: "Media Library", state: "planned", description: "Βιβλιοθήκη μέσων. " + PLANNED_EXAMPLE },
+      { key: "content-calendar", label: "Content Calendar", state: "planned", description: "Ημερολόγιο περιεχομένου. " + PLANNED_EXAMPLE },
+      { key: "social-inbox", label: "Social Inbox", state: "planned", description: "Κοινωνικά μηνύματα & σχόλια. " + PLANNED_EXAMPLE },
+      { key: "seo", label: "SEO", state: "planned", description: "SEO. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "comms",
+    label: "Communications",
+    items: [
+      { key: "comms", label: "Communications", state: "live", tab: "comms", description: "Χρονολόγιο επικοινωνιών (email/κλήσεις/σημειώσεις)." },
+      { key: "inbox", label: "Unified Inbox", state: "planned", description: "Ενοποιημένο inbox. " + PLANNED_EXAMPLE },
+      { key: "whatsapp", label: "WhatsApp", state: "planned", description: "WhatsApp. " + PLANNED_EXAMPLE },
+      { key: "viber", label: "Viber", state: "planned", description: "Viber. " + PLANNED_EXAMPLE },
+      { key: "sms", label: "SMS", state: "planned", description: "SMS. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "ops",
+    label: "Operations",
+    items: [
+      { key: "calendar", label: "Calendar & Tasks", state: "live", tab: "calendar", description: "Ημερολόγιο + εργασίες (tasks/reminders)." },
+      { key: "documents", label: "Documents", state: "planned", description: "Έγγραφα. " + PLANNED_EXAMPLE },
+      { key: "workflows", label: "Workflows", state: "planned", description: "Ροές εργασίας. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "finance",
+    label: "Finance",
+    items: [
+      { key: "invoices", label: "Invoices", state: "live", tab: "invoices", description: "Τιμολόγια με πραγματικά δεδομένα." },
+      { key: "payments", label: "Payments", state: "planned", description: "Πληρωμές. " + PLANNED_EXAMPLE },
+      { key: "commissions", label: "Commissions", state: "planned", description: "Προμήθειες. " + PLANNED_EXAMPLE },
+      { key: "revenue", label: "Revenue", state: "planned", description: "Έσοδα. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "ai",
+    label: "AI / JARVIS",
+    items: [
+      { key: "ai", label: "JARVIS", state: "live", tab: "ai", description: "Ο βοηθός AI με πραγματικές εντολές και εγκρίσεις." },
+      { key: "agent-runs", label: "Agent Runs", state: "planned", description: "Εκτελέσεις agents. " + PLANNED_EXAMPLE },
+      { key: "approvals", label: "Approvals", state: "planned", description: "Εγκρίσεις με βάση πολιτικών. " + PLANNED_EXAMPLE },
+      { key: "knowledge", label: "Knowledge", state: "planned", description: "Γνωσιακή βάση. " + PLANNED_EXAMPLE },
+      { key: "policies", label: "Policies", state: "planned", description: "Πολιτικές. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "intelligence",
+    label: "Intelligence",
+    items: [
+      { key: "analytics", label: "Analytics", state: "live", tab: "analytics", description: "Αναλυτικά από πραγματικά δεδομένα." },
+      { key: "kpis", label: "KPIs", state: "planned", description: "Στόχοι & KPI. " + PLANNED_EXAMPLE },
+      { key: "forecasts", label: "Forecasts", state: "planned", description: "Προβλέψεις. " + PLANNED_EXAMPLE },
+      { key: "customer-health", label: "Customer Health", state: "planned", description: "Υγεία πελατών. " + PLANNED_EXAMPLE },
+      { key: "churn-risk", label: "Churn Risk", state: "planned", description: "Κίνδυνος απώλειας. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "admin",
+    label: "Administration",
+    items: [
+      { key: "notifications", label: "Notifications", state: "live", tab: "notifications", description: "Ειδοποιήσεις συστήματος." },
+      { key: "social-accounts", label: "Social Accounts", state: "live", href: "/admin/social", description: "Συνδεδεμένοι λογαριασμοί social media." },
+      { key: "settings", label: "Settings", state: "live", tab: "settings", description: "Ρυθμίσεις συστήματος." },
+      { key: "users", label: "Users", state: "planned", description: "Χρήστες. " + PLANNED_EXAMPLE },
+      { key: "integrations", label: "Integrations", state: "planned", description: "Ενσωματώσεις. " + PLANNED_EXAMPLE },
+      { key: "audit-log", label: "Audit Log", state: "planned", description: "Ημερολόγιο ενεργειών. " + PLANNED_EXAMPLE },
+      { key: "system-health", label: "System Health", state: "planned", description: "Υγεία συστήματος. " + PLANNED_EXAMPLE },
+    ],
+  },
+];
+
+const NAV_KEY_TO_TAB: Record<string, Tab> = {};
+for (const g of NAV_GROUPS) for (const it of g.items) if (it.tab) NAV_KEY_TO_TAB[it.key] = it.tab;
+
+function liveTabItems(): string[] {
+  const out: string[] = [];
+  for (const g of NAV_GROUPS) {
+    for (const it of g.items) {
+      if (it.state === "live" && it.tab) out.push(it.tab);
+    }
+  }
+  return out;
+}
 
 interface StepCall {
   agent: string;
@@ -199,8 +373,8 @@ export default function CRMDashboard() {
   const [tab, setTab] = useState<Tab>(() => {
     if (typeof window !== "undefined") {
       const t = new URLSearchParams(window.location.search).get("tab");
-      const valid: Tab[] = ["dashboard", "leads", "pipeline", "calendar", "comms", "invoices", "analytics", "notifications", "ai", "settings"];
-      if (t && (valid as string[]).includes(t)) return t as Tab;
+      const live = liveTabItems();
+      if (t && live.includes(t)) return t as Tab;
     }
     return "dashboard";
   });
@@ -225,6 +399,88 @@ export default function CRMDashboard() {
   const [showNewInvoice, setShowNewInvoice] = useState(false);
   const [showNewLead, setShowNewLead] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // ── Atlas IA nav shell state ──
+  const [plannedModule, setPlannedModule] = useState<{ label: string; description: string } | null>(null);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const raw = localStorage.getItem("atlas_nav_collapsed");
+        return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+      } catch { /* ignore */ }
+    }
+    return {};
+  });
+  const toggleGroup = (id: string) => {
+    setCollapsedGroups((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try { localStorage.setItem("atlas_nav_collapsed", JSON.stringify(next)); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  // ── Renewals (materialized tasks + upcoming + overdue) ──
+  const [renewals, setRenewals] = useState<any[]>([]);
+  const [renewalsOverdue, setRenewalsOverdue] = useState<any[]>([]);
+  const [renewalsCounts, setRenewalsCounts] = useState<any>(null);
+  const [renewalsRange, setRenewalsRange] = useState(90);
+  const [renewalsFilter, setRenewalsFilter] = useState<"all" | "overdue">("all");
+  const [renewalsBusy, setRenewalsBusy] = useState(false);
+  const [renewalsError, setRenewalsError] = useState("");
+
+  const fetchRenewals = useCallback(async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    try {
+      const res = await fetch(`/api/crm/renewals/upcoming?days=${renewalsRange}&overdue=1`, { headers: authHeaders });
+      const data = await res.json();
+      if (!res.ok) { setRenewalsError(data.error || "Failed to load renewals"); return; }
+      setRenewals(data.renewals ?? []);
+      setRenewalsOverdue(data.overdue ?? []);
+      setRenewalsCounts(data.counts ?? null);
+      setRenewalsError("");
+    } catch (e: any) {
+      setRenewalsError(e?.message ?? "Failed to load renewals");
+    }
+  }, [renewalsRange]);
+
+  const runRenewals = async () => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
+    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+    setRenewalsBusy(true);
+    setRenewalsError("");
+    try {
+      const res = await fetch("/api/crm/renewals/run", {
+        method: "POST",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({ windows: [90, 60, 30, 14, 7, 3, 1], actionWindows: [14, 7, 3, 1], email: true }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRenewalsError(data.error || "Run failed");
+      } else {
+        setRenewalsError(
+          `Scan: +${data.scanned} · Materialized: +${data.materialized} · Owner emails: ${data.ownerEmailsSent}${data.ownerEmailSkipped?.length ? ` · Skipped: ${data.ownerEmailSkipped.join(", ")}` : ""}`
+        );
+        await fetchRenewals();
+        fetchAll();
+      }
+    } catch (e: any) {
+      setRenewalsError(e?.message ?? "Run failed");
+    } finally {
+      setRenewalsBusy(false);
+    }
+  };
+
+  const toggleRenewalTask = async (taskId: string, completed: boolean) => {
+    await fetch("/api/crm/events", {
+      method: "PATCH",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify({ id: taskId, completed: !completed }),
+    });
+    await fetchRenewals();
+    fetchAll();
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -299,8 +555,8 @@ export default function CRMDashboard() {
   }, []);
 
   useEffect(() => {
-    if (isLoggedIn) fetchAll();
-  }, [isLoggedIn, fetchAll]);
+    if (isLoggedIn) { fetchAll(); fetchRenewals(); }
+  }, [isLoggedIn, fetchAll, fetchRenewals]);
 
   // Generalized field updater — PATCHes any subset of lead columns and updates
   // local state optimistically (no full refetch, so drawer inputs keep focus).
@@ -356,7 +612,7 @@ export default function CRMDashboard() {
             <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
               <span className="text-white font-bold text-xl">A</span>
             </div>
-            <h1 className="text-2xl font-bold text-slate-900">CRM Pro</h1>
+            <h1 className="text-2xl font-bold text-slate-900">Atlas</h1>
             <p className="text-sm text-slate-500 mt-1">Agapitos Kalafatas</p>
           </div>
           <form onSubmit={handleLogin} className="crm-card-3d rounded-3xl p-8 space-y-4">
@@ -388,38 +644,83 @@ export default function CRMDashboard() {
               <span className="text-white font-bold text-sm">A</span>
             </div>
             <div>
-              <h1 className="text-sm font-bold text-white">CRM Pro</h1>
+              <h1 className="text-sm font-bold text-white">Atlas</h1>
               <p className="text-[10px] text-blue-100/70">Agapitos Kalafatas</p>
             </div>
           </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1">
-          {([
-            { key: "dashboard" as Tab, label: "Dashboard", icon: " " },
-            { key: "leads" as Tab, label: "Leads", icon: " " },
-            { key: "pipeline" as Tab, label: "Pipeline", icon: " " },
-            { key: "calendar" as Tab, label: "Calendar", icon: " " },
-            { key: "comms" as Tab, label: "Communications", icon: " " },
-            { key: "invoices" as Tab, label: "Invoices", icon: " " },
-            { key: "analytics" as Tab, label: "Analytics", icon: " " },
-            { key: "notifications" as Tab, label: "Notifications", icon: " " },
-            { key: "ai" as Tab, label: "AI Agent", icon: "🤖" },
-            { key: "settings" as Tab, label: "Settings", icon: "⚙️" },
-          ]).map((item) => (
-            <button
-              key={item.key}
-              onClick={() => { setTab(item.key); setSidebarOpen(false); }}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                tab === item.key
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                  : "text-slate-200/80 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              <span className="text-base">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+          {NAV_GROUPS.map((group) => {
+            const collapsed = collapsedGroups[group.id] ?? false;
+            return (
+              <div key={group.id} className="mb-1">
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-300/70 hover:text-white transition-colors"
+                >
+                  <span>{group.label}</span>
+                  <span className="text-[10px]">{collapsed ? "▸" : "▾"}</span>
+                </button>
+                {!collapsed && (
+                  <div className="space-y-0.5 mt-0.5">
+                    {group.items.map((item) => {
+                      const isActive = item.tab === tab;
+                      if (item.state === "planned") {
+                        return (
+                          <button
+                            key={item.key}
+                            title={item.description}
+                            onClick={() => {
+                              setPlannedModule({ label: item.label, description: item.description });
+                              setTab("planned");
+                              setSidebarOpen(false);
+                            }}
+                            className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                              tab === "planned" && plannedModule?.label === item.label
+                                ? "bg-white/15 text-white"
+                                : "text-slate-300/60 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            <span className="text-xs text-slate-400">◌</span>
+                            {item.label}
+                            <span className="ml-auto text-[9px] uppercase tracking-wide bg-white/10 text-slate-300/60 rounded px-1.5 py-0.5">planned</span>
+                          </button>
+                        );
+                      }
+                      if (item.href) {
+                        return (
+                          <a
+                            key={item.key}
+                            href={item.href}
+                            onClick={() => setSidebarOpen(false)}
+                            className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all text-slate-200/80 hover:text-white hover:bg-white/10"
+                          >
+                            <span className="text-base">●</span>
+                            {item.label}
+                          </a>
+                        );
+                      }
+                      return (
+                        <button
+                          key={item.key}
+                          onClick={() => { setTab(item.tab as Tab); setSidebarOpen(false); }}
+                          className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                            isActive
+                              ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                              : "text-slate-200/80 hover:text-white hover:bg-white/10"
+                          }`}
+                        >
+                          <span className="text-base">●</span>
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="p-3 border-t border-white/10">
@@ -444,12 +745,14 @@ export default function CRMDashboard() {
         </button>
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-2 md:gap-0">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 capitalize">{tab}</h2>
+            <h2 className="text-2xl font-bold text-slate-900 capitalize">
+              {tab === "planned" ? (plannedModule?.label ?? "Planned") : tab === "renewals" ? "Renewals" : tab}
+            </h2>
             <p className="text-sm text-slate-500 mt-1">
               {new Date().toLocaleDateString("el-GR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
-          <button onClick={fetchAll} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50">
+          <button onClick={() => { fetchAll(); fetchRenewals(); }} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50">
             ↻ Refresh
           </button>
         </div>
@@ -468,8 +771,29 @@ export default function CRMDashboard() {
             {tab === "invoices" && <InvoicesView invoices={invoices} onNew={() => setShowNewInvoice(true)} />}
             {tab === "analytics" && <AnalyticsView dashboard={dashboard} leads={leads} deals={deals} invoices={invoices} formatCurrency={formatCurrency} />}
             {tab === "notifications" && <NotificationsView notifications={notifications} onRefresh={fetchAll} />}
+            {tab === "renewals" && (
+              <RenewalsView
+                renewals={renewals}
+                overdue={renewalsOverdue}
+                counts={renewalsCounts}
+                horizonDays={renewalsRange}
+                range={renewalsRange}
+                onRangeChange={setRenewalsRange}
+                filter={renewalsFilter}
+                onFilterChange={setRenewalsFilter}
+                busy={renewalsBusy}
+                error={renewalsError}
+                onRun={runRenewals}
+                onToggleTask={toggleRenewalTask}
+                onOpenLead={(id) => {
+                  const lead = leads.find((l) => l.id === id);
+                  if (lead) setSelectedLead(lead);
+                }}
+              />
+            )}
             {tab === "ai" && <AgentView />}
             {tab === "settings" && <SettingsView />}
+            {tab === "planned" && <PlannedModuleView module={plannedModule} onBack={() => { setTab("dashboard"); setPlannedModule(null); }} />}
           </>
         )}
       </div>
@@ -496,6 +820,232 @@ export default function CRMDashboard() {
       {showNewComm && <NewCommModal leads={leads} onClose={() => setShowNewComm(false)} onSaved={() => { setShowNewComm(false); fetchAll(); }} />}
       {showNewInvoice && <NewInvoiceModal leads={leads} onClose={() => setShowNewInvoice(false)} onSaved={() => { setShowNewInvoice(false); fetchAll(); }} />}
     </main>
+  );
+}
+
+// ── Renewals ─────────────────────────────────────────────────────────────────
+// Real data from /api/crm/renewals/upcoming (engine scans + materialized tasks)
+// and /api/crm/renewals/run (manual scan/materialize/email orchestration).
+type RenewalUIRow = {
+  leadId: string;
+  daysLeft?: number;
+  daysOverdue?: number;
+  renewalDate: string;
+  name: string | null;
+  email: string | null;
+  service: string | null;
+  reminderStatus: string;
+  taskId: string | null;
+  window: number | null;
+};
+
+const RENEWAL_WINDOW_LABELS: Record<number, string> = {
+  1: "1η ημέρα",
+  3: "3 ημέρες",
+  7: "7 ημέρες",
+  14: "14 ημέρες",
+  30: "30 ημέρες",
+  60: "60 ημέρες",
+  90: "90 ημέρες",
+};
+
+function renewalStatusChip(status: string) {
+  switch (status) {
+    case "sent":
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-semibold">Ειδοποίηση στάλθηκε</span>;
+    case "materialized":
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">Εργασία δημιουργήθηκε</span>;
+    case "pending":
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-semibold">Σε αναμονή</span>;
+    default:
+      return <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold">Χωρίς υπενθύμιση</span>;
+  }
+}
+
+function RenewalsView(props: {
+  renewals: RenewalUIRow[];
+  overdue: RenewalUIRow[];
+  counts: { total: number; overdue: number; byWindow: Record<string, number> } | null;
+  horizonDays: number;
+  range: number;
+  onRangeChange: (n: number) => void;
+  filter: "all" | "overdue";
+  onFilterChange: (f: "all" | "overdue") => void;
+  busy: boolean;
+  error: string;
+  onRun: () => void;
+  onToggleTask: (taskId: string, completed: boolean) => void;
+  onOpenLead: (leadId: string) => void;
+}) {
+  const { renewals, overdue, counts, range, horizonDays, onRangeChange, filter, onFilterChange, busy, error, onRun, onToggleTask, onOpenLead } = props;
+  const eligible = countWindowEligible(renewals);
+
+  const rows = filter === "overdue" ? overdue : renewals;
+  const empty = rows.length === 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Controls */}
+      <div className="crm-card-3d rounded-2xl p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Ανανεώσεις Συμβολαίων</h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Σκανάρισμα {range} ημερών · {counts?.total ?? 0} ανανεώσεις · {counts?.overdue ?? 0} εκπρόθεσμες
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={range}
+              onChange={(e) => onRangeChange(Number(e.target.value))}
+              className="bg-white/80 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {[30, 60, 90, 180, 365].map((d) => <option key={d} value={d}>{d} ημέρες</option>)}
+            </select>
+            <div className="flex rounded-lg overflow-hidden border border-slate-200 bg-white/80">
+              {(["all", "overdue"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => onFilterChange(f)}
+                  className={`px-3 py-2 text-xs font-semibold transition-colors ${filter === f ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                >
+                  {f === "all" ? "Όλες" : "Εκπρόθεσμες"}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={onRun}
+              disabled={busy}
+              className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-md hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {busy ? "Εκτέλεση..." : "⚡ Σάρωση & Δημιουργία"}
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className={`mt-4 p-3 rounded-xl text-sm ${error.startsWith("Scan:") ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+            {error}
+          </div>
+        )}
+
+        <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1, 7, 14, 30].map((w) => {
+            const n = counts?.byWindow?.[String(w)] ?? 0;
+            return (
+              <div key={w} className="bg-slate-100/80 rounded-xl p-3">
+                <div className="text-lg font-bold text-slate-900">{n}</div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-500">Έως {w} ημέρες</div>
+              </div>
+            );
+          })}
+        </div>
+
+        <p className="mt-4 text-[11px] text-slate-400">
+          Αυτόματη καθημερινή εκτέλεση · pg_cron <code className="text-slate-500">renewal-daily-atlas</code> · καθημερινά 08:00 · Δημιουργεί εργασία ημερολογίου + ειδοποίηση ανά εκπρόθεσμη/επερχόμενη ανανέωση.
+        </p>
+      </div>
+
+      {/* Rows */}
+      <div className="crm-card-3d rounded-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-6 border-b border-slate-200/60">
+          <h3 className="text-sm font-bold text-slate-900">
+            {filter === "overdue" ? "Εκπρόθεσμες Ανανεώσεις" : `Επερχόμενες Ανανεώσεις (${horizonDays} ημ.)`}
+          </h3>
+          <span className="text-xs text-slate-500">{rows.length} slots</span>
+        </div>
+
+        {empty ? (
+          <div className="p-12 text-center">
+            <div className="text-4xl mb-3">📅</div>
+            <p className="text-slate-500 text-sm">{filter === "overdue" ? "Δεν υπάρχουν εκπρόθεσμες ανανεώσεις" : "Καμία ανανέωση σε αυτό το διάστημα"}</p>
+            <p className="text-slate-600 text-xs mt-1">Το σύστημα θα σας ειδοποιήσει όταν πλησιάσουν</p>
+          </div>
+        ) : (
+          <>
+            <div className="divide-y divide-slate-200/60">
+              {rows.map((r) => (
+                  <div key={r.leadId} className="p-4 hover:bg-slate-100/50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <button
+                        onClick={() => r.taskId && onToggleTask(r.taskId, false)}
+                        disabled={!r.taskId}
+                        title={r.taskId ? "Ολοκληρωμένη εργασία" : "Δεν έχει δημιουργηθεί εργασία"}
+                        className={`w-5 h-5 rounded-md border-2 flex-shrink-0 mt-0.5 transition-colors ${
+                          r.taskId ? "border-indigo-400 hover:bg-indigo-100" : "border-slate-200 cursor-default"
+                        }`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button onClick={() => onOpenLead(r.leadId)} className="text-sm font-semibold text-slate-900 hover:text-indigo-600 hover:underline">
+                            {r.name ?? "Χωρίς όνομα"}
+                          </button>
+                          {renewalStatusChip(r.reminderStatus)}
+                          {r.service && <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">{r.service}</span>}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {r.daysOverdue !== undefined
+                            ? `${r.daysOverdue} μέρες εκπρόθεσμο`
+                            : `Σε ${r.daysLeft} μέρες`}
+                          {" · "}Ανανέωση: {new Date(r.renewalDate).toLocaleDateString("el-GR")}
+                          {r.window && ` · Παράθυρο: ${RENEWAL_WINDOW_LABELS[r.window] ?? `${r.window} ημέρες`}`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+              ))}
+            </div>
+            <div className="p-3 bg-slate-50 border-t border-slate-200/60 text-[11px] text-slate-500">
+              {eligible} στηρίζονται σε εργασία εντός παραθύρου 7 ημερών · Οι εργασίες δημιουργούνται μία φορά ανά ανανέωση (idempotent).
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function countWindowEligible(rows: RenewalUIRow[]): number {
+  let n = 0;
+  for (const r of rows) {
+    if (r.taskId && r.window != null && r.window <= 7) n++;
+  }
+  return n;
+}
+
+// ── Planned module placeholder ───────────────────────────────────────────────
+// Honest module state: purpose + status only. No fabricated dashboards, counts
+// or metrics — PLANNED modules are exactly that until they are actually built.
+function PlannedModuleView({ module, onBack }: { module: { label: string; description: string } | null; onBack: () => void }) {
+  if (!module) {
+    return (
+      <div className="crm-card-3d rounded-2xl p-12 text-center">
+        <p className="text-slate-500 text-sm">Select a planned module from the sidebar.</p>
+      </div>
+    );
+  }
+  return (
+    <div className="crm-card-3d rounded-2xl p-8 max-w-2xl">
+      <div className="flex items-center gap-3 mb-6">
+        <span className="text-2xl">🗂</span>
+        <div>
+          <h3 className="text-lg font-bold text-slate-900">{module.label}</h3>
+          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold uppercase tracking-wide">Planned</span>
+        </div>
+      </div>
+      <p className="text-sm text-slate-600 leading-relaxed">{module.description}</p>
+      <div className="mt-6 bg-slate-100/80 rounded-xl p-4 text-xs text-slate-500 space-y-2">
+        <p>🛠 This module is on the Atlas build roadmap and has no fabricated data.</p>
+        <p>👀 Nothing is shown here until it actually exists in the system.</p>
+        <p>📦 Planned modules are scoped in the master architecture and built incrementally.</p>
+      </div>
+      <button
+        onClick={onBack}
+        className="mt-6 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-md hover:shadow-lg transition"
+      >
+        ← Back to Dashboard
+      </button>
+    </div>
   );
 }
 

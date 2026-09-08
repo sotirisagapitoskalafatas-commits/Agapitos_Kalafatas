@@ -204,7 +204,7 @@ export type ImageGenerationResult = {
 };
 
 const CREATIVE_IMAGE_MODEL =
-  process.env.CREATIVE_IMAGE_MODEL || "gemini-2.0-flash-exp-image-generation";
+  process.env.CREATIVE_IMAGE_MODEL || "gemini-2.5-flash-image";
 
 async function callGeminiImage(
   prompt: string,

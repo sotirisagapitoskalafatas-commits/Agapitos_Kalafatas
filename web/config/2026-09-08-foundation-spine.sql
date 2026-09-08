@@ -138,6 +138,7 @@ select
   title,
   description,
   event_type,
+  start_time,
   start_time as due_at,
   end_time,
   all_day,
