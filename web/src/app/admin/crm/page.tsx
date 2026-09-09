@@ -238,6 +238,67 @@ const SEVERITY_META: Record<Severity, { label: string; chip: string; dot: string
   low: { label: "Χαμηλό", chip: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
 };
 
+// ── Atlas Command Center theme helpers (real data → design language) ──
+const SEV_SPINE: Record<Severity, { color: string; label: string }> = {
+  critical: { color: "var(--cc-red)", label: "CRITICAL" },
+  high: { color: "var(--cc-amber-bright)", label: "HIGH" },
+  medium: { color: "var(--cc-indigo)", label: "MEDIUM" },
+  low: { color: "var(--cc-planned)", label: "LOW" },
+};
+
+function AtlasChip({ children, tone }: { children: React.ReactNode; tone: "indigo" | "red" | "amber" | "green" | "neutral" }) {
+  const styles: Record<string, React.CSSProperties> = {
+    indigo: { background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" },
+    red: { background: "var(--cc-red-chip)", color: "var(--cc-red-ink)" },
+    amber: { background: "var(--cc-amber-chip)", color: "var(--cc-amber)" },
+    green: { background: "var(--cc-live-glow)", color: "var(--cc-live)" },
+    neutral: { background: "var(--cc-chip)", color: "var(--cc-chip-ink)" },
+  };
+  return (
+    <span className="atlas-mono text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full select-none" style={styles[tone]}>
+      {children}
+    </span>
+  );
+}
+
+function MetricCell({ value, label, tone }: { value: string; label: string; tone: "indigo" | "amber" | "red" | "green" | "neutral" }) {
+  const TONE: Record<string, string> = {
+    indigo: "var(--cc-indigo-ink)",
+    amber: "var(--cc-amber)",
+    red: "var(--cc-red-ink)",
+    green: "var(--cc-live)",
+    neutral: "var(--cc-ink)",
+  };
+  return (
+    <div className="rounded-xl p-3" style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line)" }}>
+      <p className="atlas-plex text-lg font-bold leading-tight" style={{ color: TONE[tone] }}>{value}</p>
+      <p className="text-[11px] mt-0.5" style={{ color: "var(--cc-muted)" }}>{label}</p>
+    </div>
+  );
+}
+
+// Honest SLA/status badges on real attention items — flagged only when the
+// underlying row really is overdue / really is hot / really needs review.
+function potentialBreachChip(item: AttentionItem): React.ReactNode {
+  if (item.kind === "invoice_overdue" || item.kind === "renewal_overdue") {
+    if (item.severity === "critical") return <AtlasChip tone="red">SLA BREACH</AtlasChip>;
+    if (item.severity === "high") return <AtlasChip tone="amber">OVERDUE</AtlasChip>;
+  }
+  if (item.kind === "hot_lead") return <AtlasChip tone="amber">HOT</AtlasChip>;
+  if (item.kind === "approval") return <AtlasChip tone="indigo">REVIEW</AtlasChip>;
+  if (item.kind === "incident") return <AtlasChip tone="red">INCIDENT</AtlasChip>;
+  if (item.kind === "agent_failure") return <AtlasChip tone="red">AGENT FAILURE</AtlasChip>;
+  return null;
+}
+
+const CARD_TONE: Record<string, string> = {
+  indigo: "var(--cc-indigo-ink)",
+  blue: "var(--cc-beta)",
+  green: "var(--cc-live)",
+  red: "var(--cc-red-ink)",
+  amber: "var(--cc-amber-bright)",
+};
+
 // ── Service request presentation (Slice 2: service_requests) ──
 const SERVICE_ICONS: Record<ServiceKind, string> = { energy: "⚡", insurance: "🛡", web: "💻" };
 
@@ -282,8 +343,8 @@ function relTime(iso: string | null): string {
 
 function ShellFallback() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center">
-      <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+    <main className="min-h-screen atlas-canvas flex items-center justify-center">
+      <div className="animate-spin w-8 h-8 rounded-full" style={{ border: "4px solid var(--cc-line)", borderTopColor: "var(--cc-indigo)" }} />
     </main>
   );
 }
@@ -577,14 +638,18 @@ function CRMDashboardInner() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 capitalize">
-              {tab === "planned" ? (plannedModule?.label ?? "Planned") : tab === "renewals" ? "Renewals" : tab}
+            <h2 className="atlas-plex text-[20px] font-semibold" style={{ color: "var(--cc-ink)" }}>
+              {tab === "planned" ? (plannedModule?.label ?? "Planned") : tab === "renewals" ? "Renewals" : tab === "dashboard" ? "Command Center" : tab}
             </h2>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm mt-1" style={{ color: "var(--cc-muted)" }}>
               {new Date().toLocaleDateString("el-GR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
-          <button onClick={() => { fetchAll(); fetchRenewals(); }} className="text-sm text-indigo-600 hover:text-indigo-700 font-medium transition-colors px-4 py-2 rounded-xl hover:bg-indigo-50">
+          <button
+            onClick={() => { fetchAll(); fetchRenewals(); }}
+            className="text-sm font-semibold transition-opacity px-4 py-2 rounded-xl"
+            style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}
+          >
             ↻ Refresh
           </button>
         </div>
@@ -877,29 +942,30 @@ function countWindowEligible(rows: RenewalUIRow[]): number {
 function PlannedModuleView({ module, onBack }: { module: { label: string; description: string } | null; onBack: () => void }) {
   if (!module) {
     return (
-      <div className="crm-card-3d rounded-2xl p-12 text-center">
-        <p className="text-slate-500 text-sm">Select a planned module from the sidebar.</p>
+      <div className="atlas-surface rounded-2xl p-12 text-center">
+        <p className="text-sm" style={{ color: "var(--cc-faint)" }}>Select a planned module from the sidebar.</p>
       </div>
     );
   }
   return (
-    <div className="crm-card-3d rounded-2xl p-8 max-w-2xl">
+    <div className="atlas-surface rounded-2xl p-8 max-w-2xl">
       <div className="flex items-center gap-3 mb-6">
-        <span className="text-2xl">🗂</span>
+        <span className="w-9 h-9 rounded-full flex-none" style={{ border: "1px solid var(--cc-planned)", background: "var(--cc-card-2)" }} />
         <div>
-          <h3 className="text-lg font-bold text-slate-900">{module.label}</h3>
-          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-semibold uppercase tracking-wide">Planned</span>
+          <h3 className="atlas-plex text-lg font-semibold" style={{ color: "var(--cc-ink)" }}>{module.label}</h3>
+          <AtlasChip tone="neutral">Planned</AtlasChip>
         </div>
       </div>
-      <p className="text-sm text-slate-600 leading-relaxed">{module.description}</p>
-      <div className="mt-6 bg-slate-100/80 rounded-xl p-4 text-xs text-slate-500 space-y-2">
+      <p className="text-sm leading-relaxed" style={{ color: "var(--cc-ink-2)" }}>{module.description}</p>
+      <div className="mt-6 rounded-xl p-4 text-xs space-y-2" style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line-2)", color: "var(--cc-muted)" }}>
         <p>🛠 This module is on the Atlas build roadmap and has no fabricated data.</p>
         <p>👀 Nothing is shown here until it actually exists in the system.</p>
         <p>📦 Planned modules are scoped in the master architecture and built incrementally.</p>
       </div>
       <button
         onClick={onBack}
-        className="mt-6 px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-md hover:shadow-lg transition"
+        className="mt-6 px-4 py-2 rounded-xl text-sm font-semibold shadow-md hover:shadow-lg transition"
+        style={{ background: "var(--cc-indigo)", color: "#fff" }}
       >
         ← Back to Dashboard
       </button>
@@ -907,7 +973,7 @@ function PlannedModuleView({ module, onBack }: { module: { label: string; descri
   );
 }
 
-/* ─── DASHBOARD VIEW ─── */
+/* ─── DASHBOARD VIEW (Command Center, design 2a/2b) ─── */
 function DashboardView({ data, error, formatCurrency, onAction }: {
   data: CommandCenterData | null;
   error: string;
@@ -916,99 +982,92 @@ function DashboardView({ data, error, formatCurrency, onAction }: {
 }) {
   if (!data) {
     return (
-      <div className="crm-card-3d rounded-2xl p-8 flex items-center justify-center min-h-40 text-sm">
+      <div className="atlas-surface rounded-2xl p-8 flex items-center justify-center min-h-40 text-sm">
         {error ? (
-          <span className="text-red-600">Δεν μπόρεσαν να φορτωθούν τα δεδομένα: {error}</span>
+          <span style={{ color: "var(--cc-red-ink)" }}>Δεν μπόρεσαν να φορτωθούν τα δεδομένα: {error}</span>
         ) : (
-          <span className="text-slate-500">Φορτώνουμε πραγματικά δεδομένα από το CRM…</span>
+          <span style={{ color: "var(--cc-faint)" }}>Φορτώνουμε πραγματικά δεδομένα από το CRM…</span>
         )}
       </div>
     );
   }
-  const { vitals, attention, jarvis } = data;
+  const { vitals, attention, jarvis, serviceBreakdown } = data;
   const next = jarvis.next;
+  const queue = attention.items.slice(0, 9);
+  const hasCritical = attention.critical > 0;
 
   const vitalsCards = [
     {
       label: "Leads",
-      value: vitals.leads.total,
-      sub: Object.entries(vitals.leads.statuses)
-        .filter(([k]) => STATUS_META[k])
-        .slice(0, 3)
-        .map(([k, c]) => `${STATUS_META[k].label} ${c}`)
-        .join(" · ") || "κανένα lead",
-      accent: "from-blue-500 to-cyan-500",
+      value: String(vitals.leads.total),
+      sub:
+        Object.entries(vitals.leads.statuses)
+          .filter(([k]) => STATUS_META[k])
+          .slice(0, 3)
+          .map(([k, c]) => `${STATUS_META[k].label} ${c}`)
+          .join(" · ") || "κανένα lead",
+      tone: "indigo" as const,
     },
     {
-      label: "Pipeline (weighted)",
+      label: "Pipeline weighted",
       value: formatCurrency(vitals.pipeline.weighted),
       sub: `${vitals.pipeline.count} ανοιχτά deals`,
-      accent: "from-violet-500 to-purple-500",
+      tone: "blue" as const,
     },
     {
       label: "Ανανεώσεις",
       value: `${vitals.renewals.overdue} εκπρόθεσμες`,
       sub: `σε 14 ημέρες: ${vitals.renewals.in14} · σε 30: ${vitals.renewals.in30}`,
-      accent: "from-emerald-500 to-teal-500",
+      tone: "green" as const,
     },
     {
       label: "Ανοιχτά τιμολόγια",
       value: formatCurrency(vitals.finance.openAmount),
       sub: `${vitals.finance.open} ανοιχτά · ${formatCurrency(vitals.finance.overdueAmount)} εκπρόθεσμα (${vitals.finance.overdue})`,
-      accent: "from-amber-500 to-orange-500",
+      tone: "red" as const,
     },
     {
       label: "Εργασίες σήμερα",
-      value: `${vitals.operations.dueToday}`,
+      value: String(vitals.operations.dueToday),
       sub: `${vitals.operations.overdue} εκπρόθεσμες · ${vitals.operations.doneToday} ολοκληρωμένες`,
-      accent: "from-cyan-500 to-blue-500",
+      tone: "amber" as const,
     },
     {
-      label: "JARVIS",
-      value: `${vitals.ai.runs24h} εκτελέσεις`,
-      sub: `${vitals.ai.pendingApprovals} εγκρίσεις · ${vitals.ai.failures24h} αποτυχίες (24h)`,
-      accent: "from-indigo-500 to-purple-500",
+      label: "JARVIS 24h",
+      value: String(vitals.ai.runs24h),
+      sub: `${vitals.ai.pendingApprovals} εγκρίσεις · ${vitals.ai.failures24h} αποτυχίες`,
+      tone: "indigo" as const,
     },
     {
       label: "Επικοινωνίες μήνα",
-      value: `${vitals.comms.thisMonth}`,
+      value: String(vitals.comms.thisMonth),
       sub: `${vitals.comms.inbound} εισερχόμενες`,
-      accent: "from-pink-500 to-rose-500",
+      tone: "green" as const,
     },
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Attention banner */}
-      {attention.total > 0 && (
-        <div className={`rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-3 ${attention.critical > 0 ? "bg-red-50 border border-red-200" : "bg-amber-50 border border-amber-200"}`}>
-          <div>
-            <p className="font-bold text-slate-900">
-              {attention.critical > 0
-                ? `${attention.critical} κρίσιμο${attention.critical > 1 ? "α" : ""} θέμα${attention.total > 1 ? "τα" : ""} χρειάζεται${attention.critical === 1 ? "ι" : "ο"}νται την προσοχή σου`
-                : `${attention.total} θέμα${attention.total > 1 ? "τα" : ""} χρειάζεται την προσοχή σου`}
-            </p>
-            <p className="text-sm text-slate-600 mt-1">Από πραγματικά δεδομένα — ανανεώσεις, τιμολόγια, leads, εργασίες, εγκρίσεις.</p>
-          </div>
-          <button onClick={() => onAction({ label: "My Attention", kind: "tab", target: "attention" })} className="text-sm px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 font-medium shrink-0">
-            Δες το My Attention →
-          </button>
-        </div>
-      )}
-
+    <div className="space-y-5">
       {/* JARVIS foundation card — honest, no invented intelligence */}
-      <div className="crm-card-3d rounded-2xl p-6 border-l-4 border-indigo-400">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-              JARVIS <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">foundation ready</span>
-            </h3>
-            <p className="text-xs text-slate-500 mt-1 max-w-2xl">{jarvis.note}</p>
+      <div className="atlas-surface rounded-2xl p-5 border-l-4" style={{ borderLeftColor: "var(--cc-indigo)" }}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center atlas-plex text-sm font-bold flex-none" style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}>
+              J
+            </div>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="atlas-plex text-[15px] font-semibold" style={{ color: "var(--cc-ink)" }}>JARVIS</h3>
+                <AtlasChip tone="indigo">foundation ready</AtlasChip>
+              </div>
+              <p className="text-xs mt-1 max-w-2xl" style={{ color: "var(--cc-muted)" }}>{jarvis.note}</p>
+            </div>
           </div>
           {next && (
             <button
               onClick={() => onAction({ label: next.actionLabel, kind: next.actionKind, target: next.actionTarget })}
-              className="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-medium shrink-0"
+              className="shrink-0 text-sm px-4 py-2 rounded-xl font-semibold shadow-md hover:shadow-lg transition"
+              style={{ background: "var(--cc-indigo)", color: "#fff" }}
             >
               {next.actionLabel} → {next.title}
             </button>
@@ -1016,31 +1075,21 @@ function DashboardView({ data, error, formatCurrency, onAction }: {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          <div className="bg-slate-100/80 rounded-xl p-3">
-            <p className="text-lg font-bold text-slate-900">{vitals.ai.runs24h}</p>
-            <p className="text-[11px] text-slate-500">εκτελέσεις 24h</p>
-          </div>
-          <div className="bg-slate-100/80 rounded-xl p-3">
-            <p className={`text-lg font-bold ${vitals.ai.pendingApprovals > 0 ? "text-amber-600" : "text-slate-900"}`}>{vitals.ai.pendingApprovals}</p>
-            <p className="text-[11px] text-slate-500">εγκρίσεις σε εκκρεμότητα</p>
-          </div>
-          <div className="bg-slate-100/80 rounded-xl p-3">
-            <p className={`text-lg font-bold ${vitals.ai.failures24h > 0 ? "text-red-600" : "text-slate-900"}`}>{vitals.ai.failures24h}</p>
-            <p className="text-[11px] text-slate-500">αποτυχίες 24h</p>
-          </div>
-          <div className="bg-slate-100/80 rounded-xl p-3">
-            <p className="text-lg font-bold text-slate-900">{attention.total}</p>
-            <p className="text-[11px] text-slate-500">θέματα προσοχής</p>
-          </div>
+          <MetricCell value={String(vitals.ai.runs24h)} label="εκτελέσεις 24h" tone="indigo" />
+          <MetricCell value={String(vitals.ai.pendingApprovals)} label="εγκρίσεις σε εκκρεμότητα" tone="amber" />
+          <MetricCell value={String(vitals.ai.failures24h)} label="αποτυχίες 24h" tone="red" />
+          <MetricCell value={String(attention.total)} label="θέματα προσοχής" tone="neutral" />
         </div>
 
         {jarvis.atRisk.length > 0 && (
           <div className="mt-4">
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-2">Σε κίνδυνο τώρα</p>
-            <ul className="space-y-1">
+            <p className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-2" style={{ color: "var(--cc-faint)" }}>
+              Σε κίνδυνο τώρα
+            </p>
+            <ul className="space-y-1.5">
               {jarvis.atRisk.map((r, i) => (
-                <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-orange-500 shrink-0" />
+                <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--cc-ink-2)" }}>
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-none" style={{ background: "var(--cc-red)" }} />
                   {r}
                 </li>
               ))}
@@ -1049,39 +1098,118 @@ function DashboardView({ data, error, formatCurrency, onAction }: {
         )}
       </div>
 
-      {/* Vitals grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {vitalsCards.map((c) => (
-          <div key={c.label} className="crm-card-3d rounded-2xl p-5 hover:border-slate-200 transition-all">
-            <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${c.accent} flex items-center justify-center text-lg mb-3 shadow-lg`}> </div>
-            <p className="text-2xl font-bold text-slate-900">{c.value}</p>
-            <p className="text-xs text-slate-500 mt-1">{c.label}</p>
-            {c.sub && <p className="text-[11px] text-slate-400 mt-1">{c.sub}</p>}
+      {/* Needs you — ranked queue with severity spines, from real rows */}
+      <div className="atlas-surface rounded-2xl overflow-hidden">
+        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--cc-line)" }}>
+          <h3 className="atlas-plex text-[15px] font-semibold" style={{ color: "var(--cc-ink)" }}>Needs you</h3>
+          <span className="atlas-mono text-[10px]" style={{ color: "var(--cc-faint)" }}>Πρώτα πιο κρίσιμα</span>
+          <div className="flex-1" />
+          <span
+            className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
+            style={{ background: hasCritical ? "var(--cc-red-chip)" : "var(--cc-chip)", color: hasCritical ? "var(--cc-red-ink)" : "var(--cc-chip-ink)" }}
+          >
+            {hasCritical && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--cc-red)" }} />}
+            {attention.total} ανοιχτά
+          </span>
+          <button
+            onClick={() => onAction({ label: "My Attention", kind: "tab", target: "attention" })}
+            className="atlas-mono text-[11px] font-semibold hover:underline"
+            style={{ color: "var(--cc-indigo-ink)" }}
+          >
+            ALL →
+          </button>
+        </div>
+
+        {queue.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <p className="atlas-plex text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>Τίποτα δεν χρειάζεται την προσοχή σου τώρα</p>
+            <p className="text-xs mt-1" style={{ color: "var(--cc-muted)" }}>Η ουρά προκύπτει από πραγματικά δεδομένα — κανένα εικονικό στοιχείο.</p>
           </div>
-        ))}
+        ) : (
+          <div className="divide-y divide-[color:var(--cc-line)]">
+            {queue.map((item) => {
+              const sev = SEV_SPINE[item.severity];
+              const breach = potentialBreachChip(item);
+              return (
+                <div key={item.id} className="flex">
+                  <div className="w-[3px] flex-none" style={{ background: sev.color }} />
+                  <div className="flex-1 flex flex-col lg:flex-row lg:items-center gap-3 px-4 py-3.5 min-w-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <AtlasChip tone={item.severity === "critical" ? "red" : item.severity === "high" ? "amber" : item.severity === "medium" ? "indigo" : "neutral"}>
+                          {ATTENTION_KIND_LABELS[item.kind] ?? item.kind}
+                        </AtlasChip>
+                        {breach}
+                      </div>
+                      <p className="atlas-plex text-[13.5px] font-semibold mt-1 truncate" style={{ color: "var(--cc-ink)" }}>{item.title}</p>
+                      <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "var(--cc-muted)" }}>{item.reason}</p>
+                      <div className="flex flex-wrap items-center gap-3 text-[11px] mt-1.5" style={{ color: "var(--cc-faint)" }}>
+                        {item.timestamp && <span>🕒 {relTime(item.timestamp)}</span>}
+                        {item.owner && <span>👤 {item.owner}</span>}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-2 lg:shrink-0">
+                      {item.actions.map((a, i) => (
+                        <button
+                          key={i}
+                          onClick={() => onAction(a)}
+                          className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-opacity"
+                          style={
+                            i === 0
+                              ? { background: "var(--cc-indigo)", color: "#fff" }
+                              : { background: "var(--cc-chip)", color: "var(--cc-chip-ink)", border: "1px solid var(--cc-line-2)" }
+                          }
+                        >
+                          {a.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Service Breakdown */}
-        <div className="crm-card-3d rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-slate-900 mb-4">Leads by Service</h3>
-          {Object.entries(data.serviceBreakdown).length === 0 ? (
-            <p className="text-slate-600 text-sm">No data yet</p>
+      {/* Vitals grid */}
+      <div>
+        <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-3" style={{ color: "var(--cc-faint)" }}>Vitals</h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {vitalsCards.map((c) => (
+            <div key={c.label} className="atlas-surface rounded-xl p-4">
+              <div className="atlas-plex text-[22px] font-bold leading-none" style={{ color: "var(--cc-ink)" }}>{c.value}</div>
+              <div className="atlas-mono text-[10px] uppercase tracking-wide mt-2 font-semibold" style={{ color: CARD_TONE[c.tone] }}>{c.label}</div>
+              <div className="text-[11px] mt-1" style={{ color: "var(--cc-faint)" }}>{c.sub}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Market composition: service + pipeline */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="atlas-surface rounded-2xl p-5">
+          <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-4" style={{ color: "var(--cc-faint)" }}>Leads by Service</h3>
+          {Object.entries(serviceBreakdown).length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--cc-faint)" }}>No data yet</p>
           ) : (
             <div className="space-y-3">
-              {Object.entries(data.serviceBreakdown)
+              {Object.entries(serviceBreakdown)
                 .sort(([, a], [, b]) => b - a)
                 .map(([service, count]) => {
-                  const max = Math.max(...Object.values(data.serviceBreakdown));
+                  const max = Math.max(...Object.values(serviceBreakdown));
                   const pct = (count / max) * 100;
                   return (
                     <div key={service}>
                       <div className="flex justify-between text-xs mb-1">
-                        <span className="text-slate-600">{service}</span>
-                        <span className="text-slate-500">{count}</span>
+                        <span style={{ color: "var(--cc-ink-2)" }}>{service}</span>
+                        <span className="atlas-mono" style={{ color: "var(--cc-faint)" }}>{count}</span>
                       </div>
-                      <div className="w-full h-2 bg-white/80 rounded-full overflow-hidden">
-                        <div className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                      <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line)" }}>
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--cc-indigo), var(--cc-beta))" }}
+                        />
                       </div>
                     </div>
                   );
@@ -1090,11 +1218,10 @@ function DashboardView({ data, error, formatCurrency, onAction }: {
           )}
         </div>
 
-        {/* Pipeline Stages */}
-        <div className="crm-card-3d rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-slate-900 mb-4">Pipeline Stages</h3>
+        <div className="atlas-surface rounded-2xl p-5">
+          <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-4" style={{ color: "var(--cc-faint)" }}>Pipeline Stages</h3>
           {Object.keys(vitals.pipeline.byStage).length === 0 ? (
-            <p className="text-slate-600 text-sm">No deals yet</p>
+            <p className="text-sm" style={{ color: "var(--cc-faint)" }}>No deals yet</p>
           ) : (
             <div className="space-y-3">
               {STAGES.map((s) => {
@@ -1104,13 +1231,20 @@ function DashboardView({ data, error, formatCurrency, onAction }: {
                 return (
                   <div key={s.key}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-slate-600">{s.label}</span>
-                      <span className="text-slate-500">{count}</span>
+                      <span style={{ color: "var(--cc-ink-2)" }}>{s.label}</span>
+                      <span className="atlas-mono" style={{ color: "var(--cc-faint)" }}>{count}</span>
                     </div>
-                    <div className="w-full h-2 bg-white/80 rounded-full overflow-hidden">
+                    <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line)" }}>
                       <div
-                        className={`h-full rounded-full transition-all ${s.key === "closed_won" ? "bg-green-500" : s.key === "closed_lost" ? "bg-red-500" : "bg-gradient-to-r from-amber-500 to-orange-500"}`}
-                        style={{ width: `${pct}%` }}
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${pct}%`,
+                          background: s.key === "closed_won"
+                            ? "var(--cc-live)"
+                            : s.key === "closed_lost"
+                            ? "var(--cc-red)"
+                            : "linear-gradient(90deg, var(--cc-amber-bright), var(--cc-amber))",
+                        }}
                       />
                     </div>
                   </div>
@@ -1121,38 +1255,76 @@ function DashboardView({ data, error, formatCurrency, onAction }: {
         </div>
       </div>
 
-      {/* What changed (real activity, not invented) */}
-      <div className="crm-card-3d rounded-2xl p-6">
-        <h3 className="text-sm font-bold text-slate-900 mb-4">Τι άλλαξε (πραγματική δραστηριότητα)</h3>
-        {jarvis.changed.length === 0 ? (
-          <p className="text-slate-600 text-sm">Καμία πρόσφατη αλλαγή ακόμα.</p>
-        ) : (
-          <ul className="space-y-2">
-            {jarvis.changed.map((c, i) => (
-              <li key={i} className="text-sm text-slate-700 flex items-start gap-2">
-                <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
-                {c}
-              </li>
-            ))}
-          </ul>
-        )}
+      {/* What changed + recent activity (real rows, not invented) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="atlas-surface rounded-2xl p-5">
+          <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-4" style={{ color: "var(--cc-faint)" }}>Τι άλλαξε</h3>
+          {jarvis.changed.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--cc-faint)" }}>Καμία πρόσφατη αλλαγή ακόμα.</p>
+          ) : (
+            <ul className="space-y-2.5">
+              {jarvis.changed.map((c, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--cc-ink-2)" }}>
+                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-none" style={{ background: "var(--cc-indigo)" }} />
+                  {c}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
-        <h3 className="text-sm font-bold text-slate-900 mt-6 mb-4">Recent Activity</h3>
-        {data.recentActivity.length === 0 ? (
-          <p className="text-slate-600 text-sm">No recent activity</p>
-        ) : (
-          <div className="space-y-3">
-            {data.recentActivity.slice(0, 10).map((a) => (
-              <div key={a.id} className="flex items-center gap-3 p-3 bg-slate-100/80 rounded-xl">
-                <div className="w-8 h-8 bg-slate-700 rounded-lg flex items-center justify-center text-xs"> </div>
-                <div className="flex-1">
-                  <p className="text-sm text-slate-900">{a.action} {a.entity_type}</p>
-                  <p className="text-[10px] text-slate-500">{new Date(a.created_at).toLocaleString("el-GR")}</p>
+        <div className="atlas-surface rounded-2xl p-5">
+          <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-4" style={{ color: "var(--cc-faint)" }}>Recent Activity</h3>
+          {data.recentActivity.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--cc-faint)" }}>No recent activity</p>
+          ) : (
+            <div className="space-y-2.5">
+              {data.recentActivity.slice(0, 8).map((a) => (
+                <div key={a.id} className="flex items-center gap-3 rounded-xl px-3 py-2" style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line)" }}>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center atlas-plex text-[11px] font-semibold flex-none" style={{ background: "var(--cc-chip)", color: "var(--cc-chip-ink)" }}>
+                    {(a.entity_type ?? "?").slice(0, 1).toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm truncate" style={{ color: "var(--cc-ink-2)" }}>{a.action} {a.entity_type}</p>
+                    <p className="atlas-mono text-[10px]" style={{ color: "var(--cc-faint)" }}>{new Date(a.created_at).toLocaleString("el-GR")}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Ask JARVIS — commands open the real JARVIS surface (tab:ai) */}
+      <div className="atlas-surface rounded-2xl p-4 border-l-4" style={{ borderLeftColor: "var(--cc-indigo)" }}>
+        <div className="flex flex-col md:flex-row md:items-center gap-3">
+          <span className="atlas-plex text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>✦ Ask JARVIS</span>
+          <div
+            className="flex-1 flex items-center px-3 h-10 rounded-xl text-sm"
+            style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line-2)", color: "var(--cc-faint)" }}
+          >
+            Ρώτα τι θέλεις — π.χ. «ποια τιμολόγια είναι εκπρόθεσμα;»
           </div>
-        )}
+          <button
+            onClick={() => onAction({ label: "Ask JARVIS", kind: "tab", target: "ai" })}
+            className="shrink-0 text-sm px-4 py-2 rounded-xl font-semibold shadow-md hover:shadow-lg transition"
+            style={{ background: "var(--cc-indigo)", color: "#fff" }}
+          >
+            Ask
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2 mt-3">
+          {["/monday-brief", "/invoice-chase", "/lead-triage"].map((s) => (
+            <button
+              key={s}
+              onClick={() => onAction({ label: s, kind: "tab", target: "ai" })}
+              className="atlas-mono text-[10.5px] px-2.5 py-1 rounded-lg border"
+              style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)", borderColor: "var(--cc-blue-line)" }}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -1168,11 +1340,11 @@ function AttentionView({ data, error, formatCurrency, onAction }: {
   void formatCurrency;
   if (!data) {
     return (
-      <div className="crm-card-3d rounded-2xl p-8 flex items-center justify-center min-h-40 text-sm">
+      <div className="atlas-surface rounded-2xl p-8 flex items-center justify-center min-h-40 text-sm">
         {error ? (
-          <span className="text-red-600">Δεν μπόρεσαν να φορτωθούν τα θέματα: {error}</span>
+          <span style={{ color: "var(--cc-red-ink)" }}>Δεν μπόρεσαν να φορτωθούν τα θέματα: {error}</span>
         ) : (
-          <span className="text-slate-500">Φορτώνουμε τι χρειάζεται την προσοχή σου…</span>
+          <span style={{ color: "var(--cc-faint)" }}>Φορτώνουμε τι χρειάζεται την προσοχή σου…</span>
         )}
       </div>
     );
@@ -1184,20 +1356,20 @@ function AttentionView({ data, error, formatCurrency, onAction }: {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 font-medium">
+        <span className="px-3 py-1.5 rounded-xl font-medium" style={{ background: "var(--cc-chip)", color: "var(--cc-chip-ink)" }}>
           {items.length} ανοιχτό θέμα{items.length !== 1 ? "τα" : ""}
         </span>
-        <span className="px-3 py-1.5 rounded-xl bg-red-100 text-red-700 font-medium">{data.attention.critical} κρίσιμα</span>
-        <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500">
+        <span className="px-3 py-1.5 rounded-xl font-medium" style={{ background: "var(--cc-red-chip)", color: "var(--cc-red-ink)" }}>{data.attention.critical} κρίσιμα</span>
+        <span className="atlas-mono px-3 py-1.5 rounded-xl" style={{ background: "var(--cc-chip)", color: "var(--cc-faint)" }}>
           Ενημερώθηκε {new Date(data.asOf).toLocaleTimeString("el-GR", { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
 
       {allOk ? (
-        <div className="crm-card-3d rounded-2xl p-8 text-center">
+        <div className="atlas-surface rounded-2xl p-8 text-center">
           <p className="text-lg">✓</p>
-          <p className="font-bold text-slate-900 mt-2">Τίποτα δεν χρειάζεται την προσοχή σου τώρα</p>
-          <p className="text-sm text-slate-500 mt-1">
+          <p className="atlas-plex font-semibold mt-2" style={{ color: "var(--cc-ink)" }}>Τίποτα δεν χρειάζεται την προσοχή σου τώρα</p>
+          <p className="text-sm mt-1" style={{ color: "var(--cc-muted)" }}>
             Όλες οι ανανεώσεις, τα τιμολόγια, τα leads, οι εργασίες και οι εγκρίσεις είναι εντός πλάνου.
             Αυτή η λίστα προκύπτει από πραγματικά δεδομένα — κανένα εικονικό στοιχείο.
           </p>
@@ -1207,19 +1379,20 @@ function AttentionView({ data, error, formatCurrency, onAction }: {
           {items.map((item) => {
             const sev = SEVERITY_META[item.severity];
             return (
-              <div key={item.id} className="crm-card-3d rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center gap-4">
+              <div key={item.id} className={`atlas-surface rounded-2xl p-5 flex flex-col lg:flex-row lg:items-center gap-4 border-l-4`} style={{ borderLeftColor: SEV_SPINE[item.severity].color }}>
                 <div className="flex items-start gap-3 flex-1 min-w-0">
                   <span className={`mt-1.5 w-2.5 h-2.5 rounded-full ${sev.dot} shrink-0`} />
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${sev.chip}`}>{sev.label}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full font-medium" style={{ background: "var(--cc-chip)", color: "var(--cc-chip-ink)" }}>
                         {ATTENTION_KIND_LABELS[item.kind] ?? item.kind}
                       </span>
+                      {potentialBreachChip(item)}
                     </div>
-                    <p className="font-bold text-slate-900 mt-1">{item.title}</p>
-                    <p className="text-sm text-slate-500 mt-0.5">{item.reason}</p>
-                    <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 mt-2">
+                    <p className="atlas-plex font-semibold mt-1" style={{ color: "var(--cc-ink)" }}>{item.title}</p>
+                    <p className="text-sm mt-0.5" style={{ color: "var(--cc-muted)" }}>{item.reason}</p>
+                    <div className="flex flex-wrap items-center gap-3 text-[11px] mt-2" style={{ color: "var(--cc-faint)" }}>
                       {item.timestamp && <span>🕒 {relTime(item.timestamp)}</span>}
                       {item.owner && <span>👤 {item.owner}</span>}
                     </div>
@@ -1230,11 +1403,14 @@ function AttentionView({ data, error, formatCurrency, onAction }: {
                     <button
                       key={i}
                       onClick={() => onAction(a)}
-                      className={`text-sm px-4 py-2 rounded-xl font-medium transition-colors ${
-                        i === 0
-                          ? "bg-indigo-600 text-white hover:bg-indigo-700"
-                          : "bg-white border border-slate-200 text-slate-700 hover:bg-slate-100"
+                      className={`text-sm px-4 py-2 rounded-xl font-medium transition-opacity ${
+                        i === 0 ? "" : ""
                       }`}
+                      style={
+                        i === 0
+                          ? { background: "var(--cc-indigo)", color: "#fff" }
+                          : { background: "var(--cc-card)", color: "var(--cc-chip-ink)", border: "1px solid var(--cc-line-2)" }
+                      }
                     >
                       {a.label}
                     </button>

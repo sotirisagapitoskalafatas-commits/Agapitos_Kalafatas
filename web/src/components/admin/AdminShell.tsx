@@ -9,6 +9,11 @@ import {
   type NavItem,
 } from "./nav";
 import { useAdminAuth } from "./AdminAuthProvider";
+import {
+  AtlasThemeProvider,
+  useAtlasTheme,
+  type AtlasFinish,
+} from "./atlasTheme";
 
 type Crumb = { label: string; href?: string };
 
@@ -18,13 +23,149 @@ type AdminShellProps = {
   children: React.ReactNode;
 };
 
-export default function AdminShell({ breadcrumbs, headerRight, children }: AdminShellProps) {
+// Finish switch — the "widget that changes finish 1 or 2" (2a warm paper / 2b night console).
+function FinishSwitch() {
+  const { finish, setFinish } = useAtlasTheme();
+  const options: { key: AtlasFinish; label: string; title: string }[] = [
+    { key: "warm", label: "☀ Paper", title: "2a — warm paper workspace" },
+    { key: "night", label: "🌙 Console", title: "2b — night console" },
+  ];
+  return (
+    <div
+      className="flex rounded-lg p-0.5 gap-0.5"
+      style={{ background: "var(--cc-chip)" }}
+      role="radiogroup"
+      aria-label="Command Center finish"
+    >
+      {options.map((o) => (
+        <button
+          key={o.key}
+          title={o.title}
+          role="radio"
+          aria-checked={finish === o.key}
+          onClick={() => setFinish(o.key)}
+          className={`px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
+            finish === o.key ? "bg-[var(--cc-card)] text-[var(--cc-ink)] shadow-sm" : "text-[var(--cc-glass-ink-dim)]"
+          }`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function navCounts(): { live: number; beta: number; planned: number } {
+  let live = 0;
+  let beta = 0;
+  let planned = 0;
+  for (const g of NAV_GROUPS) {
+    for (const it of g.items) {
+      if (it.state === "live") live++;
+      else if (it.state === "beta") beta++;
+      else planned++;
+    }
+  }
+  return { live, beta, planned };
+}
+
+// Maturity dot — the honest module state (1c). Live/Beta are filled; Planned is a hollow ring.
+function MaturityDot({ state, active }: { state: NavItem["state"]; active?: boolean }) {
+  if (state === "live") {
+    return (
+      <span
+        className="w-[7px] h-[7px] rounded-full flex-none"
+        style={{ background: "var(--cc-live)", boxShadow: "0 0 0 3px var(--cc-live-glow)" }}
+      />
+    );
+  }
+  if (state === "beta") {
+    return <span className="w-[7px] h-[7px] rounded-full flex-none" style={{ background: "var(--cc-beta)" }} />;
+  }
+  // planned — hollow ring, honest: nothing behind it yet
+  return (
+    <span
+      className="w-[7px] h-[7px] rounded-full flex-none"
+      style={{
+        border: `1px solid ${active ? "var(--cc-glass-ink-dim)" : "var(--cc-planned)"}`,
+      }}
+    />
+  );
+}
+
+function SidebarItem({ item, active, onClick }: { item: NavItem; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      title={item.description}
+      className={`w-full flex items-center gap-2.5 rounded-lg text-[13px] transition-colors px-2.5 h-8 ${
+        active
+          ? "font-semibold"
+          : item.state === "planned"
+          ? "text-[var(--cc-glass-ink-dim)]"
+          : "text-[var(--cc-glass-ink)]"
+      }`}
+      style={active ? { background: "var(--cc-glass-active)" } : active ? { background: "var(--cc-glass-active)" } : undefined}
+    >
+      <MaturityDot state={item.state} active={active} />
+      <span className="flex-1 truncate text-left">{item.label}</span>
+      {item.state === "beta" && (
+        <span
+          className="atlas-mono text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider"
+          style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}
+        >
+          beta
+        </span>
+      )}
+    </button>
+  );
+}
+
+function Legend() {
+  const [open, setOpen] = useState(false);
+  const rows: { label: string; node: React.ReactNode }[] = [
+    { label: "Live — real data, safe to use", node: <MaturityDot state="live" /> },
+    { label: "Beta — works, still changing", node: <MaturityDot state="beta" /> },
+    { label: "Planned — nothing behind it yet", node: <MaturityDot state="planned" /> },
+  ];
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="text-[12px] font-medium hover:underline"
+        style={{ color: "var(--cc-indigo-ink)" }}
+      >
+        Legend
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div
+            className="absolute bottom-full mb-2 right-0 z-40 w-56 rounded-xl p-3 space-y-2"
+            style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line-2)", boxShadow: "0 10px 30px -10px var(--cc-shadow)" }}
+          >
+            {rows.map((r) => (
+              <div key={r.label} className="flex items-center gap-2.5 text-[12px]" style={{ color: "var(--cc-glass-ink)" }}>
+                {r.node}
+                <span>{r.label}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AdminShellInner({ breadcrumbs, headerRight, children }: AdminShellProps) {
   const { token, mounted, login, logout } = useAdminAuth();
+  const { finish } = useAtlasTheme();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hidePlanned, setHidePlanned] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -81,8 +222,8 @@ export default function AdminShell({ breadcrumbs, headerRight, children }: Admin
 
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full" />
+      <main className="min-h-screen atlas-canvas flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[var(--cc-indigo)] border-t-transparent rounded-full" />
       </main>
     );
   }
@@ -91,78 +232,81 @@ export default function AdminShell({ breadcrumbs, headerRight, children }: Admin
     return <LoginScreen onLogin={login} />;
   }
 
+  const counts = navCounts();
+  const activeItem = (() => {
+    for (const g of NAV_GROUPS) for (const it of g.items) if (isActive(it)) return it;
+    return null;
+  })();
+
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex">
-      {/* Sidebar */}
+    <main
+      data-atlas-theme={finish}
+      className="min-h-screen atlas-canvas flex"
+    >
+      {/* Sidebar — liquid glass, theme-aware */}
       <aside
         className={`crm-glass-sidebar w-64 flex flex-col fixed inset-y-0 left-0 z-40 transform transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 md:sticky md:top-0`}
       >
-        <div className="p-6 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
-              <span className="text-white font-bold text-sm">A</span>
+        <div className="px-5 py-5">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-9 h-9 rounded-lg flex items-center justify-center flex-none"
+              style={{ background: "var(--cc-card)", border: "1px solid var(--cc-glass-border)", boxShadow: "0 1px 2px var(--cc-shadow-soft)" }}
+            >
+              <span className="atlas-plex text-sm font-bold" style={{ color: "var(--cc-indigo-ink)" }}>
+                A
+              </span>
             </div>
-            <div>
-              <h1 className="text-sm font-bold text-white">Atlas</h1>
-              <p className="text-[10px] text-blue-100/70">Agapitos Kalafatas</p>
+            <div className="min-w-0">
+              <h1 className="atlas-plex text-[14px] font-semibold leading-tight truncate" style={{ color: "var(--cc-glass-ink)" }}>
+                Atlas
+              </h1>
+              <p className="text-[10px] truncate leading-tight" style={{ color: "var(--cc-glass-ink-dim)" }}>
+                Agapitos Kalafatas
+              </p>
             </div>
+          </div>
+
+          {/* Search pill — global search is a later foundation; the affordance stays honest */}
+          <div className="mt-4 flex items-center gap-2 h-9 px-3 rounded-lg" style={{ background: "var(--cc-chip)", color: "var(--cc-glass-ink-dim)" }}>
+            <span className="opacity-70 text-[13px]">⌕</span>
+            <span className="flex-1 text-[12.5px]">Search</span>
+            <span className="atlas-mono text-[9.5px] px-1.5 py-0.5 rounded" style={{ background: "var(--cc-card)", color: "var(--cc-glass-ink-dim)" }}>
+              ⌘K
+            </span>
           </div>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 pb-2 space-y-1 overflow-y-auto">
           {NAV_GROUPS.map((group) => {
             const collapsed = collapsedGroups[group.id] ?? false;
+            const items = group.items.filter((it) => !(hidePlanned && it.state === "planned"));
+            if (items.length === 0) return null;
+            const plannedHidden = hidePlanned ? 0 : group.items.filter((it) => it.state === "planned").length;
             return (
               <div key={group.id} className="mb-1">
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider text-slate-300/70 hover:text-white transition-colors"
+                  className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg group-hover:bg-white/5"
+                  style={{ color: "var(--cc-glass-ink-dim)" }}
                 >
-                  <span>{group.label}</span>
-                  <span className="text-[10px]">{collapsed ? "▸" : "▾"}</span>
+                  <span className="atlas-mono text-[9.5px] font-semibold uppercase tracking-[0.1em]">{group.label}</span>
+                  <span className="text-[9px]">{collapsed ? "▸" : "▾"}</span>
                 </button>
-                {!collapsed && (
+                {collapsed ? (
+                  <div className="px-2 pb-0.5 atlas-mono text-[10px]" style={{ color: "var(--cc-glass-ink-dim)" }}>
+                    {items.filter((i) => i.state === "live" || i.state === "beta").length > 0
+                      ? `${items.filter((i) => i.state === "live" || i.state === "beta").length} live`
+                      : ""}
+                    {plannedHidden > 0 && <span>{items.filter((i) => i.state === "live" || i.state === "beta").length > 0 ? " · " : ""}+{plannedHidden} planned</span>}
+                  </div>
+                ) : (
                   <div className="space-y-0.5 mt-0.5">
-                    {group.items.map((item) => {
-                      const active = isActive(item);
-                      if (item.state === "planned") {
-                        return (
-                          <button
-                            key={item.key}
-                            title={item.description}
-                            onClick={() => onItemClick(item)}
-                            className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                              active
-                                ? "bg-white/15 text-white"
-                                : "text-slate-300/60 hover:text-white hover:bg-white/5"
-                            }`}
-                          >
-                            <span className="text-xs text-slate-400">◌</span>
-                            {item.label}
-                            <span className="ml-auto text-[9px] uppercase tracking-wide bg-white/10 text-slate-300/60 rounded px-1.5 py-0.5">
-                              planned
-                            </span>
-                          </button>
-                        );
-                      }
-                      return (
-                        <button
-                          key={item.key}
-                          title={item.description}
-                          onClick={() => onItemClick(item)}
-                          className={`w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                            active
-                              ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                              : "text-slate-200/80 hover:text-white hover:bg-white/10"
-                          }`}
-                        >
-                          <span className="text-base">●</span>
-                          {item.label}
-                        </button>
-                      );
-                    })}
+                    {items.map((item) => (
+                      <SidebarItem key={item.key} item={item} active={isActive(item)} onClick={() => onItemClick(item)} />
+                    ))}
                   </div>
                 )}
               </div>
@@ -170,10 +314,33 @@ export default function AdminShell({ breadcrumbs, headerRight, children }: Admin
           })}
         </nav>
 
-        <div className="p-3 border-t border-white/10">
+        <div className="px-4 py-3 space-y-3" style={{ borderTop: "1px solid var(--cc-glass-border)" }}>
+          <div className="flex items-center gap-2">
+            <MaturityDot state="live" />
+            <span className="atlas-mono text-[11px]" style={{ color: "var(--cc-glass-ink)" }}>
+              {counts.live + counts.beta} live · {counts.planned} planned
+            </span>
+            <div className="flex-1" />
+            <Legend />
+          </div>
+
+          <label className="flex items-center gap-2 text-[11.5px] cursor-pointer select-none" style={{ color: "var(--cc-glass-ink-dim)" }}>
+            <input
+              type="checkbox"
+              checked={hidePlanned}
+              onChange={(e) => setHidePlanned(e.target.checked)}
+              className="accent-[var(--cc-indigo)]"
+            />
+            Hide planned modules
+          </label>
+
+          <FinishSwitch />
           <button
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm text-slate-200/70 hover:text-red-300 hover:bg-white/10 transition-all"
+            className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-[12.5px] transition-colors"
+            style={{ color: "var(--cc-glass-ink-dim)" }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--cc-chip)")}
+            onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
           >
             <span>🚪</span> Logout
           </button>
@@ -184,13 +351,20 @@ export default function AdminShell({ breadcrumbs, headerRight, children }: Admin
       {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-30 md:hidden" onClick={() => setSidebarOpen(false)} />}
 
       {/* Main Column */}
-      <div className="flex-1 md:ml-64 ml-0 min-w-0 flex flex-col">
+      <div className="flex-1 min-w-0 flex flex-col">
         {/* Breadcrumb header */}
-        <header className="sticky top-0 z-20 bg-white/70 backdrop-blur-md border-b border-slate-200/70">
+        <header
+          className="sticky top-0 z-20 backdrop-blur-xl"
+          style={{
+            background: "color-mix(in srgb, var(--cc-bg) 78%, transparent)",
+            borderBottom: "1px solid var(--cc-line-2)",
+          }}
+        >
           <div className="flex items-center gap-2 px-4 md:px-8 py-3">
             <button
               onClick={() => setSidebarOpen(true)}
-              className="md:hidden p-2 -ml-1 rounded-lg text-slate-700 hover:bg-slate-100"
+              className="md:hidden p-2 -ml-1 rounded-lg hover:bg-white/10"
+              style={{ color: "var(--cc-glass-ink)" }}
               aria-label="Open menu"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -200,13 +374,19 @@ export default function AdminShell({ breadcrumbs, headerRight, children }: Admin
             <nav className="flex items-center gap-1.5 text-sm min-w-0" aria-label="Breadcrumb">
               {breadcrumbs.map((crumb, i) => (
                 <Fragment key={i}>
-                  {i > 0 && <span className="text-slate-400 shrink-0">/</span>}
+                  {i > 0 && (
+                    <span className="shrink-0" style={{ color: "var(--cc-faint)" }}>
+                      {activeItem ? "›" : "/"}
+                    </span>
+                  )}
                   {crumb.href ? (
-                    <a href={crumb.href} className="text-indigo-600 hover:text-indigo-700 font-medium">
+                    <a href={crumb.href} className="font-medium hover:underline" style={{ color: "var(--cc-indigo-ink)" }}>
                       {crumb.label}
                     </a>
                   ) : (
-                    <span className="text-slate-700 font-semibold">{crumb.label}</span>
+                    <span className="font-semibold" style={{ color: "var(--cc-ink)" }}>
+                      {crumb.label}
+                    </span>
                   )}
                 </Fragment>
               ))}
@@ -218,6 +398,14 @@ export default function AdminShell({ breadcrumbs, headerRight, children }: Admin
         <div className="flex-1 p-6 md:p-8 min-w-0">{children}</div>
       </div>
     </main>
+  );
+}
+
+export default function AdminShell(props: AdminShellProps) {
+  return (
+    <AtlasThemeProvider>
+      <AdminShellInner {...props} />
+    </AtlasThemeProvider>
   );
 }
 

@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
 
 :root {
   --foreground: #0f172a;
@@ -649,17 +650,106 @@ section {
 
 /* ─── CRM navy liquid-glass sidebar ─── */
 .crm-glass-sidebar {
-  background: linear-gradient(
-    160deg,
-    rgba(23, 37, 84, 0.55) 0%,
-    rgba(15, 23, 42, 0.45) 30%,
-    rgba(30, 58, 138, 0.45) 55%,
-    rgba(15, 23, 42, 0.75) 100%
-  );
+  background: var(--cc-glass);
   backdrop-filter: blur(22px) saturate(160%);
   -webkit-backdrop-filter: blur(22px) saturate(160%);
-  border-right: 1px solid rgba(148, 163, 184, 0.22);
+  border-right: 1px solid var(--cc-glass-border);
   box-shadow:
-    8px 0 34px -14px rgba(2, 6, 23, 0.55),
+    8px 0 34px -14px var(--cc-shadow),
     inset 0 0 0 1px rgba(255, 255, 255, 0.06);
 }
+
+/* ─── Atlas Command Center finishes (warm paper / night console) ─────────────
+   The SAME markup switches finishes purely by swapping the data-atlas-theme
+   attribute on the shell <main>. All tokens are real CSS variables so both the
+   sidebar and the dashboard can share them. */
+:root {
+  --cc-bg: #f4f2ef;                 /* canvas */
+  --cc-glass: linear-gradient(160deg, rgba(250, 247, 242, 0.62) 0%, rgba(244, 242, 239, 0.68) 45%, rgba(235, 231, 226, 0.8) 100%);
+  --cc-glass-border: rgba(23, 24, 26, 0.08);
+  --cc-glass-ink: #3f434a;
+  --cc-glass-ink-dim: #8a8e95;
+  --cc-glass-active: rgba(255, 255, 255, 0.9);
+  --cc-card: #ffffff;               /* card surfaces */
+  --cc-card-2: #fbfaf8;             /* inner panels / wells */
+  --cc-chip: #ebe7e2;               /* pill backgrounds */
+  --cc-chip-ink: #5b5e64;
+  --cc-ink: #17181a;
+  --cc-ink-2: #3f434a;
+  --cc-muted: #5b5e64;
+  --cc-faint: #8d9299;
+  --cc-line: #ede9e3;               /* hairlines */
+  --cc-line-2: #e4e0d9;
+  --cc-live: #1c6f52;               /* live dot + green accents */
+  --cc-live-glow: rgba(28, 111, 82, 0.14);
+  --cc-beta: #2563eb;
+  --cc-planned: #c9c4bd;            /* hollow ring */
+  --cc-red: #b3392e;
+  --cc-red-ink: #b3392e;
+  --cc-red-chip: #fbeeeb;
+  --cc-amber: #8a6412;
+  --cc-amber-chip: #fdf4e3;
+  --cc-amber-bright: #d99b28;
+  --cc-amber-line: #f2e6cb;
+  --cc-amber-bg: #fdf4e3;
+  --cc-indigo: #2f5fd8;
+  --cc-indigo-ink: #1d4ed8;
+  --cc-indigo-bg: #eef3ff;
+  --cc-blue-line: #dbe7fd;
+  --cc-shadow: rgba(23, 24, 26, 0.35);
+  --cc-shadow-soft: rgba(23, 24, 26, 0.06);
+  --cc-dot-line: rgba(23, 24, 26, 0.25);
+}
+
+[data-atlas-theme="night"] {
+  --cc-bg: #0d0e11;
+  --cc-glass: linear-gradient(160deg, rgba(14, 16, 20, 0.72) 0%, rgba(10, 11, 13, 0.8) 40%, rgba(16, 18, 24, 0.86) 100%);
+  --cc-glass-border: rgba(255, 255, 255, 0.08);
+  --cc-glass-ink: #c8ccd3;
+  --cc-glass-ink-dim: #7b818b;
+  --cc-glass-active: rgba(91, 141, 239, 0.18);
+  --cc-card: #16181c;
+  --cc-card-2: #1c1f25;
+  --cc-chip: rgba(255, 255, 255, 0.07);
+  --cc-chip-ink: #a2a7b0;
+  --cc-ink: #f2f3f5;
+  --cc-ink-2: #dfe2e7;
+  --cc-muted: #9aa0aa;
+  --cc-faint: #7b818b;
+  --cc-line: rgba(255, 255, 255, 0.06);
+  --cc-line-2: rgba(255, 255, 255, 0.1);
+  --cc-live: #4bbf92;
+  --cc-live-glow: rgba(75, 191, 146, 0.18);
+  --cc-beta: #7ea6f5;
+  --cc-planned: #4a4f57;
+  --cc-red: #f2685c;
+  --cc-red-ink: #f2685c;
+  --cc-red-chip: rgba(242, 104, 92, 0.15);
+  --cc-amber: #e0a54a;
+  --cc-amber-chip: rgba(224, 165, 74, 0.14);
+  --cc-amber-bright: #e0a54a;
+  --cc-amber-line: rgba(224, 165, 74, 0.2);
+  --cc-amber-bg: rgba(224, 165, 74, 0.12);
+  --cc-indigo: #7ea6f5;
+  --cc-indigo-ink: #cddcfb;
+  --cc-indigo-bg: rgba(91, 141, 239, 0.16);
+  --cc-blue-line: rgba(126, 166, 245, 0.3);
+  --cc-shadow: rgba(0, 0, 0, 0.55);
+  --cc-shadow-soft: rgba(0, 0, 0, 0.3);
+  --cc-dot-line: rgba(255, 255, 255, 0.2);
+}
+
+.atlas-canvas {
+  background: var(--cc-bg);
+  color: var(--cc-ink);
+  transition: background 0.35s ease, color 0.35s ease;
+}
+
+.atlas-surface {
+  background: var(--cc-card);
+  border: 1px solid var(--cc-line);
+  box-shadow: 0 1px 2px var(--cc-shadow-soft), 0 14px 34px -22px var(--cc-shadow);
+}
+
+.atlas-mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+.atlas-plex { font-family: "IBM Plex Sans", system-ui, sans-serif; }
