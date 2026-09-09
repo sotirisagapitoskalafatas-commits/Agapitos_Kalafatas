@@ -169,8 +169,283 @@ export interface CustomerActivityRow {
   created_at: string;
 }
 
+// ── Service requests (2026-09-08 migration) ──────────────────────────────────
+// One person/lead can have many requests. The request lifecycle is INDEPENDENT
+// of the parent lead lifecycle: a lead may be "customer" while a request is
+// still "new", or "changed_mind" later. Request history lives in activity_log
+// (entity_type="service_request") — nothing is deleted on close/reopen.
+
+export const SERVICE_KINDS = ["energy", "insurance", "web"] as const;
+export type ServiceKind = (typeof SERVICE_KINDS)[number];
+
+export const SERVICE_KIND_LABELS: Record<ServiceKind, string> = {
+  energy: "Energy",
+  insurance: "Insurance",
+  web: "Web / Software",
+};
+
+export const REQUEST_STATUSES = [
+  "new",
+  "contacted",
+  "qualified",
+  "proposal",
+  "negotiation",
+  "won",
+  "lost",
+  "changed_mind",
+  "not_interested",
+  "nurture",
+  "cancelled",
+] as const;
+export type RequestStatus = (typeof REQUEST_STATUSES)[number];
+
+export const REQUEST_PRIORITIES = ["low", "normal", "high", "urgent"] as const;
+export type RequestPriority = (typeof REQUEST_PRIORITIES)[number];
+
+/** Statuses that represent an open/live request. Others are historical/closed. */
+export const ACTIVE_REQUEST_STATUSES: ReadonlySet<RequestStatus> = new Set<RequestStatus>([
+  "new",
+  "contacted",
+  "qualified",
+  "proposal",
+  "negotiation",
+  "nurture",
+]);
+
+export function isActiveRequestStatus(s: RequestStatus): boolean {
+  return ACTIVE_REQUEST_STATUSES.has(s);
+}
+
+export interface ServiceRequestRow {
+  id: string;
+  lead_id: string;
+  service: ServiceKind;
+  service_type: string | null;
+  reason: string | null;
+  description: string | null;
+  status: RequestStatus;
+  priority: RequestPriority;
+  owner: string | null;
+  source: string | null;
+  campaign: string | null;
+  utm_source: string | null;
+  utm_medium: string | null;
+  utm_campaign: string | null;
+  utm_term: string | null;
+  next_action: string | null;
+  lost_reason: string | null;
+  closed_reason: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface ServiceRequestView {
+  id: string;
+  service: ServiceKind;
+  serviceType: string | null;
+  reason: string | null;
+  description: string | null;
+  status: RequestStatus;
+  priority: RequestPriority;
+  owner: string | null;
+  source: string | null;
+  campaign: string | null;
+  nextAction: string | null;
+  lostReason: string | null;
+  closedReason: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+  /** Reconstructed from activity_log — the status to restore when reopening. */
+  reopenStatus?: RequestStatus;
+}
+
+export type ServiceRequestEventLine = ActivityLine;
+
+export type RequestChangeAction =
+  | "created"
+  | "updated"
+  | "status_changed"
+  | "service_changed"
+  | "owner_changed"
+  | "closed"
+  | "reopened";
+
+export interface RequestChangeEvent {
+  action: RequestChangeAction;
+  field?: string;
+  fromValue?: unknown;
+  toValue?: unknown;
+}
+
+export interface RequestPatch {
+  service?: ServiceKind | null;
+  service_type?: string | null;
+  reason?: string | null;
+  description?: string | null;
+  status?: RequestStatus | null;
+  priority?: RequestPriority | null;
+  owner?: string | null;
+  source?: string | null;
+  campaign?: string | null;
+  next_action?: string | null;
+  closed_reason?: string | null;
+  lost_reason?: string | null;
+}
+
+const REQUEST_TEXT_FIELDS: (keyof RequestPatch)[] = [
+  "service_type",
+  "reason",
+  "description",
+  "owner",
+  "source",
+  "campaign",
+  "next_action",
+  "closed_reason",
+  "lost_reason",
+];
+
+/** Pure patch application — returns the new row plus the change events the
+ *  caller should persist to activity_log. "" is normalized to null. */
+export function applyRequestPatch(
+  row: ServiceRequestRow,
+  patch: RequestPatch
+): { row: ServiceRequestRow; events: RequestChangeEvent[] } {
+  const next: ServiceRequestRow = { ...row };
+  const events: RequestChangeEvent[] = [];
+  const wasActive = isActiveRequestStatus(row.status);
+  const willActive = patch.status ? isActiveRequestStatus(patch.status) : wasActive;
+
+  for (const key of Object.keys(patch) as (keyof RequestPatch)[]) {
+    if (key === "status") continue;
+    let value = patch[key];
+    if (value === undefined) continue;
+    if (typeof value === "string" && REQUEST_TEXT_FIELDS.includes(key)) {
+      value = value.trim() === "" ? null : value.trim();
+    }
+    const cur = next[key];
+    if (value === cur) continue;
+    (next as unknown as Record<string, unknown>)[key] = value;
+    const action: RequestChangeEvent["action"] =
+      key === "service" ? "service_changed" : key === "owner" ? "owner_changed" : "updated";
+    events.push({ action, field: key, fromValue: cur as unknown, toValue: value as unknown });
+  }
+
+  if (patch.status && patch.status !== row.status) {
+    events.push({
+      action: "status_changed",
+      field: "status",
+      fromValue: row.status,
+      toValue: patch.status,
+    });
+    next.status = patch.status;
+    if (!wasActive && willActive) events.push({ action: "reopened", field: "status", fromValue: row.status, toValue: patch.status });
+    else if (wasActive && !willActive) events.push({ action: "closed", field: "status", fromValue: row.status, toValue: patch.status });
+  }
+
+  return { row: next, events };
+}
+
+export function requestView(r: ServiceRequestRow): ServiceRequestView {
+  return {
+    id: r.id,
+    service: r.service,
+    serviceType: r.service_type,
+    reason: r.reason,
+    description: r.description,
+    status: r.status,
+    priority: r.priority,
+    owner: r.owner,
+    source: r.source,
+    campaign: r.campaign,
+    nextAction: r.next_action,
+    lostReason: r.lost_reason,
+    closedReason: r.closed_reason,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export function activeRequests(rows: ServiceRequestRow[]): ServiceRequestView[] {
+  return rows.filter((r) => isActiveRequestStatus(r.status)).map(requestView);
+}
+
+export function closedRequests(rows: ServiceRequestRow[]): ServiceRequestView[] {
+  return rows.filter((r) => !isActiveRequestStatus(r.status)).map(requestView);
+}
+
+const REQUEST_EVENT_META: Record<RequestChangeAction, { title: string }> = {
+  created: { title: "Αίτηση υπηρεσίας δημιουργήθηκε" },
+  updated: { title: "Αίτηση ενημερώθηκε" },
+  status_changed: { title: "Κατάσταση άλλαξε" },
+  service_changed: { title: "Υπηρεσία άλλαξε" },
+  owner_changed: { title: "Ανάθεση άλλαξε" },
+  closed: { title: "Αίτηση έκλεισε" },
+  reopened: { title: "Αίτηση άνοιξε ξανά" },
+};
+
+function requestEventDetail(a: CustomerActivityRow): string | null {
+  const d = (typeof a.details === "object" && a.details !== null ? a.details : {}) as Record<string, unknown>;
+  const from = d.fromValue ?? d.from;
+  const to = d.toValue ?? d.to;
+  if (a.action === "status_changed" && (from !== undefined || to !== undefined)) {
+    return [from, to].filter((v) => v !== undefined && v !== null).map(String).join(" → ");
+  }
+  if ((a.action === "service_changed" || a.action === "owner_changed") && (from !== undefined || to !== undefined)) {
+    return [from, to].filter((v) => v !== undefined && v !== null).map(String).join(" → ");
+  }
+  if (typeof d.field === "string" && to !== undefined) return `${d.field}: ${String(to)}`;
+  if (typeof d.note === "string") return d.note;
+  return a.action ?? null;
+}
+
+/** Request history timeline (created + activity_log events), most recent first. */
+export function requestTimeline(r: ServiceRequestRow, activity: CustomerActivityRow[]): ActivityLine[] {
+  const lines: ActivityLine[] = [
+    {
+      id: `request-created-${r.id}`,
+      at: r.created_at,
+      title: REQUEST_EVENT_META.created.title,
+      detail: `${SERVICE_KIND_LABELS[r.service]}${r.service_type ? ` · ${r.service_type}` : ""}`,
+    },
+  ];
+  for (const a of activity) {
+    if (a.entity_id !== r.id) continue;
+    lines.push({
+      id: `request-event-${a.id}`,
+      at: a.created_at,
+      title: REQUEST_EVENT_META[a.action as RequestChangeAction]?.title ?? a.action ?? "Καταγραφή",
+      detail: requestEventDetail(a) ?? null,
+    });
+  }
+  lines.sort((x, y) => new Date(y.at).getTime() - new Date(x.at).getTime());
+  return lines;
+}
+
+/** The last active status of a closed request, reconstructed from its
+ *  activity_log events — used as the natural target when reopening. */
+export function lastActiveRequestStatus(
+  requestId: string,
+  activity: CustomerActivityRow[],
+  requests: ServiceRequestRow[]
+): RequestStatus {
+  const req = requests.find((r) => r.id === requestId);
+  if (req && isActiveRequestStatus(req.status)) return req.status;
+  const events = activity
+    .filter((a) => a.entity_id === requestId)
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  for (const a of events) {
+    const d = (typeof a.details === "object" && a.details !== null ? a.details : {}) as Record<string, unknown>;
+    const from = d.fromValue ?? d.from;
+    const to = d.toValue ?? d.to;
+    if (typeof to === "string" && isActiveRequestStatus(to as RequestStatus)) return to as RequestStatus;
+    if (typeof from === "string" && isActiveRequestStatus(from as RequestStatus)) return from as RequestStatus;
+  }
+  return "new";
+}
+
 export interface Customer360Input {
   leads: CustomerLeadRow[];
+  requests: ServiceRequestRow[];
   deals: CustomerDealRow[];
   invoices: CustomerInvoiceRow[];
   communications: CustomerCommRow[];
@@ -200,6 +475,7 @@ export interface CustomerRecord {
     tasks: number;
     documents: number;
     payments: number;
+    requests: number;
   };
   lastContactAt: string | null;
   createdAt: string;
@@ -300,6 +576,8 @@ export interface Customer360Data {
   };
   relatedLeads: Array<{ key: string; name: string; email: string | null; phone: string | null; status: string | null; matchedBy: "email" | "phone" }>;
   services: string[];
+  requests: ServiceRequestView[];
+  requestHistory: Record<string, ActivityLine[]>;
   energy: {
     provider: string | null;
     program: string | null;
@@ -406,6 +684,7 @@ export function buildCustomerIndex(input: Customer360Input): CustomerIndexData {
     const invoices = input.invoices.filter((i) => i.lead_id === l.id);
     const comms = input.communications.filter((c) => c.lead_id === l.id);
     const events = input.events.filter((e) => e.lead_id === l.id);
+    const reqs = input.requests.filter((r) => r.lead_id === l.id);
     const payments = invoices.filter((i) => i.status === "paid" && i.paid_at);
     const lastContacts = [...comms.map((c) => c.created_at), ...events.map((e) => e.created_at)].filter(Boolean);
     records.push({
@@ -425,6 +704,7 @@ export function buildCustomerIndex(input: Customer360Input): CustomerIndexData {
         tasks: events.filter((e) => (e.event_type ?? "meeting") !== "meeting" || e.completed !== null).length,
         documents: asRecords<unknown>(l.attached_files).length,
         payments: payments.length,
+        requests: reqs.length,
       },
       lastContactAt: lastContacts.sort().at(-1) ?? null,
       createdAt: l.created_at,
@@ -453,7 +733,8 @@ export function activityForLead(l: CustomerLeadRow, input: Customer360Input): Ac
   const comms = idByLead(input.communications);
   const events = idByLead(input.events);
   const reminders = input.reminders.filter((r) => r.lead_id === l.id);
-  const relatedIds = new Set<string>([l.id, ...deals.map((d) => d.id), ...invoices.map((i) => i.id), ...comms.map((c) => c.id), ...events.map((e) => e.id)]);
+  const requests = idByLead(input.requests);
+  const relatedIds = new Set<string>([l.id, ...deals.map((d) => d.id), ...invoices.map((i) => i.id), ...comms.map((c) => c.id), ...events.map((e) => e.id), ...requests.map((r) => r.id)]);
   const lines: ActivityLine[] = [
     { id: "lead-created", at: l.created_at, title: "Lead δημιουργήθηκε", detail: l.service_category ?? null },
   ];
@@ -477,7 +758,11 @@ export function activityForLead(l: CustomerLeadRow, input: Customer360Input): Ac
     lines.push({ id: `reminder-${r.id}`, at: r.created_at, title: "Υπενθύμιση ανανέωσης", detail: r.status ?? null });
     if (r.sent_at) lines.push({ id: `reminder-sent-${r.id}`, at: r.sent_at, title: "Υπενθύμιση ανανέωσης στάλθηκε", detail: null });
   }
+  for (const r of requests) {
+    lines.push(...requestTimeline(r, input.activity));
+  }
   for (const a of input.activity) {
+    if (a.entity_type === "service_request") continue; // rendered per request above
     if (a.entity_id && relatedIds.has(a.entity_id)) {
       lines.push({ id: `activity-${a.id}`, at: a.created_at, title: a.action ?? "Καταγραφή", detail: a.entity_type ?? null });
     }
@@ -495,6 +780,7 @@ export function buildCustomer360(input: Customer360Input, leadId: string): Custo
   const comms = input.communications.filter((c) => c.lead_id === leadId);
   const events = input.events.filter((e) => e.lead_id === leadId);
   const reminders = input.reminders.filter((r) => r.lead_id === leadId);
+  const requests = input.requests.filter((r) => r.lead_id === leadId);
 
   const dealView = (d: CustomerDealRow): DealView => ({
     id: d.id,
@@ -550,6 +836,11 @@ export function buildCustomer360(input: Customer360Input, leadId: string): Custo
     },
     relatedLeads: relatedLeads(l, input.leads),
     services: leadServices(l),
+    requests: requests.map((r) => ({
+      ...requestView(r),
+      reopenStatus: lastActiveRequestStatus(r.id, input.activity, input.requests),
+    })),
+    requestHistory: Object.fromEntries(requests.map((r) => [r.id, requestTimeline(r, input.activity)])),
     energy: {
       provider: l.provider,
       program: l.program,

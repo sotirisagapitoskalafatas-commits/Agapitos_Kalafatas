@@ -14,9 +14,18 @@ import type {
 import type {
   Customer360Data,
   CustomerIndexData,
-  CustomerSectionKey,
+  RequestPriority,
+  RequestStatus,
+  ServiceKind,
+  ServiceRequestView,
 } from "@/lib/spine/customers";
-import { CUSTOMER_SECTIONS } from "@/lib/spine/customers";
+import {
+  isActiveRequestStatus,
+  REQUEST_PRIORITIES,
+  REQUEST_STATUSES,
+  SERVICE_KIND_LABELS,
+  SERVICE_KINDS,
+} from "@/lib/spine/customers";
 
 function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
   const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
@@ -229,6 +238,36 @@ const SEVERITY_META: Record<Severity, { label: string; chip: string; dot: string
   low: { label: "Χαμηλό", chip: "bg-slate-100 text-slate-600", dot: "bg-slate-400" },
 };
 
+// ── Service request presentation (Slice 2: service_requests) ──
+const SERVICE_ICONS: Record<ServiceKind, string> = { energy: "⚡", insurance: "🛡", web: "💻" };
+
+const REQUEST_STATUS_META: Record<RequestStatus, { label: string; chip: string }> = {
+  new: { label: "Νέα", chip: "bg-blue-100 text-blue-700" },
+  contacted: { label: "Επικοινωνήθηκε", chip: "bg-yellow-100 text-yellow-700" },
+  qualified: { label: "Qualified", chip: "bg-cyan-100 text-cyan-700" },
+  proposal: { label: "Πρόταση", chip: "bg-violet-100 text-violet-700" },
+  negotiation: { label: "Διαπραγμάτευση", chip: "bg-orange-100 text-orange-700" },
+  won: { label: "Κερδήθηκε", chip: "bg-green-100 text-green-700" },
+  lost: { label: "Χάθηκε", chip: "bg-red-100 text-red-700" },
+  changed_mind: { label: "Άλλαξε γνώμη", chip: "bg-amber-100 text-amber-700" },
+  not_interested: { label: "Δεν ενδιαφέρεται", chip: "bg-slate-200 text-slate-600" },
+  nurture: { label: "Nurture", chip: "bg-teal-100 text-teal-700" },
+  cancelled: { label: "Ακυρώθηκε", chip: "bg-slate-100 text-slate-500" },
+};
+
+const REQUEST_PRIORITY_META: Record<RequestPriority, { label: string; chip: string }> = {
+  low: { label: "Χαμηλή", chip: "bg-slate-100 text-slate-600" },
+  normal: { label: "Κανονική", chip: "bg-blue-100 text-blue-700" },
+  high: { label: "Υψηλή", chip: "bg-orange-100 text-orange-700" },
+  urgent: { label: "Επείγουσα", chip: "bg-red-100 text-red-700" },
+};
+
+const SERVICE_TYPE_SUGGESTIONS: Record<ServiceKind, string[]> = {
+  energy: ["Ρεύμα", "Φυσικό Αέριο", "Φωτοβολταϊκά", "EV Charging"],
+  insurance: ["Ζωή", "Υγεία", "Αυτοκίνητο", "Κατοικία"],
+  web: ["Software Development", "Website", "Web Design", "Maintenance"],
+};
+
 function relTime(iso: string | null): string {
   if (!iso) return "";
   const diff = Date.now() - new Date(iso).getTime();
@@ -306,6 +345,7 @@ function CRMDashboardInner() {
   const [customersError, setCustomersError] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer360Data | null>(null);
   const [customersBusy, setCustomersBusy] = useState(false);
+  const [reqSignal, setReqSignal] = useState(0);
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showNewDeal, setShowNewDeal] = useState(false);
@@ -462,6 +502,25 @@ function CRMDashboardInner() {
 
   const closeCustomer360 = useCallback(() => setSelectedCustomer(null), []);
 
+  // Create or update a service request, then refresh the 360 view so the new
+  // state (and activity_log history) shows immediately.
+  const saveServiceRequest = useCallback(async (leadId: string, requestId: string | null, payload: Record<string, unknown>) => {
+    const res = await fetch("/api/crm/service-requests", {
+      method: requestId ? "PATCH" : "POST",
+      headers: getAuthHeaders({ "Content-Type": "application/json" }),
+      body: JSON.stringify(requestId ? { ...payload, id: requestId } : { ...payload, lead_id: leadId }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body?.error || "Σφάλμα αποθήκευσης");
+    await openCustomer360(leadId);
+  }, [openCustomer360]);
+
+  // Open the 360 drawer straight into "add request" (used from the lead folder).
+  const open360WithAddRequest = useCallback((id: string) => {
+    openCustomer360(id);
+    setReqSignal((n) => n + 1);
+  }, [openCustomer360]);
+
   // Generalized field updater — PATCHes any subset of lead columns and updates
   // local state optimistically (no full refetch, so drawer inputs keep focus).
   const updateLeadFields = async (id: string, patch: Partial<Lead>) => {
@@ -595,6 +654,7 @@ function CRMDashboardInner() {
           comms={comms}
           events={events}
           onOpen360={(id) => openCustomer360(id)}
+          onAddRequest={(id) => open360WithAddRequest(id)}
         />
       )}
 
@@ -606,6 +666,8 @@ function CRMDashboardInner() {
           onClose={closeCustomer360}
           onBack={() => openCustomer360(selectedCustomer.key)}
           formatCurrency={formatCurrency}
+          onSaveRequest={saveServiceRequest}
+          openRequestSignal={reqSignal}
         />
       )}
 
@@ -1278,6 +1340,7 @@ function CustomersView({ data, busy, error, onRefresh, onOpen, formatCurrency }:
                     <span>{r.counts.payments} πληρωμές</span>
                     <span>{r.counts.communications} επικοινωνίες</span>
                     <span>{r.counts.tasks} εργασίες</span>
+                    <span>{r.counts.requests} αιτήσεις</span>
                     {r.counts.documents > 0 && <span>{r.counts.documents} έγγραφα</span>}
                   </div>
 
@@ -1299,7 +1362,7 @@ function CustomersView({ data, busy, error, onRefresh, onOpen, formatCurrency }:
   );
 }
 
-/* ─── CUSTOMER 360 DRAWER (16-section profile, real data) ─── */
+/* ─── CUSTOMER 360 DRAWER (grouped profile, real data) ─── */
 const SECTION_DOTS: Record<string, { dot: string; label: string }> = {
   live: { dot: "bg-emerald-500", label: "Live" },
   derived: { dot: "bg-blue-500", label: "Derived" },
@@ -1329,105 +1392,768 @@ function PlannedSection({ label, note }: { label: string; note?: string }) {
   );
 }
 
-function Customer360Drawer({ data, busy, onClose, onBack, formatCurrency }: {
+const CUSTOMER_GROUPS: { key: string; label: string; icon: string }[] = [
+  { key: "overview", label: "Overview", icon: "👤" },
+  { key: "requests", label: "Requests", icon: "🧩" },
+  { key: "commercial", label: "Commercial", icon: "💶" },
+  { key: "activity", label: "Activity", icon: "🕓" },
+  { key: "documents", label: "Documents", icon: "📄" },
+  { key: "finance", label: "Finance", icon: "🧾" },
+  { key: "communications", label: "Communications", icon: "✉" },
+];
+
+function Customer360Drawer({ data, busy, onClose, onBack, formatCurrency, onSaveRequest, openRequestSignal }: {
   data: Customer360Data;
   busy: boolean;
   onClose: () => void;
   onBack: () => void;
   formatCurrency: (n: number) => string;
+  onSaveRequest: (leadId: string, requestId: string | null, payload: Record<string, unknown>) => Promise<void>;
+  openRequestSignal: number;
 }) {
   const p = data.profile;
-  const [rail, setRail] = useState<CustomerSectionKey>("profile");
+  const [group, setGroup] = useState("overview");
+  const [reqModal, setReqModal] = useState<null | { mode: "add" } | { mode: "edit"; req: ServiceRequestView }>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const rn = p.renewalState ? CUST_RENEWAL_META[p.renewalState] : null;
 
+  useEffect(() => {
+    if (openRequestSignal > 0) {
+      setGroup("requests");
+      setReqModal({ mode: "add" });
+    }
+  }, [openRequestSignal]);
+
+  const switchGroup = (g: string) => { setGroup(g); setReqModal(null); };
+
+  const save = async (requestId: string | null, payload: Record<string, unknown>) => {
+    setSaving(true); setError("");
+    try {
+      await onSaveRequest(data.key, requestId, payload);
+      setReqModal(null);
+    } catch (e: any) {
+      setError(e?.message ?? "Σφάλμα αποθήκευσης");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const activeRequests = data.requests.filter((r) => isActiveRequestStatus(r.status));
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-end z-50" onClick={onClose}>
-      <div className="bg-white/95 backdrop-blur-xl w-full md:max-w-4xl h-full shadow-2xl overflow-hidden flex flex-col border-l border-slate-200/60" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-slate-200/60 bg-white/90 shrink-0">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <span className="text-[10px] font-semibold uppercase text-indigo-500 bg-indigo-500/10 px-2.5 py-1 rounded-lg">Καρτέλα 360° πελάτη</span>
-              <h2 className="text-2xl font-bold mt-2 text-slate-900">{p.name}</h2>
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500">
-                {p.email && <span>✉ {p.email}</span>}
-                {p.phone && <span>☎ {p.phone}</span>}
-                {p.company && <span>🏢 {p.company}</span>}
-                {(p.address || p.region) && <span>📍 {[p.address, p.region].filter(Boolean).join(", ")}</span>}
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-end z-50" onClick={onClose}>
+        <div className="bg-white/95 backdrop-blur-xl w-full md:max-w-4xl h-full shadow-2xl overflow-hidden flex flex-col border-l border-slate-200/60" onClick={(e) => e.stopPropagation()}>
+          {/* Header */}
+          <div className="px-6 pt-5 pb-4 border-b border-slate-200/60 bg-white/90 shrink-0">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <span className="text-[10px] font-semibold uppercase text-indigo-500 bg-indigo-500/10 px-2.5 py-1 rounded-lg">Καρτέλα 360° πελάτη</span>
+                <h2 className="text-2xl font-bold mt-2 text-slate-900">{p.name}</h2>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-slate-500">
+                  {p.email && <span>✉ {p.email}</span>}
+                  {p.phone && <span>☎ {p.phone}</span>}
+                  {p.company && <span>🏢 {p.company}</span>}
+                  {(p.address || p.region) && <span>📍 {[p.address, p.region].filter(Boolean).join(", ")}</span>}
+                </div>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button onClick={onBack} disabled={busy} className="text-xs px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50">
+                  {busy ? "…" : "↻"}
+                </button>
+                <button onClick={onClose} className="text-slate-500 hover:text-slate-900 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200">✕</button>
               </div>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button onClick={onBack} disabled={busy} className="text-xs px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50">
-                {busy ? "…" : "↻"}
+
+            {/* Quick chips */}
+            <div className="flex flex-wrap items-center gap-2 mt-3">
+              <span className="text-[10px] px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold">
+                {data.isCustomer ? "ΠΕΛΑΤΗΣ" : "Lead"}
+              </span>
+              {p.status && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">{p.status}</span>}
+              {p.serviceCategory && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">{p.serviceCategory}</span>}
+              {p.assignedAgent && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">👤 {p.assignedAgent}</span>}
+              {rn && (
+                <span className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-medium ${rn.chip}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${rn.dot}`} /> {rn.label}
+                </span>
+              )}
+              <button
+                onClick={() => { setGroup("requests"); setReqModal({ mode: "add" }); }}
+                className="text-[10px] px-2.5 py-1 rounded-full bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition-colors"
+              >
+                ＋ Αίτηση
               </button>
-              <button onClick={onClose} className="text-slate-500 hover:text-slate-900 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200">✕</button>
+            </div>
+
+            {/* Group rail */}
+            <div className="flex gap-1.5 mt-4 overflow-x-auto pb-1 -mx-1 px-1">
+              {CUSTOMER_GROUPS.map((g) => {
+                const active = group === g.key;
+                const isRequests = g.key === "requests";
+                const count = isRequests ? activeRequests.length : 0;
+                return (
+                  <button
+                    key={g.key}
+                    onClick={() => switchGroup(g.key)}
+                    className={`shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-medium transition-all ${
+                      active ? "bg-indigo-600 text-white shadow" : "bg-white/70 text-slate-600 border border-slate-200 hover:bg-slate-100"
+                    }`}
+                  >
+                    <span>{g.icon}</span>
+                    {g.label}
+                    {isRequests && count > 0 && (
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-bold ${active ? "bg-white/25 text-white" : "bg-indigo-100 text-indigo-700"}`}>{count}</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Quick chips */}
-          <div className="flex flex-wrap items-center gap-2 mt-3">
-            <span className="text-[10px] px-2 py-1 rounded-full bg-indigo-100 text-indigo-700 font-semibold">
-              {data.isCustomer ? "ΠΕΛΑΤΗΣ" : "Lead"}
-            </span>
-            {p.status && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">{p.status}</span>}
-            {p.serviceCategory && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">{p.serviceCategory}</span>}
-            {p.assignedAgent && <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">👤 {p.assignedAgent}</span>}
-            {rn && (
-              <span className={`flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-medium ${rn.chip}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${rn.dot}`} /> {rn.label}
-              </span>
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-6">
+            {error && (
+              <div className="mb-4 rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700 flex items-center justify-between gap-2">
+                <span>{error}</span>
+                <button onClick={() => setError("")} className="text-red-400 hover:text-red-600 text-xs shrink-0">✕</button>
+              </div>
             )}
+            {group === "overview" && (
+              <OverviewTab data={data} formatCurrency={formatCurrency} onOpenRequests={() => switchGroup("requests")} />
+            )}
+            {group === "requests" && (
+              <RequestsTab
+                data={data}
+                saving={saving}
+                error={error}
+                formatCurrency={formatCurrency}
+                onAdd={() => setReqModal({ mode: "add" })}
+                onEditRequest={(r) => setReqModal({ mode: "edit", req: r })}
+                onSave={save}
+              />
+            )}
+            {group === "commercial" && (
+              <div className="space-y-4">
+                <OpportunitiesSection data={data} formatCurrency={formatCurrency} />
+                <QuotesSection data={data} formatCurrency={formatCurrency} />
+                <RenewalsSection360 data={data} />
+                <PlannedSection label="Συμβόλαια" note="Τα συμβόλαια είναι προγραμματισμένα — καμία εγγραφή πίσω τους ακόμα." />
+              </div>
+            )}
+            {group === "activity" && (
+              <div className="space-y-4">
+                <TasksSection360 data={data} />
+                <ActivitySection data={data} />
+              </div>
+            )}
+            {group === "documents" && <DocumentsSection data={data} />}
+            {group === "finance" && (
+              <div className="space-y-4">
+                <InvoicesSection data={data} formatCurrency={formatCurrency} />
+                <PaymentsSection data={data} formatCurrency={formatCurrency} />
+              </div>
+            )}
+            {group === "communications" && <CommsSection data={data} />}
           </div>
 
-          {/* Section rail */}
-          <div className="flex gap-1.5 mt-4 overflow-x-auto pb-1 -mx-1 px-1">
-            {CUSTOMER_SECTIONS.map((s) => {
-              const m = SECTION_DOTS[s.mode];
-              const active = rail === s.key;
+          <div className="shrink-0 border-t border-slate-200/60 px-6 py-3 text-[11px] text-slate-400 bg-white/90 flex flex-wrap items-center gap-x-4 gap-y-1">
+            <span>Ενημερώθηκε {new Date(data.asOf).toLocaleTimeString("el-GR", { hour: "2-digit", minute: "2-digit" })}</span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${data.isCustomer ? "bg-emerald-500" : "bg-slate-400"}`} />
+              {data.isCustomer ? "Αναγνωρισμένος πελάτης" : "Lead — προεπιλεγμένο προφίλ"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {reqModal && (
+        <RequestFormModal
+          leadName={p.name}
+          mode={reqModal.mode}
+          req={reqModal.mode === "edit" ? reqModal.req : null}
+          onClose={() => setReqModal(null)}
+          onSave={save}
+          saving={saving}
+          error={error}
+        />
+      )}
+    </>
+  );
+}
+
+function OverviewTab({ data, formatCurrency, onOpenRequests }: {
+  data: Customer360Data;
+  formatCurrency: (n: number) => string;
+  onOpenRequests: () => void;
+}) {
+  const active = data.requests.filter((r) => isActiveRequestStatus(r.status));
+  return (
+    <div className="space-y-4">
+      <ProfileSection data={data} formatCurrency={formatCurrency} />
+      <div className="crm-card-3d rounded-2xl p-5">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <SectionHeader label="Service Requests" mode="live" note={`${data.requests.length} συνολικά · ${active.length} ενεργές`} />
+          <button onClick={onOpenRequests} className="text-xs px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors shrink-0">
+            Δες όλες →
+          </button>
+        </div>
+        {active.length === 0 ? (
+          <p className="text-sm text-slate-500 mt-3">
+            Κανένα ανοιχτό αίτημα υπηρεσίας. <span className="text-slate-400">Ξεκίνα με «＋ Αίτηση» ή δες το πλήρες ιστορικό στις Requests.</span>
+          </p>
+        ) : (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {active.map((r) => {
+              const sm = REQUEST_STATUS_META[r.status];
               return (
-                <button
-                  key={s.key}
-                  onClick={() => setRail(s.key)}
-                  className={`shrink-0 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-xl font-medium transition-all ${
-                    active ? "bg-indigo-600 text-white shadow" : "bg-white/70 text-slate-600 border border-slate-200 hover:bg-slate-100"
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${m.dot} ${active ? "bg-white" : ""}`} />
-                  {s.label}
-                </button>
+                <span key={r.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
+                  <span>{SERVICE_ICONS[r.service]}</span>
+                  {SERVICE_KIND_LABELS[r.service]}
+                  {r.serviceType ? ` · ${r.serviceType}` : ""}
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-semibold ${sm.chip}`}>{sm.label}</span>
+                </span>
               );
             })}
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function RequestsTab({ data, saving, error, formatCurrency, onAdd, onEditRequest, onSave }: {
+  data: Customer360Data;
+  saving: boolean;
+  error: string | null;
+  formatCurrency: (n: number) => string;
+  onAdd: () => void;
+  onEditRequest: (r: ServiceRequestView) => void;
+  onSave: (requestId: string | null, payload: Record<string, unknown>) => void;
+}) {
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const all = [...data.requests].sort((a, b) =>
+    (b.updatedAt ?? b.createdAt).localeCompare(a.updatedAt ?? a.createdAt)
+  );
+  const active = all.filter((r) => isActiveRequestStatus(r.status));
+  const closed = all.filter((r) => !isActiveRequestStatus(r.status));
+  const detail = detailId ? all.find((r) => r.id === detailId) ?? null : null;
+
+  if (all.length === 0) {
+    return (
+      <div className="space-y-4">
+        <div className="crm-card-3d rounded-2xl p-8 text-center">
+          <p className="font-bold text-slate-900">Καμία αίτηση υπηρεσίας ακόμα</p>
+          <p className="text-sm text-slate-500 mt-2 max-w-lg mx-auto">
+            Αυτό το lead δεν έχει ακόμα καμία αίτηση υπηρεσίας. Πρόσθεσε την πρώτη για να ξεκινήσει ο φάκελος.
+          </p>
+          <button onClick={onAdd} className="mt-4 text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors">
+            ＋ Αίτηση
+          </button>
+        </div>
+        <ServiceMatrix data={data} />
+      </div>
+    );
+  }
+
+  if (detail) {
+    return (
+      <RequestDetail
+        data={data}
+        r={detail}
+        saving={saving}
+        error={error}
+        formatCurrency={formatCurrency}
+        onBack={() => setDetailId(null)}
+        onEditRequest={onEditRequest}
+        onSave={onSave}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <SectionHeader label="Service Requests" mode="live" note={`${active.length} ενεργές · ${closed.length} κλειστές`} />
+        <button onClick={onAdd} className="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors shrink-0">
+          ＋ Νέα αίτηση
+        </button>
+      </div>
+
+      {active.length === 0 ? (
+        <div className="crm-card-3d rounded-2xl p-6 text-center">
+          <p className="font-medium text-slate-700">Καμία ενεργή αίτηση</p>
+          <p className="text-xs text-slate-500 mt-1">Όλες οι αιτήσεις αυτού του lead είναι κλειστές.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {active.map((r) => (
+            <RequestCard key={r.id} r={r} saving={saving} onOpen={() => setDetailId(r.id)} onEdit={() => onEditRequest(r)} />
+          ))}
+        </div>
+      )}
+
+      {closed.length > 0 && (
+        <>
+          <div className="pt-2">
+            <SectionHeader label="Αρχείο" mode="derived" note={`${closed.length} κλειστές`} />
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {closed.map((r) => (
+              <RequestCard key={r.id} r={r} saving={saving} onOpen={() => setDetailId(r.id)} onEdit={() => onEditRequest(r)} />
+            ))}
+          </div>
+        </>
+      )}
+
+      <ServiceMatrix data={data} />
+    </div>
+  );
+}
+
+function RequestCard({ r, saving, onOpen, onEdit }: {
+  r: ServiceRequestView;
+  saving: boolean;
+  onOpen: () => void;
+  onEdit: () => void;
+}) {
+  const sm = REQUEST_STATUS_META[r.status];
+  const pm = REQUEST_PRIORITY_META[r.priority];
+  const ago = relTime(r.updatedAt ?? r.createdAt);
+  return (
+    <div className="crm-card-3d rounded-2xl p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <span className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-lg shrink-0">{SERVICE_ICONS[r.service]}</span>
+          <div className="min-w-0">
+            <p className="font-bold text-slate-900">{SERVICE_KIND_LABELS[r.service]}</p>
+            {r.serviceType && <p className="text-xs text-slate-500 truncate">{r.serviceType}</p>}
+          </div>
+        </div>
+        <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold shrink-0 ${sm.chip}`}>{sm.label.toUpperCase()}</span>
+      </div>
+
+      {r.reason && <p className="text-sm text-slate-600 mt-2 line-clamp-2">{r.reason}</p>}
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-[11px] text-slate-500">
+        <span className="inline-flex items-center gap-1.5">
+          <span className={`w-1.5 h-1.5 rounded-full ${pm.chip.split(" ")[0]}`} />
+          {pm.label}
+        </span>
+        {r.owner && <span>👤 {r.owner}</span>}
+        {r.nextAction && <span>Επόμενη ενέργεια: {r.nextAction}</span>}
+        {ago && <span className="text-slate-400">επεξεργάστηκε {ago}</span>}
+      </div>
+
+      <div className="flex flex-wrap gap-2 mt-3">
+        <button onClick={onOpen} disabled={saving} className="text-xs px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50">Άνοιγμα</button>
+        <button onClick={onEdit} disabled={saving} className="text-xs px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50">Επεξεργασία</button>
+      </div>
+    </div>
+  );
+}
+
+function RequestDetail({ data, r, saving, error, formatCurrency, onBack, onEditRequest, onSave }: {
+  data: Customer360Data;
+  r: ServiceRequestView;
+  saving: boolean;
+  error: string | null;
+  formatCurrency: (n: number) => string;
+  onBack: () => void;
+  onEditRequest: (r: ServiceRequestView) => void;
+  onSave: (requestId: string | null, payload: Record<string, unknown>) => void;
+}) {
+  void formatCurrency;
+  const sm = REQUEST_STATUS_META[r.status];
+  const pm = REQUEST_PRIORITY_META[r.priority];
+  const [status, setStatus] = useState<RequestStatus>(r.status);
+  const [closing, setClosing] = useState(false);
+  const [closeStatus, setCloseStatus] = useState<RequestStatus>("changed_mind");
+  const [closeReason, setCloseReason] = useState("");
+  const history = data.requestHistory?.[r.id] ?? [];
+  const act = isActiveRequestStatus(r.status);
+
+  const closePayload = () =>
+    closeStatus === "lost"
+      ? { status: closeStatus, lost_reason: closeReason.trim() || null, closed_reason: null }
+      : { status: closeStatus, closed_reason: closeReason.trim() || null, lost_reason: null };
+
+  return (
+    <div className="space-y-4">
+      <button onClick={onBack} className="text-xs px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">← Πίσω στις αιτήσεις</button>
+
+      <div className="crm-card-3d rounded-2xl p-5">
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-2xl shrink-0">{SERVICE_ICONS[r.service]}</span>
+            <div className="min-w-0">
+              <p className="text-lg font-bold text-slate-900">{SERVICE_KIND_LABELS[r.service]}</p>
+              {r.serviceType && <p className="text-sm text-slate-500 truncate">{r.serviceType}</p>}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <span className={`text-[10px] px-2 py-1 rounded-full font-semibold ${sm.chip}`}>{sm.label.toUpperCase()}</span>
+            <span className="text-[10px] px-2 py-1 rounded-full bg-slate-100 text-slate-600">{pm.label}</span>
+          </div>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {rail === "profile" && <ProfileSection data={data} formatCurrency={formatCurrency} />}
-          {rail === "leads" && <LeadsSection data={data} />}
-          {rail === "opportunities" && <OpportunitiesSection data={data} formatCurrency={formatCurrency} />}
-          {rail === "services" && <ServicesSection data={data} />}
-          {rail === "energy" && <EnergySection data={data} />}
-          {rail === "documents" && <DocumentsSection data={data} />}
-          {rail === "quotes" && <QuotesSection data={data} formatCurrency={formatCurrency} />}
-          {rail === "renewals" && <RenewalsSection360 data={data} />}
-          {rail === "tasks" && <TasksSection360 data={data} />}
-          {rail === "communications" && <CommsSection data={data} />}
-          {rail === "invoices" && <InvoicesSection data={data} formatCurrency={formatCurrency} />}
-          {rail === "payments" && <PaymentsSection data={data} formatCurrency={formatCurrency} />}
-          {rail === "activity" && <ActivitySection data={data} />}
-          {rail === "insurance" && <PlannedSection label="Ασφάλειες" note="Τα ασφαλιστικά συμβόλαια είναι προγραμματισμένα — καμία εγγραφή πίσω τους ακόμα." />}
-          {rail === "web" && <PlannedSection label="Web Projects" note="Τα web έργα είναι προγραμματισμένα — καμία εγγραφή πίσω τους ακόμα." />}
-          {rail === "contracts" && <PlannedSection label="Συμβόλαια" note="Τα συμβόλαια είναι προγραμματισμένα — καμία εγγραφή πίσω τους ακόμα." />}
-        </div>
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          {r.reason && <KVField label="Reason" value={r.reason} />}
+          {r.description && <KVField label="Περιγραφή" value={r.description} />}
+          {r.source && <KVField label="Πηγή" value={r.source} />}
+          {r.campaign && <KVField label="Καμπάνια" value={r.campaign} />}
+          {r.owner && <KVField label="Ανάθεση" value={r.owner} />}
+          {r.nextAction && <KVField label="Επόμενη ενέργεια" value={r.nextAction} />}
+          {r.lostReason && <KVField label="Λόγος απώλειας" value={r.lostReason} />}
+          {r.closedReason && <KVField label="Λόγος κλεισίματος" value={r.closedReason} />}
+          <KVField label="Δημιουργήθηκε" value={r.createdAt ? new Date(r.createdAt).toLocaleString("el-GR") : null} />
+          {r.updatedAt && <KVField label="Ενημερώθηκε" value={new Date(r.updatedAt).toLocaleString("el-GR")} />}
+        </dl>
+      </div>
 
-        <div className="shrink-0 border-t border-slate-200/60 px-6 py-3 text-[11px] text-slate-400 bg-white/90 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span>Ενημερώθηκε {new Date(data.asOf).toLocaleTimeString("el-GR", { hour: "2-digit", minute: "2-digit" })}</span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className={`w-1.5 h-1.5 rounded-full ${data.isCustomer ? "bg-emerald-500" : "bg-slate-400"}`} />
-            {data.isCustomer ? "Αναγνωρισμένος πελάτης" : "Lead — προεπιλεγμένο προφίλ"}
-          </span>
+      <ServiceContextPanel data={data} r={r} />
+
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Ιστορικό" mode="live" note="activity_log" />
+        {history.length === 0 ? (
+          <p className="text-sm text-slate-500 mt-3">Κανένα γεγονός για αυτήν την αίτηση.</p>
+        ) : (
+          <div className="relative mt-3">
+            <div className="absolute left-2.5 top-0 bottom-0 w-px bg-slate-200" />
+            <div className="space-y-2.5">
+              {history.map((a) => (
+                <div key={a.id} className="relative pl-8">
+                  <span className="absolute left-1.5 top-1.5 w-2.5 h-2.5 rounded-full bg-indigo-400 ring-4 ring-white" />
+                  <div className="rounded-xl px-3 py-2 bg-slate-50 border border-slate-100">
+                    <p className="text-sm text-slate-800">{a.title}</p>
+                    {a.detail && <p className="text-[11px] text-slate-500 mt-0.5">{a.detail}</p>}
+                    <p className="text-[10px] text-slate-400 mt-1">{new Date(a.at).toLocaleString("el-GR")}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Ενέργειες" mode="live" />
+        {act ? (
+          <div className="space-y-4 mt-3">
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-[10px] uppercase tracking-wide text-slate-400 font-medium mb-1">Αλλαγή κατάστασης</label>
+                <select value={status} onChange={(e) => setStatus(e.target.value as RequestStatus)} className="text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500">
+                  {REQUEST_STATUSES.map((s) => <option key={s} value={s}>{REQUEST_STATUS_META[s].label}</option>)}
+                </select>
+              </div>
+              <button
+                onClick={() => { if (status !== r.status) onSave(r.id, { status }); }}
+                disabled={saving || status === r.status}
+                className="text-xs px-3 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+              >
+                {saving ? "…" : status !== r.status ? "Αποθήκευση" : "Αποθηκεύτηκε"}
+              </button>
+            </div>
+
+            <div className="border-t border-slate-100 pt-4">
+              <p className="text-xs font-semibold text-slate-700">Κλείσιμο (δεν διαγράφει τίποτα — η ιστορία μένει)</p>
+              <div className="flex flex-wrap items-end gap-3 mt-2">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wide text-slate-400 font-medium mb-1">Κατάσταση κλεισίματος</label>
+                  <select value={closeStatus} onChange={(e) => setCloseStatus(e.target.value as RequestStatus)} className="text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 outline-none focus:ring-2 focus:ring-indigo-500">
+                    {REQUEST_STATUSES.filter((s) => !isActiveRequestStatus(s)).map((s) => <option key={s} value={s}>{REQUEST_STATUS_META[s].label}</option>)}
+                  </select>
+                </div>
+                <div className="flex-1 min-w-[180px]">
+                  <label className="block text-[10px] uppercase tracking-wide text-slate-400 font-medium mb-1">Λόγος</label>
+                  <input value={closeReason} onChange={(e) => setCloseReason(e.target.value)} placeholder={closeStatus === "lost" ? "Λόγος απώλειας" : "Λόγος κλεισίματος"} className="w-full p-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500" />
+                </div>
+                <button
+                  onClick={() => { setClosing(true); onSave(r.id, closePayload()); }}
+                  disabled={saving}
+                  className="text-xs px-3 py-2 rounded-xl bg-amber-600 text-white font-medium hover:bg-amber-700 disabled:opacity-40 transition-colors"
+                >
+                  {saving ? "…" : "Κλείσιμο"}
+                </button>
+              </div>
+              {closing && !error && <p className="text-[11px] text-slate-400 mt-2">Αποθηκεύεται…</p>}
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3 mt-3">
+            <p className="text-sm text-slate-600">
+              Αυτή η αίτηση είναι κλειστή ({sm.label.toLowerCase()}).
+              {r.closedReason ? ` Λόγος: ${r.closedReason}` : ""}
+              {r.lostReason ? ` Λόγος απώλειας: ${r.lostReason}` : ""}
+            </p>
+            <button
+              onClick={() => onSave(r.id, { status: r.reopenStatus ?? "new", closed_reason: null, lost_reason: null })}
+              disabled={saving}
+              className="text-xs px-3 py-2 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 disabled:opacity-40 transition-colors"
+            >
+              {saving ? "…" : "Επανάνοιγμα"}
+            </button>
+          </div>
+        )}
+        <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-slate-100">
+          <button onClick={() => onEditRequest(r)} disabled={saving} className="text-xs px-3 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50">
+            Επεξεργασία αίτησης
+          </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ServiceMatrix({ data }: { data: Customer360Data }) {
+  return (
+    <div className="crm-card-3d rounded-2xl p-5">
+      <SectionHeader label="Υπηρεσίες" mode="live" note="Τι έχει ζητηθεί για αυτόν τον πελάτη" />
+      <div className="flex flex-wrap gap-2 mt-3">
+        {SERVICE_KINDS.map((k) => {
+          const metas = data.requests.filter((r) => r.service === k);
+          const latest = metas[0];
+          return (
+            <div key={k} className={`rounded-xl border p-3 flex items-center gap-2.5 ${latest ? "bg-slate-50 border-slate-200" : "border-dashed border-slate-300"}`}>
+              <span className="text-lg">{SERVICE_ICONS[k]}</span>
+              <div>
+                <p className="text-xs font-bold text-slate-800">{SERVICE_KIND_LABELS[k]}</p>
+                {latest ? (
+                  latest.serviceType ? (
+                    <p className="text-[10px] text-slate-500">{latest.serviceType} · {REQUEST_STATUS_META[latest.status].label}</p>
+                  ) : (
+                    <p className="text-[10px] text-slate-500">{REQUEST_STATUS_META[latest.status].label}</p>
+                  )
+                ) : (
+                  <p className="text-[10px] text-slate-400">Δεν έχει ζητηθεί ακόμα</p>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ServiceContextPanel({ data, r }: { data: Customer360Data; r: ServiceRequestView }) {
+  if (r.service === "energy") {
+    const e = data.energy;
+    const rn = data.profile.renewalState ? CUST_RENEWAL_META[data.profile.renewalState] : null;
+    return (
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Ενεργειακό πλαίσιο" mode="live" note="Πραγματικά στοιχεία από τη βάση" />
+        <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+          <KVField label="Πάροχος" value={e.provider} />
+          <KVField label="Πρόγραμμα" value={e.program} />
+          <KVField label="Ημ. ανανέωσης" value={data.profile.renewalDate} />
+        </dl>
+        {rn && (
+          <span className={`inline-flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-full font-medium mt-3 ${rn.chip}`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${rn.dot}`} /> {rn.label}
+          </span>
+        )}
+        {e.supplies.length > 0 && (
+          <div className="mt-4">
+            <p className="text-[10px] uppercase tracking-wide text-slate-400 font-medium">Παροχές</p>
+            <div className="space-y-2 mt-2">
+              {e.supplies.map((s, i) => (
+                <div key={i} className="bg-slate-100/70 rounded-xl p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-medium text-slate-800 text-sm">{s.type || "Παροχή"}</span>
+                    {s.supply_number && <span className="text-xs text-slate-500 font-mono">{s.supply_number}</span>}
+                  </div>
+                  {(s.address || s.provider) && <p className="text-xs text-slate-500 mt-1">{[s.provider, s.address].filter(Boolean).join(" · ")}</p>}
+                  {s.notes && <p className="text-xs text-slate-500 mt-1">{s.notes}</p>}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (r.service === "insurance") {
+    return (
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Ασφαλιστικό πλαίσιο" mode="planned" note="Αναμένεται σύστημα συμβολαίων" />
+        <p className="text-sm text-slate-500 mt-2">
+          Τα συμβόλαια (Policy/Provider/Product/Coverage/Premium/Renewal/Quote) δεν έχουν ακόμα σύστημα.
+          Δεν εμφανίζεται κανένα πλασματικό δεδομένο εδώ — μόνο αυτή η αίτηση υπηρεσίας είναι πραγματική.
+        </p>
+      </div>
+    );
+  }
+
+  if (r.service === "web") {
+    return (
+      <div className="crm-card-3d rounded-2xl p-5">
+        <SectionHeader label="Web project" mode="planned" note="Αναμένεται σύστημα έργων" />
+        <p className="text-sm text-slate-500 mt-2">
+          Τα web projects (Project/Scope/Budget/Proposal/Contract/Hosting/Domain/Maintenance) δεν έχουν ακόμα σύστημα.
+          Δεν εμφανίζεται κανένα πλασματικό δεδομένο εδώ — μόνο αυτή η αίτηση υπηρεσίας είναι πραγματική.
+        </p>
+      </div>
+    );
+  }
+
+  return null;
+}
+
+function RequestFormModal({ leadName, mode, req, onClose, onSave, saving, error }: {
+  leadName: string;
+  mode: "add" | "edit";
+  req: ServiceRequestView | null;
+  onClose: () => void;
+  onSave: (requestId: string | null, payload: Record<string, unknown>) => void;
+  saving: boolean;
+  error: string | null;
+}) {
+  const [service, setService] = useState<ServiceKind>(req?.service ?? "energy");
+  const [serviceType, setServiceType] = useState(req?.serviceType ?? "");
+  const [reason, setReason] = useState(req?.reason ?? "");
+  const [description, setDescription] = useState(req?.description ?? "");
+  const [status, setStatus] = useState<RequestStatus>(req?.status ?? "new");
+  const [priority, setPriority] = useState<RequestPriority>(req?.priority ?? "normal");
+  const [source, setSource] = useState(req?.source ?? "");
+  const [campaign, setCampaign] = useState(req?.campaign ?? "");
+  const [owner, setOwner] = useState(req?.owner ?? "");
+  const [nextAction, setNextAction] = useState(req?.nextAction ?? "");
+  const [closedReason, setClosedReason] = useState(req?.closedReason ?? "");
+  const [lostReason, setLostReason] = useState(req?.lostReason ?? "");
+  const [err, setErr] = useState("");
+
+  const submit = (e: { preventDefault: () => void }) => {
+    e.preventDefault();
+    if (!service) { setErr("Η υπηρεσία είναι υποχρεωτική."); return; }
+    onSave(req?.id ?? null, {
+      service,
+      service_type: serviceType.trim() || null,
+      reason: reason.trim() || null,
+      description: description.trim() || null,
+      status,
+      priority,
+      source: source.trim() || null,
+      campaign: campaign.trim() || null,
+      owner: owner.trim() || null,
+      next_action: nextAction.trim() || null,
+      closed_reason: closedReason.trim() || null,
+      lost_reason: lostReason.trim() || null,
+    });
+  };
+
+  const inputCls = "w-full p-2.5 bg-slate-100/80 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500";
+  const labelCls = "block text-[10px] uppercase tracking-wide text-slate-400 font-medium mb-1";
+
+  return (
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60] flex items-center justify-center p-4" onClick={onClose}>
+      <form
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto p-6"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <span className="text-[10px] font-semibold uppercase text-indigo-500 bg-indigo-500/10 px-2.5 py-1 rounded-lg">
+              {mode === "edit" ? "Επεξεργασία αίτησης" : "Νέα αίτηση υπηρεσίας"}
+            </span>
+            <h3 className="text-lg font-bold text-slate-900 mt-2">{leadName}</h3>
+          </div>
+          <button type="button" onClick={onClose} className="text-slate-400 hover:text-slate-900 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-100 transition-colors">✕</button>
+        </div>
+
+        <div className="space-y-4 mt-5">
+          <div>
+            <label className={labelCls}>Υπηρεσία *</label>
+            <select value={service} onChange={(e) => setService(e.target.value as ServiceKind)} className={inputCls}>
+              {SERVICE_KINDS.map((k) => <option key={k} value={k}>{SERVICE_KIND_LABELS[k]}</option>)}
+            </select>
+          </div>
+
+          <div>
+            <label className={labelCls}>Τύπος υπηρεσίας</label>
+            <input
+              list="sr-service-types"
+              value={serviceType}
+              onChange={(e) => setServiceType(e.target.value)}
+              placeholder={`π.χ. ${SERVICE_TYPE_SUGGESTIONS[service][0] ?? ""}`}
+              className={inputCls}
+            />
+            <datalist id="sr-service-types">
+              {SERVICE_TYPE_SUGGESTIONS[service].map((t) => <option key={t} value={t} />)}
+            </datalist>
+          </div>
+
+          <div>
+            <label className={labelCls}>Reason</label>
+            <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={2} className={inputCls} placeholder="Γιατί προέκυψε αυτή η αίτηση;" />
+          </div>
+
+          <div>
+            <label className={labelCls}>Περιγραφή</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className={inputCls} placeholder="Λεπτομέρειες της αίτησης" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Κατάσταση</label>
+              <select value={status} onChange={(e) => setStatus(e.target.value as RequestStatus)} className={inputCls}>
+                {REQUEST_STATUSES.map((s) => <option key={s} value={s}>{REQUEST_STATUS_META[s].label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Προτεραιότητα</label>
+              <select value={priority} onChange={(e) => setPriority(e.target.value as RequestPriority)} className={inputCls}>
+                {REQUEST_PRIORITIES.map((s) => <option key={s} value={s}>{REQUEST_PRIORITY_META[s].label}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={labelCls}>Πηγή</label>
+              <input value={source} onChange={(e) => setSource(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Καμπάνια</label>
+              <input value={campaign} onChange={(e) => setCampaign(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Ανάθεση</label>
+              <input value={owner} onChange={(e) => setOwner(e.target.value)} className={inputCls} />
+            </div>
+            <div>
+              <label className={labelCls}>Επόμενη ενέργεια</label>
+              <input value={nextAction} onChange={(e) => setNextAction(e.target.value)} className={inputCls} />
+            </div>
+          </div>
+
+          {mode === "edit" && !isActiveRequestStatus(status) && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Λόγος κλεισίματος</label>
+                <input value={closedReason} onChange={(e) => setClosedReason(e.target.value)} className={inputCls} />
+              </div>
+              <div>
+                <label className={labelCls}>Λόγος απώλειας</label>
+                <input value={lostReason} onChange={(e) => setLostReason(e.target.value)} className={inputCls} />
+              </div>
+            </div>
+          )}
+
+          {err && <p className="text-sm text-red-600">{err}</p>}
+          {error && <p className="text-sm text-red-600">{error}</p>}
+
+          <div className="flex flex-wrap justify-end gap-2 pt-1">
+            <button type="button" onClick={onClose} disabled={saving} className="text-xs px-4 py-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-50">
+              Άκυρο
+            </button>
+            <button type="submit" disabled={saving} className="text-sm px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-40 transition-colors">
+              {saving ? "Αποθήκευση…" : mode === "edit" ? "Αποθήκευση" : "Δημιουργία"}
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   );
 }
@@ -1442,14 +2168,10 @@ function ProfileSection({ data, formatCurrency }: { data: Customer360Data; forma
     ["Διεύθυνση", p.address],
     ["Περιοχή", p.region],
     ["Κατάσταση", p.status],
-    ["Υπηρεσία", p.serviceCategory],
-    ["Πάροχος", p.provider],
-    ["Πρόγραμμα", p.program],
     ["Πηγή", p.source],
     ["Τύπος", p.leadType],
     ["Συνεργάτης", p.partner],
     ["Ανάθεση", p.assignedAgent],
-    ["Ημ. ανανέωσης", p.renewalDate],
     ["Συναίνεση GDPR", p.gdprConsent ? "Ναι" : p.gdprConsent === null ? "—" : "Όχι"],
     ["Έκδοση συναίνεσης", p.consentVersion],
     ["Πηγή συναίνεσης", p.consentSource],
@@ -1508,21 +2230,6 @@ function SectionHeader({ label, mode, note }: { label: string; mode: string; not
   );
 }
 
-function LeadsSection({ data }: { data: Customer360Data }) {
-  return (
-    <div className="crm-card-3d rounded-2xl p-5">
-      <SectionHeader label="Leads" mode="live" note={CUSTOMER_SECTIONS.find((s) => s.key === "leads")?.note} />
-      <p className="text-sm text-slate-700 mt-3">
-        Αυτό το προφίλ προέρχεται από το lead με αναγνωριστικό <code className="text-xs bg-slate-100 px-1.5 py-0.5 rounded">{data.key}</code>.
-      </p>
-      <p className="text-sm text-slate-600 mt-1">
-        Προς το παρόν η δομή αποθηκεύει ένα lead ανά εγγραφή, οπότε εδώ εμφανίζεται το ίδιο το προφίλ.
-        Η αντιστοίχιση πολλαπλών leads (π.χ. το ίδιο email/τηλέφωνο) εμφανίζεται στο «Profile» ως πιθανά διπλότυπα.
-      </p>
-    </div>
-  );
-}
-
 function OpportunitiesSection({ data, formatCurrency }: { data: Customer360Data; formatCurrency: (n: number) => string }) {
   return (
     <div className="space-y-4">
@@ -1551,59 +2258,6 @@ function OpportunitiesSection({ data, formatCurrency }: { data: Customer360Data;
           ))}
         </div>
       )}
-    </div>
-  );
-}
-
-function ServicesSection({ data }: { data: Customer360Data }) {
-  return (
-    <div className="crm-card-3d rounded-2xl p-5">
-      <SectionHeader label="Services" mode="live" note="Υπηρεσίες από κατηγορία, tags και παροχές" />
-      {data.services.length === 0 ? (
-        <p className="text-sm text-slate-500 mt-3">Καμία υπηρεσία καταγεγραμμένη.</p>
-      ) : (
-        <div className="flex flex-wrap gap-2 mt-3">
-          {data.services.map((s) => (
-            <span key={s} className="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 text-sm font-medium">{s}</span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function EnergySection({ data }: { data: Customer360Data }) {
-  const e = data.energy;
-  return (
-    <div className="space-y-4">
-      <div className="crm-card-3d rounded-2xl p-5">
-        <SectionHeader label="Energy" mode="live" note="Πάροχος, πρόγραμμα, παροχές" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-          <KVField label="Πάροχος" value={e.provider} />
-          <KVField label="Πρόγραμμα" value={e.program} />
-        </div>
-      </div>
-      <div className="crm-card-3d rounded-2xl p-5">
-        <SectionHeader label="Παροχές (supplies)" mode="live" />
-        {e.supplies.length === 0 ? (
-          <p className="text-sm text-slate-500 mt-3">Καμία παροχή καταγεγραμμένη.</p>
-        ) : (
-          <div className="space-y-3 mt-3">
-            {e.supplies.map((s, i) => (
-              <div key={i} className="bg-slate-100/70 rounded-xl p-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="font-medium text-slate-800 text-sm">{s.type || "Παροχή"}</span>
-                  {s.supply_number && <span className="text-xs text-slate-500 font-mono">{s.supply_number}</span>}
-                </div>
-                {(s.address || s.provider) && (
-                  <p className="text-xs text-slate-500 mt-1">{[s.provider, s.address].filter(Boolean).join(" · ")}</p>
-                )}
-                {s.notes && <p className="text-xs text-slate-500 mt-1">{s.notes}</p>}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -2504,7 +3158,7 @@ function Timeline({ lead, comms, events, docCount }: { lead: Lead; comms: CommRe
 /* ─── LEAD FOLDER (tabbed drawer) ─── */
 type FolderTab = "genika" | "paroxes" | "synergates" | "eggrafa" | "prosfores" | "istoriko";
 
-function LeadDrawer({ lead, onClose, onErased, updateFields, comms, events, onOpen360 }: {
+function LeadDrawer({ lead, onClose, onErased, updateFields, comms, events, onOpen360, onAddRequest }: {
   lead: Lead;
   onClose: () => void;
   onErased: (id: string) => void;
@@ -2512,6 +3166,7 @@ function LeadDrawer({ lead, onClose, onErased, updateFields, comms, events, onOp
   comms: CommRecord[];
   events: CalendarEvent[];
   onOpen360: (id: string) => void;
+  onAddRequest: (id: string) => void;
 }) {
   const [tab, setTab] = useState<FolderTab>("genika");
   const [groups, setGroups] = useState<Record<string, { name: string; url: string; path: string; type: string }[]>>({});
@@ -2629,6 +3284,9 @@ function LeadDrawer({ lead, onClose, onErased, updateFields, comms, events, onOp
             </div>
             <button onClick={() => { onOpen360(lead.id); }} className="text-xs px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors shrink-0">
               360° Προφίλ
+            </button>
+            <button onClick={() => { onAddRequest(lead.id); }} className="text-xs px-3 py-1.5 rounded-xl bg-emerald-600 text-white font-medium hover:bg-emerald-700 transition-colors shrink-0">
+              ＋ Αίτηση
             </button>
             <button onClick={onClose} className="text-slate-500 hover:text-slate-900 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-200 transition-colors">✕</button>
           </div>

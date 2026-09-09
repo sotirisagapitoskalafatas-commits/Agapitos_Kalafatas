@@ -5,7 +5,13 @@ import { buildCustomerIndex, buildCustomer360 } from "@/lib/spine/customers";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!,
+  {
+    global: {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+        fetch(input as any, { ...init, cache: "no-store" }),
+    },
+  }
 );
 
 export const dynamic = "force-dynamic";
@@ -17,9 +23,14 @@ export async function GET(req: NextRequest) {
   const leadId = req.nextUrl.searchParams.get("id");
   const now = new Date();
 
-  const [leadsRes, dealsRes, invoicesRes, commsRes, eventsRes, remindersRes, activityRes] =
+  const [leadsRes, requestsRes, dealsRes, invoicesRes, commsRes, eventsRes, remindersRes, activityRes] =
     await Promise.all([
       supabase.from("leads").select("*").order("created_at", { ascending: false }).limit(1000),
+      supabase
+        .from("service_requests")
+        .select("id, lead_id, service, service_type, reason, description, status, priority, owner, source, campaign, utm_source, utm_medium, utm_campaign, utm_term, next_action, lost_reason, closed_reason, created_at, updated_at")
+        .order("created_at", { ascending: false })
+        .limit(2000),
       supabase
         .from("deals")
         .select("id, lead_id, title, value, currency, stage, expected_close_date, closed_at, created_at")
@@ -49,13 +60,14 @@ export async function GET(req: NextRequest) {
     ]);
 
   const firstError =
-    leadsRes.error || dealsRes.error || invoicesRes.error || commsRes.error || eventsRes.error;
+    leadsRes.error || requestsRes.error || dealsRes.error || invoicesRes.error || commsRes.error || eventsRes.error;
   if (firstError) {
     return NextResponse.json({ error: firstError.message }, { status: 500 });
   }
 
   const input = {
     leads: leadsRes.data ?? [],
+    requests: requestsRes.data ?? [],
     deals: dealsRes.data ?? [],
     invoices: invoicesRes.data ?? [],
     communications: commsRes.data ?? [],
