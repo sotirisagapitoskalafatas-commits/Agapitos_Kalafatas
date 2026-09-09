@@ -753,3 +753,150 @@ section {
 
 .atlas-mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
 .atlas-plex { font-family: "IBM Plex Sans", system-ui, sans-serif; }
+
+/* ─── Atlas nav + shell (sidebar category cards / icon tiles / items) ────────
+   Each navigation CATEGORY is its own compact container; category icons are the
+   strongest element (colored tile), child icons stay monochrome and quiet. */
+.atlas-nav-group {
+  background: color-mix(in srgb, var(--cc-card) 55%, transparent);
+  border: 1px solid var(--cc-line-2);
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 1px 2px var(--cc-shadow-soft);
+}
+
+.atlas-nav-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px;
+  border-radius: 8px;
+  text-align: left;
+  color: var(--cc-glass-ink);
+  background: transparent;
+  transition: background 130ms ease, color 130ms ease;
+}
+.atlas-nav-group-header:hover { background: var(--cc-chip); }
+
+.atlas-nav-tile {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 1px 2px var(--cc-shadow-soft);
+}
+
+.atlas-nav-group-name {
+  flex: 1;
+  min-width: 0;
+  font-family: "IBM Plex Sans", system-ui, sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cc-glass-ink-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.atlas-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--cc-glass-ink);
+  background: transparent;
+  border: none;
+  transition: background 130ms ease, color 130ms ease;
+}
+.atlas-nav-item:hover { background: color-mix(in srgb, var(--cc-chip) 62%, transparent); }
+.atlas-nav-item-active {
+  background: var(--cc-glass-active);
+  color: var(--cc-ink);
+  font-weight: 600;
+  box-shadow:
+    inset 2px 0 0 var(--cc-indigo),
+    inset 0 0 0 1px color-mix(in srgb, var(--cc-indigo) 20%, transparent);
+}
+.atlas-nav-item-planned { color: var(--cc-glass-ink-dim); }
+
+.atlas-nav-icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  color: var(--cc-glass-ink-dim);
+  transition: color 130ms ease;
+}
+.atlas-nav-item:hover .atlas-nav-icon { color: var(--cc-glass-ink); }
+.atlas-nav-item-active .atlas-nav-icon { color: var(--cc-indigo); }
+
+.atlas-nav-meta {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  color: var(--cc-glass-ink-dim);
+  white-space: nowrap;
+}
+
+.atlas-chevron {
+  color: var(--cc-glass-ink-dim);
+  flex: none;
+  transition: transform 160ms ease;
+}
+.atlas-chevron-open { transform: rotate(0deg); }
+.atlas-chevron-closed { transform: rotate(-90deg); }
+
+.atlas-rail-tile {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--cc-glass-ink-dim);
+  background: transparent;
+  transition: background 130ms ease, color 130ms ease;
+}
+.atlas-rail-tile:hover { background: var(--cc-chip); color: var(--cc-glass-ink); }
+
+/* glass pill (search / controls / status) */
+.atlas-glass-pill {
+  background: var(--cc-chip);
+  color: var(--cc-glass-ink-dim);
+  border: 1px solid var(--cc-glass-border);
+  border-radius: 10px;
+  transition: background 130ms ease, border-color 130ms ease, color 130ms ease;
+}
+.atlas-glass-pill:hover {
+  background: color-mix(in srgb, var(--cc-chip) 70%, var(--cc-card));
+  color: var(--cc-glass-ink);
+}
+
+/* Top bar */
+.atlas-topbar { border-bottom: 1px solid var(--cc-line-2); }
+
+.atlas-lang-btn {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 7px;
+  border-radius: 7px;
+  color: var(--cc-glass-ink-dim);
+  background: transparent;
+  transition: 130ms ease;
+}
+.atlas-lang-btn:hover { color: var(--cc-glass-ink); background: var(--cc-chip); }
+.atlas-lang-btn-active { background: var(--cc-indigo-bg); color: var(--cc-indigo-ink); }
