@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { listPendingApprovals, decideApproval } from "@/lib/agents/approvals";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET /api/agent/approvals — list pending actions requiring admin approval
+// GET /api/agent/approvals β€” list pending actions requiring admin approval
 export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.ok) return unauthorizedResponse();
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST /api/agent/approvals — { approvalId, decision: "approved" | "rejected" }
+// POST /api/agent/approvals β€” { approvalId, decision: "approved" | "rejected" }
 export async function POST(request: NextRequest) {
   const auth = await requireAuth(request);
   if (!auth.ok) return unauthorizedResponse();
@@ -29,7 +29,10 @@ export async function POST(request: NextRequest) {
     if (decision !== "approved" && decision !== "rejected") {
       return NextResponse.json({ error: "decision must be approved or rejected" }, { status: 400 });
     }
-    const result = await decideApproval(approvalId, decision, String(decidedBy || "admin"));
+    const safeDecidedBy = typeof decidedBy === "string" && /^[0-9a-f-]{36}$/i.test(decidedBy)
+      ? decidedBy
+      : null;
+    const result = await decideApproval(approvalId, decision, safeDecidedBy);
     return NextResponse.json(result);
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 500 });

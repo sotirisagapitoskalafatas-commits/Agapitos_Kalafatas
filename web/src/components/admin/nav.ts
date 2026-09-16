@@ -65,6 +65,7 @@ import {
   Workflow,
   Wrench,
   Zap,
+  Orbit,
   type LucideIcon,
 } from "lucide-react";
 
@@ -83,6 +84,7 @@ export type CrmTab =
   | "notifications"
   | "renewals"
   | "ai"
+  | "survivor"
   | "settings"
   | "planned";
 
@@ -242,6 +244,17 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "approvals", label: "Approvals", state: "planned", icon: BadgeCheck, description: "Εγκρίσεις με βάση πολιτικών. " + PLANNED_EXAMPLE },
       { key: "knowledge", label: "Knowledge", state: "planned", icon: BookOpen, description: "Γνωσιακή βάση. " + PLANNED_EXAMPLE },
       { key: "policies", label: "Policies", state: "planned", icon: ShieldCheck, description: "Πολιτικές. " + PLANNED_EXAMPLE },
+    ],
+  },
+  {
+    id: "survivor",
+    label: "AI Survivor",
+    icon: Orbit,
+    accent: "#0d9488",
+    items: [
+      { key: "survivor", label: "Survivor Dashboard", state: "live", icon: Orbit, tab: "survivor", description: "Το σύστημα AI Freelance Survivor (sandbox): ζωντανό wallet, προτάσεις, εγκρίσεις, δουλειές και μάθηση." },
+      { key: "survivor-simulation", label: "Simulation", state: "planned", icon: Workflow, description: "Προσομοιώσεις & πειράματα. " + PLANNED_EXAMPLE },
+      { key: "survivor-memory", label: "Memory", state: "planned", icon: BrainCircuit, description: "Μνήμη & μαθήματα. " + PLANNED_EXAMPLE },
     ],
   },
   {

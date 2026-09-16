@@ -1,14 +1,20 @@
-// Approval-gated write system for the agent orchestrator.
+﻿// Approval-gated write system for the agent orchestrator.
 //
 // Golden rule: "The LLM proposes; Postgres/RLS authorizes."
 // Writes NEVER execute directly from the model. Instead the model proposes a
-// payload, an admin approves it, and only then does the server execute it —
+// payload, an admin approves it, and only then does the server execute it β€”
 // guarded by an idempotency key so a payload can't be double-applied.
 import { createHash } from "crypto";
 import { supabase } from "./db";
 import type { AgentContext } from "./types";
 
-type ActionType = "create_lead" | "send_email" | "create_deal" | "create_event";
+type ActionType =
+  | "create_lead"
+  | "send_email"
+  | "create_deal"
+  | "create_event"
+  | "survivor_propose"
+  | "survivor_topup";
 
 const EXPIRY_MIN = 60 * 24; // 24h default
 const EXPIRY_MS = EXPIRY_MIN * 60 * 1000;
@@ -115,7 +121,7 @@ export async function listPendingApprovals() {
 export async function decideApproval(
   approvalId: string,
   decision: "approved" | "rejected",
-  decidedBy: string
+  decidedBy: string | null
 ) {
   const { data: row, error: fetchErr } = await supabase
     .from("agent_action_approvals")
@@ -143,7 +149,7 @@ export async function decideApproval(
     return { id: approvalId, status: "rejected" };
   }
 
-  // Approve → execute with idempotency guard
+  // Approve β†’ execute with idempotency guard
   const executor = getExecutor(row.action_type);
   const result = await executor(row.payload);
 
@@ -161,10 +167,10 @@ export async function decideApproval(
   return { id: approvalId, status: "executed", result };
 }
 
-// ── Executors: perform the actual (safe) write with the service role ──
+// β”€β”€ Executors: perform the actual (safe) write with the service role β”€β”€
 type Executor = (payload: Record<string, any>) => Promise<any>;
 
-// Live leads.status CHECK values — map any model-supplied status onto these;
+// Live leads.status CHECK values β€” map any model-supplied status onto these;
 // anything else falls back to the default (NOT NULL-safe lowercase value).
 const LEAD_STATUSES = new Set([
   "new_lead",
@@ -267,6 +273,65 @@ const executors: Record<ActionType, Executor> = {
       html: payload.body || payload.html || "",
     });
     return { ok: true, sent: true, id: result.data?.id || null };
+  },
+
+  async survivor_propose(payload) {
+    // Executed when an admin approves a Survivor bid: create a won job so the
+    // sandbox execution engine can pick it up, and mark the proposal approved.
+    const { data, error } = await supabase
+      .from("survivor_jobs")
+      .insert({
+        agent_id: payload.agentId ?? null,
+        opportunity_id: payload.opportunityId ?? null,
+        proposal_id: payload.proposalId ?? null,
+        title: payload.title || "Sandbox gig",
+        client: payload.client || null,
+        value: payload.value || 0,
+        status: "won",
+        win_rate: 85,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    if (payload.proposalId) {
+      await supabase
+        .from("survivor_proposals")
+        .update({ status: "approved" })
+        .eq("id", payload.proposalId);
+    }
+    return { ok: true, jobId: data?.id ?? null };
+  },
+
+  async survivor_topup(payload) {
+    // Credits the sandbox wallet with a top-up (simulation: starting capital).
+    const { data: agent } = await supabase
+      .from("survivor_agents")
+      .select("id")
+      .eq("id", payload.agentId)
+      .maybeSingle();
+    if (!agent) throw new Error("Survivor agent not found");
+    const { data: txs } = await supabase
+      .from("survivor_transactions")
+      .select("amount, type, balance_after")
+      .eq("agent_id", agent.id)
+      .order("created_at", { ascending: true });
+    let balance = 0;
+    for (const t of txs || []) {
+      if (t.type === "deposit" || t.type === "income" || t.type === "payment") balance += t.amount;
+      else if (t.type === "spend" || t.type === "expense") balance -= t.amount;
+    }
+    const amount = payload.amount ?? 0;
+    const { error } = await supabase.from("survivor_transactions").insert({
+      agent_id: agent.id,
+      type: "deposit",
+      amount,
+      currency: "EUR",
+      description: payload.description || "Survivor top-up",
+      reference_id: payload.referenceId || `topup:${Date.now()}`,
+      balance_after: Math.round((balance + amount) * 100) / 100,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true, balanceAfter: Math.round((balance + amount) * 100) / 100 };
   },
 };
 

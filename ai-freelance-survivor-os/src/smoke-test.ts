@@ -1,0 +1,2 @@
+import {Store} from './store.js'; import {MockLLM} from './llm.js'; import {seedSimulation} from './simulation.js'; import {Orchestrator} from './orchestrator.js';
+const s=new Store(); s.seed(25); seedSimulation(s); const o=new Orchestrator(s,new MockLLM()); await o.start(); const approval=s.approvals[0]; if(!approval) throw new Error('No approval'); s.approve(approval.id); await o.executeApproved(approval.id); await o.simulateWin(s.opportunities[0].id); console.log(JSON.stringify({wallet:s.wallet(),agent:s.agent,events:s.events.length},null,2));

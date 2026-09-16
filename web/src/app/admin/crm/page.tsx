@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/admin/AdminShell";
 import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
+import SurvivorView from "@/components/admin/survivor/SurvivorView";
 import { resolveCrmTab, plannedModuleByKey, type CrmTab } from "@/components/admin/nav";
 import type {
   AttentionAction,
@@ -639,7 +640,7 @@ function CRMDashboardInner() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
           <div>
             <h2 className="atlas-plex text-[20px] font-semibold" style={{ color: "var(--cc-ink)" }}>
-              {tab === "planned" ? (plannedModule?.label ?? "Planned") : tab === "renewals" ? "Renewals" : tab === "dashboard" ? "Command Center" : tab}
+              {tab === "planned" ? (plannedModule?.label ?? "Planned") : tab === "renewals" ? "Renewals" : tab === "dashboard" ? "Command Center" : tab === "survivor" ? "AI Survivor" : tab}
             </h2>
             <p className="text-sm mt-1" style={{ color: "var(--cc-muted)" }}>
               {new Date().toLocaleDateString("el-GR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
@@ -700,6 +701,7 @@ function CRMDashboardInner() {
               />
             )}
             {tab === "ai" && <AgentView />}
+            {tab === "survivor" && <SurvivorView />}
             {tab === "settings" && <SettingsView />}
             {tab === "planned" && <PlannedModuleView module={plannedModule} onBack={() => setTab("dashboard")} />}
           </>
