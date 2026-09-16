@@ -4,7 +4,7 @@ import {Store} from './store.js'; import {Orchestrator} from './orchestrator.js'
 const app=express(); app.use(cors()); app.use(express.json());
 const store=new Store(); store.seed(Number(process.env.STARTING_CAPITAL||25)); seedSimulation(store);
 const llm=process.env.OPENAI_API_KEY?new OpenAIProvider(process.env.OPENAI_CEO_MODEL||'gpt-6-astra'):new MockLLM(); const orch=new Orchestrator(store,llm);
-app.get('/api/ai/state',(_,res)=>res.json({agent:store.agent,wallet:store.wallet(),opportunities:store.opportunities,scores:Object.fromEntries(store.scores),approvals:store.approvals,proposals:store.proposals,jobs:store.jobs,memories:store.memories.slice(-20),events:store.events.slice(-50)}));
+app.get('/api/ai/state',(_,res)=>res.json({agent:store.agent,wallet:store.wallet(),opportunities:store.opportunities,scores:Object.fromEntries(store.scores),approvals:store.approvals,proposals:store.proposals,jobs:store.jobs,transactions:store.txs.slice(-25),memories:store.memories.slice(-20),events:store.events.slice(-50)}));
 app.post('/api/ai/start',async(_,res)=>{try{await orch.start(); res.json({ok:true});}catch(e){res.status(500).json({error:String(e)});}});
 app.post('/api/ai/approvals/:id/approve',async(req,res)=>{try{store.approve(req.params.id);const p=await orch.executeApproved(req.params.id);res.json({ok:true,proposal:p});}catch(e){res.status(400).json({error:String(e)});}});
 app.post('/api/ai/simulate-payment/:opportunityId',async(req,res)=>{try{res.json(await orch.simulateWin(req.params.opportunityId));}catch(e){res.status(400).json({error:String(e)});}});

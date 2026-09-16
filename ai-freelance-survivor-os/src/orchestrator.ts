@@ -2,10 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { Store } from './store.js';
 import { scoreOpportunity } from './scoring.js';
 import { routeTask } from './router.js';
-import { planJob } from './planner.js';
 import { verifyAction } from './policy.js';
 import { rememberOutcome } from './memory.js';
+import { evaluateOutput } from './evaluator.js';
 import { LLMProvider } from './llm.js';
+import { Job, Memory } from './types.js';
 
 export class Orchestrator {
  constructor(public store:Store,private llm:LLMProvider){ }
@@ -26,7 +27,7 @@ export class Orchestrator {
   const wallet=this.store.wallet(); const policy=verifyAction({type:'submit_proposal',irreversible:true},wallet);
   if(policy.status==='BLOCK') {this.store.setAgentState('PAUSED'); throw new Error(policy.reason);}
   const routed=routeTask(`proposal for ${o.title}`);
-  const ctx={task:`Create proposal for ${o.title}.`,role:routed.role,objective:this.store.agent.objective,constraints:{},currentState:this.store.agent.state,wallet,worldState:{opportunity:o},relevantMemory:[],availableTools:['job.read','proposal.create','web.search'],strategy:this.store.agent.strategy} as const;
+  const ctx={task:`Create proposal for ${o.title}.`,role:routed.role,objective:this.store.agent.objective,constraints:{},currentState:this.store.agent.state,wallet,worldState:{opportunity:o},relevantMemory:[] as Memory[],availableTools:['job.read','proposal.create','web.search'],strategy:this.store.agent.strategy};
   const result=await this.llm.generate(ctx,`Write a short honest proposal for this job. Job description: ${o.description}. Price: €${o.budget}.`);
   const p={id:randomUUID(),opportunityId:o.id,text:result.text,price:o.budget,status:'SUBMITTED' as const,createdAt:new Date().toISOString()}; this.store.proposals.push(p);
   this.store.emit('PROPOSAL_CREATED',{proposalId:p.id,opportunityId:o.id});
@@ -37,12 +38,27 @@ export class Orchestrator {
  async simulateWin(opportunityId:string){
   const p=this.store.proposals.find(x=>x.opportunityId===opportunityId); if(!p) throw new Error('Proposal missing');
   const o=this.store.opportunities.find(x=>x.id===opportunityId)!;
-  const job={id:randomUUID(),opportunityId:o.id,title:o.title,clientName:o.clientName,revenue:o.budget,state:'WON' as const,estimatedHours:o.estimatedHours,cost:0,createdAt:new Date().toISOString()};
+  const job: Job={id:randomUUID(),opportunityId:o.id,title:o.title,clientName:o.clientName,revenue:o.budget,state:'WON',estimatedHours:o.estimatedHours,cost:0,createdAt:new Date().toISOString()};
   this.store.jobs.push(job); this.store.emit('JOB_WON',{jobId:job.id,opportunityId:o.id});
-  const steps=planJob(o.description); for(const _ of steps){}
-  job.state='IN_PROGRESS'; this.store.setAgentState('EXECUTING');
-  const evalResult={score:92,passed:true,issues:[],summary:'Simulation quality check passed'};
-  if(evalResult.passed){ job.state='DELIVERED'; job.state='PAID'; job.profit=job.revenue; this.store.transact('JOB_REVENUE',job.revenue,'Simulated job payment'); this.store.emit('PAYMENT_RECEIVED',{jobId:job.id,amount:job.revenue}); rememberOutcome(this.store,`Completed and paid job ${job.title} for €${job.revenue}.`,0.9,['job','payment',o.source],'simulation'); }
-  this.store.setAgentState('LEARNING'); this.store.addMemory({kind:'LONG_TERM',text:`Job outcome: ${job.title}; revenue €${job.revenue}.`,importance:.9,tags:['job','outcome'],source:'simulation'}); this.store.setAgentState('WAITING'); return job;
+  this.store.setAgentState('EXECUTING');
+  const evalResult=evaluateOutput(p.text,o.description);
+  if(!evalResult.passed){
+   job.state='FAILED'; job.profit=-o.estimatedHours*0.6;
+   this.store.emit('PAYMENT_FAILED',{jobId:job.id,reason:evalResult.summary});
+   rememberOutcome(this.store,`Job ${job.title} failed quality gate (${evalResult.summary}).`,0.8,['job','failed','qa'],'evaluator');
+   this.store.setAgentState('LEARNING');
+   return job;
+  }
+  const platformFee=+ (o.budget*(o.platformFeePct/100)).toFixed(2);
+  const toolCost=+ (o.estimatedHours*0.6).toFixed(2);
+  job.state='DELIVERED'; job.cost=+(platformFee+toolCost).toFixed(2);
+  this.store.transact('MARKETPLACE_FEE',-platformFee,'Marketplace fee for '+o.title);
+  this.store.transact('TOOL_EXPENSE',-toolCost,'Operational tools for '+o.title);
+  job.state='PAID'; job.profit=+(job.revenue-job.cost).toFixed(2);
+  this.store.transact('JOB_REVENUE',job.revenue,'Simulated job payment');
+  this.store.emit('PAYMENT_RECEIVED',{jobId:job.id,amount:job.revenue,net:job.profit});
+  rememberOutcome(this.store,`Completed and paid job ${job.title} for €${job.revenue} (net €${job.profit}).`,0.9,['job','payment',o.source],'simulation');
+  this.store.setAgentState('LEARNING');
+  return job;
  }
 }

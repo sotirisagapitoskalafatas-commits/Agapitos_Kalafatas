@@ -34,7 +34,10 @@ export class Store {
     if (!Number.isFinite(amount) || amount===0) throw new Error('Invalid transaction');
     this.balance=+(this.balance+amount).toFixed(2);
     const tx={id:randomUUID(), type, amount, description, ts:new Date().toISOString(), balanceAfter:this.balance};
-    this.txs.push(tx); this.emit('BALANCE_LOW',{balance:this.balance, state:this.wallet().state}); return tx;
+    this.txs.push(tx);
+    const state=this.wallet().state;
+    if(state!=='ALIVE') this.emit('BALANCE_LOW',{balance:this.balance, state});
+    return tx;
   }
   emit(name:EventName,data:Record<string,unknown>){ const e={id:randomUUID(),name,ts:new Date().toISOString(),data}; this.events.push(e); this.subscribers.forEach(s=>s(e)); }
   setAgentState(state:AgentState){ this.agent.state=state; }
