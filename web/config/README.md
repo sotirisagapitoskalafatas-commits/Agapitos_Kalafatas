@@ -57,6 +57,18 @@ token with database-write permission. Never use the service-role key as that tok
 
 The application does not store or recover the administrator password in Supabase. Reset it at the hosting provider by replacing `ADMIN_USER`, `ADMIN_PASS`, and `AUTH_SECRET` together. Use a unique, random password and a separately generated random `AUTH_SECRET`; redeploy and test the login page. Changing `AUTH_SECRET` invalidates existing CRM session tokens. Do not add credentials to this repository, a SQL table, or a public issue. The app login form is protected by API-level bearer-token checks; there is no separate HTTP Basic password gate.
 
+On Windows PowerShell, generate two distinct high-entropy values locally (run this in your terminal, not in chat):
+```powershell
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+foreach ($name in @('ADMIN_PASS','AUTH_SECRET')) {
+  $bytes = New-Object byte[] 48
+  $rng.GetBytes($bytes)
+  "$name=$([Convert]::ToBase64String($bytes))"
+}
+$rng.Dispose()
+```
+Copy the generated values directly into the Vercel Environment Variables page. Set them for the intended deployment environments, then redeploy. Set `ADMIN_USER=agapitos` (or a new username) separately.
+
 ## Verification checklist
 
 After applying the files, verify that:
