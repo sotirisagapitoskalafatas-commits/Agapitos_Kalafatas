@@ -4,7 +4,8 @@
 -- =============================================
 
 -- 1. Enable vector extension
-CREATE EXTENSION IF NOT EXISTS vector;
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
 
 -- 2. Create Knowledge Base Table
 CREATE TABLE IF NOT EXISTS knowledge_base (
@@ -12,13 +13,13 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
   category TEXT NOT NULL,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
-  embedding VECTOR(1536),
+  embedding extensions.vector(1536),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- 3. Create Vector Match Function for RAG Retrieval
 CREATE OR REPLACE FUNCTION match_knowledge(
-  query_embedding VECTOR(1536),
+  query_embedding extensions.vector(1536),
   match_category TEXT,
   match_threshold FLOAT,
   match_count INT
@@ -31,7 +32,8 @@ RETURNS TABLE (
   similarity FLOAT
 )
 LANGUAGE plpgsql
-AS $$
+SET search_path = public, extensions
+AS $
 BEGIN
   RETURN QUERY
   SELECT
@@ -46,12 +48,15 @@ BEGIN
   ORDER BY kb.embedding <=> query_embedding
   LIMIT match_count;
 END;
-$$;
+$;
+
+REVOKE ALL ON FUNCTION public.match_knowledge(extensions.vector, text, double precision, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.match_knowledge(extensions.vector, text, double precision, integer) TO service_role;
 
 -- 4. Create index for faster vector search
 CREATE INDEX IF NOT EXISTS knowledge_base_embedding_idx
   ON knowledge_base
-  USING ivfflat (embedding vector_cosine_ops)
+  USING ivfflat (embedding extensions.vector_cosine_ops)
   WITH (lists = 10);
 
 -- 5. Enable Row Level Security (optional, for API key auth)
