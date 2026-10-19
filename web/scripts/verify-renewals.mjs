@@ -19,6 +19,7 @@ const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
 
 const out = [];
+let baselineLeadCount = 0;
 const step = (name, ok, detail) => {
   out.push(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? `  (${detail})` : ""}`);
   console.log(out[out.length - 1]);
@@ -26,6 +27,11 @@ const step = (name, ok, detail) => {
 
 async function setup() {
   await supabase.from("leads").delete().in("id", [A, B]);
+  const { count, error: baselineError } = await supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true });
+  if (baselineError) throw new Error(`baseline count: ${baselineError.message}`);
+  baselineLeadCount = count ?? 0;
   const tomorrow10 = new Date(Date.now() + 10 * 864e5).toISOString().slice(0, 10);
   const past5 = new Date(Date.now() - 5 * 864e5).toISOString().slice(0, 10);
   const { error } = await supabase.from("leads").insert([
@@ -136,6 +142,6 @@ try {
   const { count } = await supabase
     .from("leads")
     .select("id", { count: "exact", head: true });
-  step("leads count back to baseline", count === 1, `leads=${count}`);
+  step("leads count back to baseline", count === baselineLeadCount, `baseline=${baselineLeadCount} leads=${count}`);
   console.log(out.join("\n"));
 }
