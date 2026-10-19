@@ -62,7 +62,12 @@ CREATE INDEX IF NOT EXISTS knowledge_base_embedding_idx
 -- 5. Enable Row Level Security (optional, for API key auth)
 ALTER TABLE knowledge_base ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow service role full access" ON knowledge_base
-  FOR ALL
+DROP POLICY IF EXISTS "Allow service role full access" ON public.knowledge_base;
+DROP POLICY IF EXISTS "Service role manages knowledge_base" ON public.knowledge_base;
+CREATE POLICY "Service role manages knowledge_base" ON public.knowledge_base
+  FOR ALL TO service_role
   USING (true)
   WITH CHECK (true);
+
+REVOKE ALL PRIVILEGES ON public.knowledge_base FROM PUBLIC, anon, authenticated;
+GRANT ALL PRIVILEGES ON public.knowledge_base TO service_role;
