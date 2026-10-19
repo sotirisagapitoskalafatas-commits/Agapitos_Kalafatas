@@ -5,6 +5,21 @@
 -- No browser client should read private CRM tables directly.
 -- =============================================================================
 
+-- Keep pgvector outside the exposed public schema when the installed extension is still there.
+CREATE SCHEMA IF NOT EXISTS extensions;
+DO $move_vector$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_extension e
+    JOIN pg_namespace n ON n.oid = e.extnamespace
+    WHERE e.extname = 'vector' AND n.nspname = 'public'
+  ) THEN
+    EXECUTE 'ALTER EXTENSION vector SET SCHEMA extensions';
+  END IF;
+END;
+$move_vector$;
+
 -- Explicit service-role policies for tables created in the later feature slices.
 ALTER TABLE public.consent_log ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.renewal_reminders ENABLE ROW LEVEL SECURITY;
@@ -69,7 +84,7 @@ REVOKE ALL ON FUNCTION public.rls_auto_enable() FROM PUBLIC, anon, authenticated
 -- The embedding search function should only be callable by server-side code.
 -- Pin search_path to prevent object shadowing and preserve invoker/RLS semantics.
 CREATE OR REPLACE FUNCTION public.match_knowledge(
-  query_embedding vector,
+  query_embedding extensions.vector,
   match_category text,
   match_threshold double precision,
   match_count integer
@@ -83,7 +98,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY INVOKER
-SET search_path = public
+SET search_path = public, extensions
 AS $match$
 BEGIN
   RETURN QUERY
@@ -97,7 +112,7 @@ BEGIN
 END;
 $match$;
 
-REVOKE ALL ON FUNCTION public.match_knowledge(vector, text, double precision, integer)
+REVOKE ALL ON FUNCTION public.match_knowledge(extensions.vector, text, double precision, integer)
   FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.match_knowledge(vector, text, double precision, integer)
   TO service_role;
