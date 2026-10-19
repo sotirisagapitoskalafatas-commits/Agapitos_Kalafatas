@@ -1,3 +1,5 @@
+-- HISTORICAL MIGRATION WARNING: Do NOT apply this file to the new project. It can drop legacy objects and has been superseded by the numbered setup files in web/config/README.md. Use the current canonical schema and migrations listed there instead.
+
 -- ============================================================
 -- AGAPITOS KALAFATAS — SECURITY + SCHEMA MIGRATION (single run)
 -- Paste the ENTIRE block once into the Supabase SQL Editor and run.
