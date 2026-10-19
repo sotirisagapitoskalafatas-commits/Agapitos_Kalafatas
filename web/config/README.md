@@ -1,40 +1,86 @@
-# web/config
+# Supabase schema and seed data — Atlas CRM
 
-Supabase schema and seed data.
+The active Supabase project for this repository is **`jqaxebkyroxqhcisvrvs`**:
+`https://jqaxebkyroxqhcisvrvs.supabase.co`.
 
-## Files
+## Fresh-project setup
 
-| File | Purpose | Safe to run on empty project? |
-|---|---|---|
-| `schema.sql` | Complete hardened schema (RLS + service_role-only policies) | **Yes** — this is the canonical source |
-| `vector_setup.sql` | Vector extension + `knowledge_base` — subset of `schema.sql`, kept for isolated re-runs | Yes |
-| `seed_knowledge.sql` | Populates `knowledge_base` with the current RAG corpus | Yes (idempotent inserts) |
-| `leads-schema.sql` | Legacy leads-only definition | Don't use — `schema.sql` supersedes it |
+The CRM uses a server-side service-role client for private data. Do not expose the
+service-role/secret key in browser code, `NEXT_PUBLIC_*` variables, or Git.
 
-## Setup on a fresh Supabase project
+Apply the following SQL files in order in Supabase SQL Editor. Run each file as
+a separate transaction/submission and verify it finishes successfully before
+continuing:
 
-1. Create the project. Note the `service_role` key (Settings → API).
-2. SQL Editor → paste `schema.sql` → **Run**.
-3. Confirm in Table Editor that RLS is `on` for every table.
-4. SQL Editor → paste `seed_knowledge.sql` → **Run** to populate the RAG corpus.
-5. Set env vars:
-   - `NEXT_PUBLIC_SUPABASE_URL` — project URL
-   - `SUPABASE_SERVICE_ROLE_KEY` — service_role key (server-only, never expose to client)
-   - Anon key **is not required** in this setup; every mutation goes through server-side routes.
+1. `web/config/schema.sql` — canonical CRM tables, RLS, private client uploads bucket and knowledge base.
+2. `config/supabase-schema.sql` — chat sessions/messages, service-role-only.
+3. `config/settings-table.sql` — system settings. Settings contain private financial and webhook values; the whole row must not be public.
+4. `config/notifications-table.sql` — CRM notification history.
+5. `config/agent-commands.sql` — external integration credential store.
+6. `config/agent-audit.sql` — agent audit log.
+7. `config/agent-approvals.sql` — human approval queue for agent actions.
+8. `web/config/2026-09-07-lead-folder.sql` — energy/provider fields and private client documents bucket.
+9. `web/config/2026-10-19-crm-compatibility.sql` — customer display-name compatibility fields, updated-at triggers and the missing `service_requests` table; also hardens private CRM RLS policies.
+10. `web/config/2026-09-08-foundation-spine.sql` — consent, source attribution and idempotent renewal reminders.
+11. `web/config/2026-09-08-fix-tasks-view.sql` — exposes the expected `start_time` field on the task view.
+12. `web/config/2026-09-08-renewal-materialize.sql` — enables `pg_cron`, creates renewal tasks/notifications and schedules the daily job.
+13. `web/config/2026-09-08-social-connections.sql` — social account connection metadata.
+14. `web/config/2026-09-08-creative-studio.sql` — campaigns, assets, variants, rules, audit and the creative media bucket.
+15. `web/config/seed_knowledge.sql` — initial knowledge-base content for the agent.
+16. `web/config/2026-10-19-security-hardening.sql` — explicit service-role RLS policies, browser-role revocation, pinned function search paths and function execution grants.
+17. `web/config/2026-10-19-performance-indexes.sql` — indexes frequently joined CRM foreign keys.
+18. `web/config/2026-10-19-survivor-module.sql` — private service-role-only sandbox agent, ledger, opportunity, proposal, job, strategy, memory and experiment tables.
 
-## Why not `USING (true)`
+**Do not run `config/apply-security-migration.sql` on this fresh project.** It is a
+historical upgrade script for older schemas and overlaps the canonical schema.
 
-Prior versions of `RUN_ALL_SETUP.sql` and `unified-crm-schema.sql` shipped with policies like:
+## Environment variables
 
-```sql
-CREATE POLICY "Allow read on leads" ON leads FOR SELECT USING (true);
+Set these for local development and for every deployed runtime (Vercel/Railway/
+Render as applicable):
+
+- `NEXT_PUBLIC_SUPABASE_URL=https://jqaxebkyroxqhcisvrvs.supabase.co`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — the project's legacy anon key or publishable key; this is public and must be paired with correct RLS.
+- `SUPABASE_SERVICE_ROLE_KEY` — server-side only; retrieve it from the new project's API key settings. Never commit it.
+- `GEMINI_API_KEY` — required for agent/orchestrator features.
+- `OPENAI_API_KEY` — needed for semantic knowledge-base embeddings/RAG features.
+- `ADMIN_USER` and a strong `ADMIN_PASS` — required for CRM login in production. These are application login credentials, not your Supabase account login.
+- `AUTH_SECRET` — required to sign admin session tokens; set a new random value in the deployment environment. Do not store real values in Git.
+- `RESEND_API_KEY` and `NOTIFY_EMAIL_TO` — required for email notifications.
+- `SLACK_WEBHOOK_URL`, `SUPABASE_WEBHOOK_SECRET`, and/or Slack bot values only when those integrations are enabled.
+
+`SUPABASE_PROJECT_REF` and `SUPABASE_ACCESS_TOKEN` are only for the optional SQL helper.
+The Management API SQL endpoint is experimental and requires a scoped Management API
+token with database-write permission. Never use the service-role key as that token.
+
+## Recovering a forgotten CRM login
+
+The application does not store or recover the administrator password in Supabase. Reset it at the hosting provider by replacing `ADMIN_USER`, `ADMIN_PASS`, and `AUTH_SECRET` together. Use a unique, random password and a separately generated random `AUTH_SECRET`; redeploy and test the login page. Changing `AUTH_SECRET` invalidates existing CRM session tokens. Do not add credentials to this repository, a SQL table, or a public issue. The app login form is protected by API-level bearer-token checks; there is no separate HTTP Basic password gate.
+
+On Windows PowerShell, generate two distinct high-entropy values locally (run this in your terminal, not in chat):
+```powershell
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+foreach ($name in @('ADMIN_PASS','AUTH_SECRET')) {
+  $bytes = New-Object byte[] 48
+  $rng.GetBytes($bytes)
+  "$name=$([Convert]::ToBase64String($bytes))"
+}
+$rng.Dispose()
 ```
+Copy the generated values directly into the Vercel Environment Variables page. Set them for the intended deployment environments, then redeploy. Set `ADMIN_USER=agapitos` (or a new username) separately.
 
-Because the anon key is embedded in the client bundle, that gives **any website visitor**
-full read/update/delete on every lead, deal, invoice, and uploaded file. Those two files
-have been removed. Do not re-introduce policies of that shape.
+## Verification checklist
 
-## Applying a change to an already-live project
+After applying the files, verify that:
 
-Never `DROP TABLE`. Add a new migration file next to `schema.sql`
-(e.g. `2026-09-06-add-column.sql`) and apply through the SQL Editor.
+- all expected tables exist and RLS is enabled for private CRM tables;
+- anon/authenticated cannot read or modify leads, service requests, settings, invoices, notifications, integration credentials, approvals or agent audit rows directly;
+- `client_uploads` and `client_documents` are private buckets;
+- `creative-assets` is public-read only by design for media previews, with writes via server-side service-role routes;
+- the Supabase project reference in the environment variables matches the dashboard project;
+- the CRM login works, then create and edit a test lead, service request, task, invoice and creative asset;
+- Supabase Security and Performance Advisors are reviewed after setup.
+
+Seeded knowledge text does not include embeddings. To enable semantic retrieval, configure
+`OPENAI_API_KEY` and run the application's knowledge embedding/seed flow. Text lookup
+works without embeddings, but semantic retrieval does not.

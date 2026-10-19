@@ -42,7 +42,8 @@
 
 
 -- ---------------------------------------------------------------- extensions --
-CREATE EXTENSION IF NOT EXISTS vector;
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS vector WITH SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 
@@ -127,7 +128,7 @@ CREATE TABLE IF NOT EXISTS knowledge_base (
   category TEXT NOT NULL,
   title TEXT NOT NULL,
   content TEXT NOT NULL,
-  embedding VECTOR(1536),
+  embedding extensions.vector(1536),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 ALTER TABLE knowledge_base ENABLE ROW LEVEL SECURITY;
@@ -140,12 +141,12 @@ CREATE POLICY "Service role manages knowledge_base" ON knowledge_base
 
 CREATE INDEX IF NOT EXISTS knowledge_base_embedding_idx
   ON knowledge_base
-  USING ivfflat (embedding vector_cosine_ops)
+  USING ivfflat (embedding extensions.vector_cosine_ops)
   WITH (lists = 10);
 
 -- Vector similarity search RPC used by RAG sub-agents.
 CREATE OR REPLACE FUNCTION match_knowledge(
-  query_embedding VECTOR(1536),
+  query_embedding extensions.vector(1536),
   match_category  TEXT,
   match_threshold FLOAT,
   match_count     INT
@@ -153,7 +154,8 @@ CREATE OR REPLACE FUNCTION match_knowledge(
 RETURNS TABLE (id UUID, category TEXT, title TEXT, content TEXT, similarity FLOAT)
 LANGUAGE plpgsql
 SECURITY INVOKER
-AS $$
+SET search_path = public, extensions
+AS $
 BEGIN
   RETURN QUERY
   SELECT kb.id, kb.category, kb.title, kb.content,
@@ -164,8 +166,10 @@ BEGIN
   ORDER BY kb.embedding <=> query_embedding
   LIMIT match_count;
 END;
-$$;
+$;
 
+REVOKE ALL ON FUNCTION public.match_knowledge(extensions.vector, text, double precision, integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.match_knowledge(extensions.vector, text, double precision, integer) TO service_role;
 
 -- ---------------------------------------------------------------- deals table --
 CREATE TABLE IF NOT EXISTS deals (
