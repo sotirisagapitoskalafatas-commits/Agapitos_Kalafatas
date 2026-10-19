@@ -28,7 +28,7 @@ async function login() {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username: env.ADMIN_USERNAME, password: env.ADMIN_PASSWORD }),
+    body: JSON.stringify({ username: env.ADMIN_USER || env.ADMIN_USERNAME, password: env.ADMIN_PASS || env.ADMIN_PASSWORD }),
   });
   const body = await res.json();
   if (!res.ok || !body.token) throw new Error(`login failed (${res.status})`);
