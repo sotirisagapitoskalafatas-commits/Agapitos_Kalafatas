@@ -13,6 +13,8 @@
 -- legacy display-name fields, so keep them populated while first/last name are
 -- the editable canonical fields.
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS client_name text;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS client_contact text;
+ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS project_details text;
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS full_name text;
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS tags text[] NOT NULL DEFAULT '{}';
 ALTER TABLE public.leads ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT timezone('utc', now());
@@ -21,6 +23,8 @@ UPDATE public.leads
 SET
   full_name = COALESCE(NULLIF(BTRIM(full_name), ''), NULLIF(BTRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')), '')),
   client_name = COALESCE(NULLIF(BTRIM(client_name), ''), NULLIF(BTRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')), '')),
+  client_contact = COALESCE(NULLIF(BTRIM(client_contact), ''), NULLIF(BTRIM(phone), '')),
+  project_details = COALESCE(NULLIF(BTRIM(project_details), ''), NULLIF(BTRIM(comments), '')),
   updated_at = COALESCE(updated_at, created_at, timezone('utc', now()));
 
 ALTER TABLE public.knowledge_base ADD COLUMN IF NOT EXISTS tags text[] NOT NULL DEFAULT '{}';
@@ -67,6 +71,44 @@ DROP TRIGGER IF EXISTS leads_sync_display_names ON public.leads;
 CREATE TRIGGER leads_sync_display_names
 BEFORE INSERT OR UPDATE OF first_name, last_name, full_name, client_name ON public.leads
 FOR EACH ROW EXECUTE FUNCTION public.sync_lead_display_names();
+
+CREATE OR REPLACE FUNCTION public.sync_lead_legacy_contact_fields()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $legacy$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    NEW.phone := COALESCE(NULLIF(BTRIM(NEW.phone), ''), NULLIF(BTRIM(NEW.client_contact), ''), '');
+    NEW.client_contact := COALESCE(NULLIF(BTRIM(NEW.client_contact), ''), NULLIF(BTRIM(NEW.phone), ''), '');
+    NEW.comments := COALESCE(NULLIF(BTRIM(NEW.comments), ''), NULLIF(BTRIM(NEW.project_details), ''), '');
+    NEW.project_details := COALESCE(NULLIF(BTRIM(NEW.project_details), ''), NULLIF(BTRIM(NEW.comments), ''), '');
+  ELSE
+    IF NEW.phone IS DISTINCT FROM OLD.phone
+       AND NEW.client_contact IS NOT DISTINCT FROM OLD.client_contact THEN
+      NEW.client_contact := NEW.phone;
+    ELSIF NEW.client_contact IS DISTINCT FROM OLD.client_contact
+       AND NEW.phone IS NOT DISTINCT FROM OLD.phone THEN
+      NEW.phone := NEW.client_contact;
+    END IF;
+
+    IF NEW.comments IS DISTINCT FROM OLD.comments
+       AND NEW.project_details IS NOT DISTINCT FROM OLD.project_details THEN
+      NEW.project_details := NEW.comments;
+    ELSIF NEW.project_details IS DISTINCT FROM OLD.project_details
+       AND NEW.comments IS NOT DISTINCT FROM OLD.comments THEN
+      NEW.comments := NEW.project_details;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$legacy$;
+
+DROP TRIGGER IF EXISTS leads_sync_legacy_contact_fields ON public.leads;
+CREATE TRIGGER leads_sync_legacy_contact_fields
+BEFORE INSERT OR UPDATE OF phone, client_contact, comments, project_details ON public.leads
+FOR EACH ROW EXECUTE FUNCTION public.sync_lead_legacy_contact_fields();
 
 DROP TRIGGER IF EXISTS leads_set_updated_at ON public.leads;
 CREATE TRIGGER leads_set_updated_at
