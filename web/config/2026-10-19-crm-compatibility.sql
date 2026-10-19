@@ -36,6 +36,38 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.sync_lead_display_names()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $
+DECLARE
+  derived_name text;
+BEGIN
+  derived_name := NULLIF(BTRIM(COALESCE(NEW.first_name, '') || ' ' || COALESCE(NEW.last_name, '')), '');
+
+  IF TG_OP = 'INSERT' THEN
+    NEW.full_name := COALESCE(NULLIF(BTRIM(NEW.full_name), ''), derived_name);
+    NEW.client_name := COALESCE(NULLIF(BTRIM(NEW.client_name), ''), derived_name);
+  ELSIF NEW.first_name IS DISTINCT FROM OLD.first_name
+     OR NEW.last_name IS DISTINCT FROM OLD.last_name THEN
+    IF NEW.full_name IS NULL OR NEW.full_name IS NOT DISTINCT FROM OLD.full_name THEN
+      NEW.full_name := derived_name;
+    END IF;
+    IF NEW.client_name IS NULL OR NEW.client_name IS NOT DISTINCT FROM OLD.client_name THEN
+      NEW.client_name := derived_name;
+    END IF;
+  END IF;
+
+  RETURN NEW;
+END;
+$;
+
+DROP TRIGGER IF EXISTS leads_sync_display_names ON public.leads;
+CREATE TRIGGER leads_sync_display_names
+BEFORE INSERT OR UPDATE OF first_name, last_name, full_name, client_name ON public.leads
+FOR EACH ROW EXECUTE FUNCTION public.sync_lead_display_names();
+
 DROP TRIGGER IF EXISTS leads_set_updated_at ON public.leads;
 CREATE TRIGGER leads_set_updated_at
 BEFORE UPDATE ON public.leads
@@ -130,6 +162,13 @@ GRANT ALL ON public.leads, public.site_leads, public.deals, public.calendar_even
   public.service_requests, public.system_settings, public.notifications,
   public.agent_audit, public.agent_action_approvals, public.integration_credentials
 TO service_role;
+
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_role;
+
+REVOKE EXECUTE ON FUNCTION public.match_knowledge(vector, text, double precision, integer)
+  FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.match_knowledge(vector, text, double precision, integer)
+  TO service_role;
 
 -- Verification after applying:
 -- SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname='public' ORDER BY tablename;
