@@ -63,7 +63,7 @@ export async function searchDeals(
   const limit = Math.min(Number(args.limit) || 5, 20);
   let q = supabase
     .from("deals")
-    .select("id, title, value, stage, probability, expected_close, created_at")
+    .select("id, title, value, currency, stage, expected_close_date, created_at")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -81,7 +81,7 @@ export async function getPipelineMetrics(
   context: AgentContext,
   args: Record<string, any>
 ): Promise<any> {
-  const deals = await supabase.from("deals").select("stage, value, probability, status");
+  const deals = await supabase.from("deals").select("stage, value");
   if (deals.error) return { error: deals.error.message };
 
   // Live deals.stage CHECK: lead, qualified, proposal, negotiation,
@@ -120,8 +120,8 @@ export async function getInvoices(
   const limit = Math.min(Number(args.limit) || 10, 30);
   let q = supabase
     .from("invoices")
-    .select("id, invoice_number, amount, currency, status, issued_at, due_at")
-    .order("issued_at", { ascending: false })
+    .select("id, invoice_number, total, currency, status, created_at, valid_until")
+    .order("created_at", { ascending: false })
     .limit(limit);
 
   if (args.status) q = q.eq("status", String(args.status).toLowerCase());
@@ -171,11 +171,11 @@ export async function getCommunications(
   const limit = Math.min(Number(args.limit) || 10, 30);
   let q = supabase
     .from("communications")
-    .select("id, lead_id, direction, channel, subject, body, sent_at")
-    .order("sent_at", { ascending: false })
+    .select("id, lead_id, comm_type, direction, subject, body, created_at")
+    .order("created_at", { ascending: false })
     .limit(limit);
 
-  if (args.channel) q = q.eq("channel", String(args.channel).toLowerCase());
+  if (args.channel) q = q.eq("comm_type", String(args.channel).toLowerCase());
 
   const { data, error } = await q;
   if (error) return { error: error.message };
