@@ -28,6 +28,7 @@ continuing:
 14. `web/config/2026-09-08-creative-studio.sql` — campaigns, assets, variants, rules, audit and the creative media bucket.
 15. `web/config/seed_knowledge.sql` — initial knowledge-base content for the agent.
 16. `web/config/2026-10-19-security-hardening.sql` — explicit service-role RLS policies, browser-role revocation, pinned function search paths and function execution grants.
+17. `web/config/2026-10-19-performance-indexes.sql` — indexes frequently joined CRM foreign keys.
 
 **Do not run `config/apply-security-migration.sql` on this fresh project.** It is a
 historical upgrade script for older schemas and overlaps the canonical schema.
