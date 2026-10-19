@@ -23,7 +23,7 @@ continuing:
 9. `web/config/2026-10-19-crm-compatibility.sql` — customer display-name compatibility fields, updated-at triggers and the missing `service_requests` table; also hardens private CRM RLS policies.
 10. `web/config/2026-09-08-foundation-spine.sql` — consent, source attribution and idempotent renewal reminders.
 11. `web/config/2026-09-08-fix-tasks-view.sql` — exposes the expected `start_time` field on the task view.
-12. `web/config/2026-09-08-renewal-materialize.sql` — renewal tasks/notifications and daily job. If the scheduled job statement errors because `pg_cron` is unavailable, enable the `pg_cron` extension in Database → Extensions, then re-run only the scheduling block.
+12. `web/config/2026-09-08-renewal-materialize.sql` — enables `pg_cron`, creates renewal tasks/notifications and schedules the daily job.
 13. `web/config/2026-09-08-social-connections.sql` — social account connection metadata.
 14. `web/config/2026-09-08-creative-studio.sql` — campaigns, assets, variants, rules, audit and the creative media bucket.
 15. `web/config/seed_knowledge.sql` — initial knowledge-base content for the agent.
