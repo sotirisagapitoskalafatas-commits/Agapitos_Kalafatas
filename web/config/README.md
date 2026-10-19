@@ -27,6 +27,7 @@ continuing:
 13. `web/config/2026-09-08-social-connections.sql` — social account connection metadata.
 14. `web/config/2026-09-08-creative-studio.sql` — campaigns, assets, variants, rules, audit and the creative media bucket.
 15. `web/config/seed_knowledge.sql` — initial knowledge-base content for the agent.
+16. `web/config/2026-10-19-security-hardening.sql` — explicit service-role RLS policies, browser-role revocation, pinned function search paths and function execution grants.
 
 **Do not run `config/apply-security-migration.sql` on this fresh project.** It is a
 historical upgrade script for older schemas and overlaps the canonical schema.
@@ -41,13 +42,18 @@ Render as applicable):
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side only; retrieve it from the new project's API key settings. Never commit it.
 - `GEMINI_API_KEY` — required for agent/orchestrator features.
 - `OPENAI_API_KEY` — needed for semantic knowledge-base embeddings/RAG features.
-- `ADMIN_USER` and a strong `ADMIN_PASS` — required for CRM login in production.
+- `ADMIN_USER` and a strong `ADMIN_PASS` — required for CRM login in production. These are application login credentials, not your Supabase account login.
+- `AUTH_SECRET` — required to sign admin session tokens; set a new random value in the deployment environment. Do not store real values in Git.
 - `RESEND_API_KEY` and `NOTIFY_EMAIL_TO` — required for email notifications.
 - `SLACK_WEBHOOK_URL`, `SUPABASE_WEBHOOK_SECRET`, and/or Slack bot values only when those integrations are enabled.
 
 `SUPABASE_PROJECT_REF` and `SUPABASE_ACCESS_TOKEN` are only for the optional SQL helper.
 The Management API SQL endpoint is experimental and requires a scoped Management API
 token with database-write permission. Never use the service-role key as that token.
+
+## Recovering a forgotten CRM login
+
+The application does not store or recover the administrator password in Supabase. Reset it at the hosting provider by replacing `ADMIN_USER`, `ADMIN_PASS`, and `AUTH_SECRET` together. Use a unique, random password and a separately generated random `AUTH_SECRET`; redeploy and test the login page. Changing `AUTH_SECRET` invalidates existing CRM session tokens. Do not add credentials to this repository, a SQL table, or a public issue. The app login form is protected by API-level bearer-token checks; there is no separate HTTP Basic password gate.
 
 ## Verification checklist
 
