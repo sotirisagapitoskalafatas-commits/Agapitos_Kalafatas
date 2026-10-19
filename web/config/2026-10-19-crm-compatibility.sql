@@ -40,7 +40,7 @@ CREATE OR REPLACE FUNCTION public.sync_lead_display_names()
 RETURNS trigger
 LANGUAGE plpgsql
 SET search_path = public
-AS $
+AS $sync$
 DECLARE
   derived_name text;
 BEGIN
@@ -61,7 +61,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$sync$;
 
 DROP TRIGGER IF EXISTS leads_sync_display_names ON public.leads;
 CREATE TRIGGER leads_sync_display_names
