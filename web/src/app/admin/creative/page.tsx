@@ -191,7 +191,7 @@ function CreativeStudioInner() {
   }, [api, authenticated, mounted]);
 
   const loadAssets = useCallback(async () => {
-    if (!token) return;
+    if (!authenticated || !mounted) return;
     setLibraryLoading(true);
     try {
       const params = new URLSearchParams();
