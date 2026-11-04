@@ -9,11 +9,8 @@ import {
   EyeOff,
   Info,
   LogOut,
-  Moon,
   PanelLeftClose,
   PanelLeftOpen,
-  Search,
-  Sun,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -174,50 +171,51 @@ function useShellStatus(token: string | null): ShellStatus | null {
   return status;
 }
 
-// ── Finish switch (2a warm paper / 2b night console), icon-labeled ──────────
+// ── Compact appearance selector: the workspace chrome changes, content stays light. ──
+const THEME_OPTIONS: { key: AtlasFinish; label: string; color: string }[] = [
+  { key: "navy", label: "Navy", color: "#17365d" },
+  { key: "ocean", label: "Ωκεανός", color: "#087f9c" },
+  { key: "graphite", label: "Γραφίτης", color: "#3c4655" },
+  { key: "forest", label: "Δάσος", color: "#25624c" },
+  { key: "plum", label: "Δαμάσκηνο", color: "#704b7d" },
+  { key: "light", label: "Φωτεινό", color: "#dce5f2" },
+];
+
 function FinishSwitch({ collapsed }: { collapsed?: boolean }) {
   const { finish, setFinish, toggle } = useAtlasTheme();
   if (collapsed) {
     return (
       <button
         onClick={toggle}
-        title={finish === "warm" ? "Paper · Console" : "Console · Paper"}
-        aria-label="Toggle finish"
+        title="Αλλαγή εμφάνισης"
+        aria-label="Αλλαγή εμφάνισης"
         className="atlas-rail-tile"
       >
-        {finish === "warm" ? <Sun className="w-[17px] h-[17px]" /> : <Moon className="w-[17px] h-[17px]" />}
+        <span className="w-4 h-4 rounded-full border border-white/40" style={{ background: THEME_OPTIONS.find((o) => o.key === finish)?.color }} />
       </button>
     );
   }
-  const options: { key: AtlasFinish; label: string; icon: LucideIcon }[] = [
-    { key: "warm", label: "Paper", icon: Sun },
-    { key: "night", label: "Console", icon: Moon },
-  ];
+
   return (
-    <div
-      className="flex rounded-lg p-0.5 gap-0.5"
-      style={{ background: "var(--cc-chip)" }}
-      role="radiogroup"
-      aria-label="Command Center finish"
-    >
-      {options.map((o) => {
-        const Icon = o.icon;
-        const active = finish === o.key;
-        return (
+    <div className="atlas-theme-picker">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-semibold" style={{ color: "var(--cc-glass-ink-dim)" }}>Εμφάνιση</span>
+        <span className="text-[10px]" style={{ color: "var(--cc-glass-ink-dim)" }}>{THEME_OPTIONS.find((o) => o.key === finish)?.label}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        {THEME_OPTIONS.map((option) => (
           <button
-            key={o.key}
-            role="radio"
-            aria-checked={active}
-            onClick={() => setFinish(o.key)}
-            className={`flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold rounded-md transition-colors ${
-              active ? "bg-[var(--cc-card)] text-[var(--cc-ink)] shadow-sm" : "text-[var(--cc-glass-ink-dim)]"
-            }`}
-          >
-            <Icon className="w-3.5 h-3.5" />
-            {o.label}
-          </button>
-        );
-      })}
+            key={option.key}
+            type="button"
+            onClick={() => setFinish(option.key)}
+            aria-label={option.label}
+            aria-pressed={finish === option.key}
+            title={option.label}
+            className={`atlas-theme-swatch ${finish === option.key ? "atlas-theme-swatch-active" : ""}`}
+            style={{ background: option.color }}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -364,29 +362,20 @@ function JarvisStatusBar({ status }: { status: ShellStatus | null }) {
   );
 }
 
-function ShellTopBar({ breadcrumbs, headerRight, lang, setLang, t, status, onOpenMenu, onChangeLang }: {
+function ShellTopBar({ breadcrumbs, headerRight, lang, t, status, onOpenMenu, onChangeLang }: {
   breadcrumbs: Crumb[];
   headerRight?: React.ReactNode;
   lang: ShellLang;
-  setLang: (l: ShellLang) => void;
   t: Record<TKey, string>;
   status: ShellStatus | null;
   onOpenMenu: () => void;
   onChangeLang: (l: ShellLang) => void;
 }) {
   const router = useRouter();
-  const now = new Date();
-  const dateLine = new Intl.DateTimeFormat(langLocale(lang), {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(now);
 
   return (
-    <div className="sticky top-0 z-20 atlas-topbar backdrop-blur-xl" style={{ background: "color-mix(in srgb, var(--cc-bg) 78%, transparent)" }}>
-      {/* Row 2 — breadcrumb + global controls */}
-      <div className="flex items-center gap-2 px-4 md:px-6 py-2">
+    <header className="sticky top-0 z-20 atlas-topbar backdrop-blur-xl">
+      <div className="flex items-center gap-2 px-4 md:px-6 min-h-[60px]">
         <button
           onClick={onOpenMenu}
           className="md:hidden p-2 -ml-1 rounded-lg hover:bg-white/10"
@@ -397,27 +386,23 @@ function ShellTopBar({ breadcrumbs, headerRight, lang, setLang, t, status, onOpe
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+
         <nav className="flex items-center gap-1.5 text-sm min-w-0" aria-label="Breadcrumb">
           {breadcrumbs.map((crumb, i) => (
             <Fragment key={i}>
-              {i > 0 && (
-                <ChevronRight className="w-3.5 h-3.5 shrink-0" style={{ color: "var(--cc-faint)" }} />
-              )}
+              {i > 0 && <ChevronRight className="w-3.5 h-3.5 shrink-0 opacity-50" />}
               {crumb.href ? (
-                <a href={crumb.href} className="font-medium hover:underline" style={{ color: "var(--cc-indigo-ink)" }}>
-                  {crumb.label}
-                </a>
+                <a href={crumb.href} className="font-medium hover:underline opacity-85">{crumb.label}</a>
               ) : (
-                <span className="font-semibold truncate max-w-[180px] md:max-w-none" style={{ color: "var(--cc-ink)" }}>
-                  {crumb.label}
-                </span>
+                <span className="font-semibold truncate max-w-[180px] md:max-w-none">{crumb.label}</span>
               )}
             </Fragment>
           ))}
         </nav>
+
         <div className="flex-1" />
         {headerRight && <div className="shrink-0">{headerRight}</div>}
-        {/* Language */}
+
         <div className="flex items-center gap-0.5 shrink-0" role="group" aria-label="Language">
           {LANGS.map((l) => (
             <button
@@ -430,60 +415,34 @@ function ShellTopBar({ breadcrumbs, headerRight, lang, setLang, t, status, onOpe
             </button>
           ))}
         </div>
-        {/* Notifications — real pending count */}
+
         <button
           onClick={() => router.push("/admin/crm?tab=notifications")}
           className="relative p-2 rounded-lg hover:bg-white/10 shrink-0"
           style={{ color: "var(--cc-glass-ink)" }}
-          aria-label="Notifications"
-          title="Notifications"
+          aria-label="Ειδοποιήσεις"
+          title="Ειδοποιήσεις"
         >
           <Bell className="w-[17px] h-[17px]" />
           {!!status?.notificationCount && status.notificationCount > 0 && (
             <span
-              className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[9px] atlas-mono font-semibold flex items-center justify-center"
-              style={{ background: "var(--cc-red)", color: "#fff" }}
+              className="absolute -top-0.5 -right-0.5 min-w-4 h-4 px-1 rounded-full text-[9px] atlas-mono font-semibold flex items-center justify-center"
+              style={{ background: "#d94841", color: "#fff" }}
             >
               {status.notificationCount}
             </span>
           )}
         </button>
-        {/* Profile */}
+
         <div
-          className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 atlas-plex text-[11px] font-bold"
+          className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 atlas-plex text-[11px] font-bold"
           style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)", border: "1px solid var(--cc-glass-border)" }}
           title="Agapitos Kalafatas"
         >
           AK
         </div>
       </div>
-
-      {/* Row 2 — date + greeting | global search | JARVIS status */}
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 md:px-6 pb-2.5">
-        <div className="min-w-0">
-          <div className="text-[13px] font-semibold leading-tight atlas-plex" style={{ color: "var(--cc-ink)" }}>
-            {dateLine}
-          </div>
-          <div className="text-[11.5px] leading-tight flex items-center gap-1.5" style={{ color: "var(--cc-glass-ink-dim)" }}>
-            <span>{t[greetingKey(new Date().getHours())]}, Sotiris</span>
-          </div>
-        </div>
-        <div className="flex-1 min-w-[180px]" />
-        <button
-          className="atlas-glass-pill flex items-center gap-2 px-3 h-9 flex-1 sm:flex-none sm:w-72 max-w-md"
-          aria-label={t.search}
-          title={t.search}
-        >
-          <Search className="w-4 h-4 flex-none opacity-70" />
-          <span className="flex-1 text-left text-[12.5px] truncate">{t.search}</span>
-          <span className="atlas-mono text-[9.5px] px-1.5 py-0.5 rounded flex-none" style={{ background: "var(--cc-card)", color: "var(--cc-glass-ink-dim)" }}>
-            ⌘K
-          </span>
-        </button>
-        <div className="flex-1" />
-        <JarvisStatusBar status={status} />
-      </div>
-    </div>
+    </header>
   );
 }
 
@@ -512,13 +471,14 @@ function AdminShellInner({ breadcrumbs, headerRight, children }: AdminShellProps
   const status = useShellStatus(token);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [hidePlanned, setHidePlanned] = useState(false);
+  const [hidePlanned, setHidePlanned] = useState(true);
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [openGroupId, setOpenGroupIdState] = useState<string | null>(null);
 
   useEffect(() => {
     try {
       setRailCollapsed(localStorage.getItem("atlas_nav_rail") === "1");
+      setHidePlanned(localStorage.getItem("atlas_hide_planned") !== "0");
       const stored = localStorage.getItem("atlas_nav_open");
       const valid = stored && NAV_GROUPS.some((g) => g.id === stored);
       if (valid) setOpenGroupIdState(stored);
@@ -782,7 +742,11 @@ function AdminShellInner({ breadcrumbs, headerRight, children }: AdminShellProps
                 <input
                   type="checkbox"
                   checked={hidePlanned}
-                  onChange={(e) => setHidePlanned(e.target.checked)}
+                  onChange={(e) => {
+                    const next = e.target.checked;
+                    setHidePlanned(next);
+                    try { localStorage.setItem("atlas_hide_planned", next ? "1" : "0"); } catch { /* ignore */ }
+                  }}
                   className="accent-[var(--cc-indigo)]"
                 />
                 {t.hidePlanned}
@@ -826,13 +790,12 @@ function AdminShellInner({ breadcrumbs, headerRight, children }: AdminShellProps
           breadcrumbs={breadcrumbs}
           headerRight={headerRight}
           lang={lang}
-          setLang={setLang}
           t={t}
           status={status}
           onOpenMenu={() => setSidebarOpen(true)}
           onChangeLang={setLang}
         />
-        <div className="flex-1 p-6 md:p-8 min-w-0">{children}</div>
+        <div className="flex-1 px-4 py-5 md:px-6 md:py-6 min-w-0">{children}</div>
       </div>
     </main>
   );
