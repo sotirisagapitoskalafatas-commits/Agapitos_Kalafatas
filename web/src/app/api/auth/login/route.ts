@@ -1,62 +1,78 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
-  verifyAdminCredentials,
   generateSessionToken,
-  getAdminCredentials,
+  isAuthConfigured,
+  isSameOriginRequest,
+  sessionCookieOptions,
+  verifyAdminCredentials,
+  SESSION_TTL_SECONDS,
 } from "@/lib/admin-auth";
 import { rateLimit } from "@/lib/rate-limit";
 
 export async function POST(request: NextRequest) {
-  // Brute-force guard: credential verification is SHA-256 based, so bound the
-  // attempts per IP. 10/min is generous for a single operator, hostile to bots.
-  const limited = rateLimit(request, "login", 10, 60_000);
+  // Reject cross-origin login attempts before doing any credential work.
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+  }
+
+  // This is an instance-level throttle. Use a shared store/WAF for a
+  // distributed guarantee across Vercel serverless instances.
+  const limited = rateLimit(request, "login", 5, 60_000);
   if (limited) return limited;
 
+  if (!isAuthConfigured()) {
+    return NextResponse.json(
+      { error: "Authentication is not configured. Check the Production admin credentials and AUTH_SECRET settings." },
+      { status: 503, headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
   try {
-    let username = "";
-    let password = "";
-    try {
-      const body = await request.json();
-      username = body?.username ?? "";
-      password = body?.password ?? "";
-    } catch {
-      // fall through to validation
+    const contentLength = Number(request.headers.get("content-length") || 0);
+    if (contentLength > 8192) {
+      return NextResponse.json({ error: "Request too large" }, { status: 413 });
     }
 
-    if (!username || !password) {
+    const body = await request.json().catch(() => null);
+    const username = typeof body?.username === "string" ? body.username : "";
+    const password = typeof body?.password === "string" ? body.password : "";
+
+    if (!username || !password || username.length > 128 || password.length > 1024) {
       return NextResponse.json(
-        { error: "Username and password are required" },
+        { error: "Enter a valid username and password" },
         { status: 400 }
       );
     }
 
-    if (await verifyAdminCredentials(username, password)) {
-      try {
-        const token = await generateSessionToken(username);
-        return NextResponse.json({ success: true, token });
-      } catch {
-        return NextResponse.json(
-          { error: "Admin auth is not configured (set AUTH_SECRET)" },
-          { status: 503 }
-        );
-      }
+    if (!(await verifyAdminCredentials(username, password))) {
+      return NextResponse.json(
+        { error: "Invalid username or password" },
+        { status: 401, headers: { "Cache-Control": "no-store" } }
+      );
     }
 
-    return NextResponse.json(
-      { error: "Invalid username or password" },
-      { status: 401 }
+    const token = await generateSessionToken(username);
+    const response = NextResponse.json(
+      {
+        success: true,
+        expiresInSeconds: SESSION_TTL_SECONDS,
+      },
+      { headers: { "Cache-Control": "no-store" } }
     );
+    response.cookies.set("atlas_session", token, sessionCookieOptions());
+    return response;
   } catch (error) {
     console.error("Login API error:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
+      { error: "Unable to sign in right now" },
+      { status: 500, headers: { "Cache-Control": "no-store" } }
     );
   }
 }
 
 export async function GET() {
-  // Expose whether admin auth is configured so the client can fail-closed.
-  const configured = getAdminCredentials() !== null;
-  return NextResponse.json({ configured });
+  return NextResponse.json(
+    { configured: isAuthConfigured() },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
