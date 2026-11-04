@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/admin/AdminShell";
+import { useAtlasTheme, type AtlasFinish } from "@/components/admin/atlasTheme";
 import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
 import SurvivorView from "@/components/admin/survivor/SurvivorView";
 import { resolveCrmTab, plannedModuleByKey, type CrmTab } from "@/components/admin/nav";
@@ -183,6 +184,23 @@ const STAGES = [
   { key: "closed_won", label: "Won", color: "bg-green-50 border-green-300" },
   { key: "closed_lost", label: "Lost", color: "bg-red-50 border-red-300" },
 ];
+
+type DashboardWidgetId = "metrics" | "attention" | "jarvis" | "pipeline" | "activity";
+type DashboardWidgetPreference = {
+  id: DashboardWidgetId;
+  label: string;
+  description: string;
+  visible: boolean;
+  size: "half" | "full";
+};
+const DEFAULT_DASHBOARD_LAYOUT: DashboardWidgetPreference[] = [
+  { id: "metrics", label: "Βασικοί δείκτες", description: "Leads, Pipeline, ανανεώσεις και σημερινές εργασίες.", visible: true, size: "full" },
+  { id: "attention", label: "Χρειάζεται την προσοχή σου", description: "Εκκρεμότητες που χρειάζονται ενέργεια.", visible: true, size: "half" },
+  { id: "jarvis", label: "ATLAS AI · JARVIS", description: "Κατάσταση AI, εγκρίσεις και αποτυχίες.", visible: true, size: "half" },
+  { id: "pipeline", label: "Pipeline πωλήσεων", description: "Deals ανά στάδιο και βασικές υπηρεσίες.", visible: true, size: "half" },
+  { id: "activity", label: "Πρόσφατη δραστηριότητα", description: "Οι τελευταίες αλλαγές στο CRM.", visible: true, size: "half" },
+];
+const DASHBOARD_LAYOUT_STORAGE = "atlas_home_layout";
 
 // ── Lead pipeline statuses (Greek labels + emoji + chip colors) ──
 const LEAD_STATUSES = [
@@ -408,6 +426,36 @@ function CRMDashboardInner() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer360Data | null>(null);
   const [customersBusy, setCustomersBusy] = useState(false);
   const [reqSignal, setReqSignal] = useState(0);
+  const [dashboardLayout, setDashboardLayout] = useState<DashboardWidgetPreference[]>(DEFAULT_DASHBOARD_LAYOUT);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DASHBOARD_LAYOUT_STORAGE);
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return;
+      const allowed = new Set(DEFAULT_DASHBOARD_LAYOUT.map((item) => item.id));
+      const normalized = parsed
+        .filter((item: any) => item && allowed.has(item.id))
+        .map((item: any) => {
+          const fallback = DEFAULT_DASHBOARD_LAYOUT.find((entry) => entry.id === item.id)!;
+          return {
+            ...fallback,
+            visible: typeof item.visible === "boolean" ? item.visible : fallback.visible,
+            size: item.size === "full" || item.size === "half" ? item.size : fallback.size,
+          } as DashboardWidgetPreference;
+        });
+      const present = new Set(normalized.map((item) => item.id));
+      setDashboardLayout([...normalized, ...DEFAULT_DASHBOARD_LAYOUT.filter((item) => !present.has(item.id))]);
+    } catch {
+      /* Use the default layout if browser preferences are invalid. */
+    }
+  }, []);
+
+  const saveDashboardLayout = useCallback((next: DashboardWidgetPreference[]) => {
+    setDashboardLayout(next);
+    try { localStorage.setItem(DASHBOARD_LAYOUT_STORAGE, JSON.stringify(next)); } catch { /* session state still applies */ }
+  }, []);
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showNewDeal, setShowNewDeal] = useState(false);
@@ -640,19 +688,26 @@ function CRMDashboardInner() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
           <div>
             <h2 className="atlas-plex text-[20px] font-semibold" style={{ color: "var(--cc-ink)" }}>
-              {tab === "planned" ? (plannedModule?.label ?? "Planned") : tab === "renewals" ? "Renewals" : tab === "dashboard" ? "Command Center" : tab === "survivor" ? "AI Survivor" : tab}
+              {tab === "planned" ? (plannedModule?.label ?? "Προγραμματισμένη ενότητα") : tab === "renewals" ? "Ανανεώσεις" : tab === "dashboard" ? "Αρχική" : tab === "preferences" ? "Προσαρμογή CRM" : tab}
             </h2>
             <p className="text-sm mt-1" style={{ color: "var(--cc-muted)" }}>
               {new Date().toLocaleDateString("el-GR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
-          <button
-            onClick={() => { fetchAll(); fetchRenewals(); }}
-            className="text-sm font-semibold transition-opacity px-4 py-2 rounded-xl"
-            style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}
-          >
-            ↻ Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            {tab === "dashboard" && (
+              <button onClick={() => setTab("preferences")} className="text-xs font-semibold px-3.5 py-2 rounded-xl border" style={{ background: "#fff", color: "#44536a", borderColor: "#e0e7f0" }}>
+                ⚙ Προσαρμογή αρχικής
+              </button>
+            )}
+            <button
+              onClick={() => { fetchAll(); fetchRenewals(); }}
+              className="text-sm font-semibold transition-opacity px-4 py-2 rounded-xl"
+              style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}
+            >
+              ↻ Ανανέωση
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -661,7 +716,7 @@ function CRMDashboardInner() {
           </div>
         ) : (
           <>
-            {tab === "dashboard" && <DashboardView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} />}
+            {tab === "dashboard" && <DashboardView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} layout={dashboardLayout} />}
             {tab === "attention" && <AttentionView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} />}
             {tab === "leads" && <LeadsView leads={leads} onSelect={setSelectedLead} onNew={() => setShowNewLead(true)} updateFields={updateLeadFields} />}
             {tab === "customers" && (
@@ -703,6 +758,7 @@ function CRMDashboardInner() {
             {tab === "ai" && <AgentView />}
             {tab === "survivor" && <SurvivorView />}
             {tab === "settings" && <SettingsView />}
+            {tab === "preferences" && <PreferencesView layout={dashboardLayout} onLayoutChange={saveDashboardLayout} />}
             {tab === "planned" && <PlannedModuleView module={plannedModule} onBack={() => setTab("dashboard")} />}
           </>
         )}
