@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 import {
   applyRequestPatch,
@@ -13,16 +13,7 @@ import {
   type ServiceRequestRow,
 } from "@/lib/spine/customers";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    global: {
-      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
-        fetch(input as any, { ...init, cache: "no-store" }),
-    },
-  }
-);
+
 
 export const dynamic = "force-dynamic";
 
