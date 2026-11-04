@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 import { computeDiagnostic, FunnelSnapshot } from "@/lib/diagnostic/engine";
 import { buildHypotheses } from "@/lib/diagnostic/hypotheses";
 import { getModelClient } from "@/lib/agents/model-client";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 // Statuses that represent "real" tracked leads (archived = noise, excluded).
 const CONTACTED = ["contacted", "qualified", "customer"];
