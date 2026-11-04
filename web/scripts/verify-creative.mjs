@@ -89,9 +89,9 @@ async function ensureAssetRow() {
 }
 
 async function run() {
-  const token = await login();
+  const session = await login();
 
-  const image = await api(token, "/api/creative/image", {
+  const image = await api(session, "/api/creative/image", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -120,7 +120,7 @@ async function run() {
   return { assetId: seeded.assetId, campaignId: seeded.campaignId, imageGen: false };
 }
 
-async function runFlow(token, assetId) {
+async function runFlow(session, assetId) {
   const copy = await api(token, "/api/creative/copy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -192,7 +192,7 @@ try {
   const seeded = await run();
   assetId = seeded.assetId;
   campaignId = seeded.campaignId;
-  await runFlow(token, assetId);
+  await runFlow(session, assetId);
   await checkState(assetId, campaignId, seeded.imageGen);
 } catch (e) {
   step("error", false, e.message);
