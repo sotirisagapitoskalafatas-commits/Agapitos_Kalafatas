@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
-import { buildCommandCenter } from "@/lib/spine/command";
+import { buildCommandCenter, type ActivityRow } from "@/lib/spine/command";
 
 
 
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     agentAudit: auditRes.data ?? [],
     notifications: notifRes.data ?? [],
     creativeRuns: creativeRes.data ?? [],
-    activity: activityRes.data ?? [],
+    activity: (activityRes.data ?? []) as ActivityRow[],
     deals: dealsRes.data ?? [],
     now,
   });
