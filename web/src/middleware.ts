@@ -1,61 +1,25 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { getAdminCredentials } from "./lib/admin-auth";
+import { SESSION_COOKIE_NAME, verifySessionToken } from "./lib/admin-auth";
 
-export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-  const isPrefetch =
-    request.headers.get("next-router-prefetch") === "1" ||
-    request.headers.get("purpose") === "prefetch";
+export async function middleware(request: NextRequest) {
+  const token = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const session = token ? await verifySessionToken(token) : null;
 
-  // For prefetch requests we never send the Basic challenge, otherwise
-  // Next.js auto-prefetching a protected link from a public page would pop
-  // the browser's native sign-in dialog (and leave scroll broken on cancel).
-  const authHeaders = (): Headers => {
-    const headers = new Headers();
-    if (!isPrefetch) {
-      headers.set("WWW-Authenticate", 'Basic realm="Admin Dashboard"');
-    }
-    return headers;
-  };
-
-  if (pathname.startsWith("/admin")) {
-    // Fail closed: if no admin credentials are configured (production), block all access.
-    const creds = getAdminCredentials();
-    if (!creds) {
-      return new NextResponse("Admin access is not configured", { status: 503 });
-    }
-
-    const authHeader = request.headers.get("authorization");
-    if (!authHeader || !authHeader.startsWith("Basic ")) {
-      return new NextResponse("Authentication required", {
-        status: 401,
-        headers: authHeaders(),
-      });
-    }
-
-    const base64Credentials = authHeader.split(" ")[1];
-    let credentials = "";
-    try {
-      credentials = atob(base64Credentials);
-    } catch {
-      return new NextResponse("Invalid credentials", { status: 401 });
-    }
-    const [username, password] = credentials.split(":");
-
-    if (username !== creds.user || password !== creds.pass) {
-      return new NextResponse("Invalid credentials", {
-        status: 401,
-        headers: authHeaders(),
-      });
-    }
+  if (session) {
+    const response = NextResponse.next();
+    response.headers.set("Cache-Control", "private, no-store");
+    return response;
   }
 
-  return NextResponse.next();
+  const loginUrl = new URL("/auth/login", request.url);
+  loginUrl.searchParams.set(
+    "next",
+    `${request.nextUrl.pathname}${request.nextUrl.search}`
+  );
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
-  // Note: only page routes are protected by HTTP Basic Auth. API routes
-  // (/api/*) are protected individually via Bearer session tokens in admin-auth.
   matcher: ["/admin/:path*"],
 };
