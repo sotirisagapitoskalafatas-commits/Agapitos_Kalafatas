@@ -492,7 +492,7 @@ function CRMDashboardInner() {
 
     const results = await Promise.all(requests);
 
-    // If the stored token is rejected (401), it is stale/invalid — force a fresh login.
+    // If the server rejects the cookie session, send the user through the login flow.
     if (results.some(r => r.status === 401)) {
       logout();
       setLoading(false);
