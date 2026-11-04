@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 import { generateCopyRun } from "@/lib/creative/server";
 import { PLATFORMS, LANGUAGES } from "@/lib/creative/types";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
