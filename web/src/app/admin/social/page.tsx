@@ -87,7 +87,7 @@ export default function SocialSettingsPage() {
 }
 
 function SocialSettingsInner() {
-  const { token } = useAdminAuth();
+  const { authenticated, mounted } = useAdminAuth();
 
   const [connections, setConnections] = useState<ConnectionRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -108,14 +108,18 @@ function SocialSettingsInner() {
   const api = useCallback(
     async (path: string, opts: RequestInit = {}) => {
       const headers: Record<string, string> = { ...(opts.headers as Record<string, string>) };
-      if (token) headers.Authorization = `Bearer ${token}`;
       if (opts.body) headers["Content-Type"] = "application/json";
-      const res = await fetch(path, { ...opts, headers });
+      const res = await fetch(path, {
+        ...opts,
+        credentials: "same-origin",
+        cache: "no-store",
+        headers,
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
       return data;
     },
-    [token]
+    []
   );
 
   const loadMatrix = useCallback(
@@ -132,7 +136,7 @@ function SocialSettingsInner() {
   );
 
   const loadConnections = useCallback(async () => {
-    if (!token) return;
+    if (!authenticated) return;
     setLoading(true);
     try {
       const d = await api("/api/social/connections");
@@ -142,16 +146,13 @@ function SocialSettingsInner() {
     } finally {
       setLoading(false);
     }
-  }, [api, token]);
+  }, [api, authenticated]);
 
   useEffect(() => {
-    if (!token) {
-      loadMatrix();
-      return;
-    }
+    if (!mounted || !authenticated) return;
     loadConnections();
     loadMatrix();
-  }, [token, loadConnections, loadMatrix]);
+  }, [mounted, authenticated, loadConnections, loadMatrix]);
 
   useEffect(() => {
     const caps = matrix[platform] || [];
