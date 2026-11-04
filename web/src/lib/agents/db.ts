@@ -1,10 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient as SupabaseClientType } from "@supabase/supabase-js";
 
-type SupabaseClient = ReturnType<typeof createClient>;
+type AdminSupabaseClient = SupabaseClientType<any>;
 
-let adminClient: SupabaseClient | null = null;
+let adminClient: AdminSupabaseClient | null = null;
 
-function getAdminClient(): SupabaseClient {
+function getAdminClient(): AdminSupabaseClient {
   if (adminClient) return adminClient;
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -13,7 +13,7 @@ function getAdminClient(): SupabaseClient {
     throw new Error("Supabase server access is not configured for this environment.");
   }
 
-  adminClient = createClient(url, serviceRoleKey, {
+  adminClient = createClient<any>(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   return adminClient;
@@ -21,7 +21,7 @@ function getAdminClient(): SupabaseClient {
 
 // Do not initialize a service-role client while Next.js is collecting route data.
 // The service key is read only at request time and never sent to the browser.
-export const supabase = new Proxy({} as SupabaseClient, {
+export const supabase = new Proxy({} as AdminSupabaseClient, {
   get(_target, property) {
     const client = getAdminClient();
     const value = Reflect.get(client, property, client);
