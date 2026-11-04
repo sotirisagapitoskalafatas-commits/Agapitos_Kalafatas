@@ -1084,3 +1084,86 @@ section {
 @media (max-width: 767px) {
   .crm-glass-sidebar { width: min(17rem, calc(100vw - 3rem)); }
 }
+
+
+/* ─── ATLAS dashboard: compact actions and a clear visual hierarchy ───────── */
+.atlas-dashboard .atlas-metric-card {
+  box-shadow: 0 1px 2px rgba(20, 35, 58, 0.035), 0 8px 24px -20px rgba(20, 35, 58, 0.16);
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+.atlas-dashboard .atlas-metric-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px -13px rgba(20, 35, 58, 0.18);
+}
+.atlas-metric-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.atlas-metric-blue { background: #eaf2ff; color: #3268c8; }
+.atlas-metric-violet { background: #f0edff; color: #7560cd; }
+.atlas-metric-amber { background: #fff5e4; color: #aa761e; }
+.atlas-metric-green { background: #e7f5ee; color: #24815b; }
+
+.atlas-primary-action,
+.atlas-secondary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 650;
+  transition: background 140ms ease, border-color 140ms ease, transform 140ms ease;
+}
+.atlas-primary-action {
+  color: #fff;
+  background: #2866d7;
+  box-shadow: 0 3px 10px rgba(40, 102, 215, 0.16);
+}
+.atlas-primary-action:hover { background: #1f58c1; transform: translateY(-1px); }
+.atlas-secondary-action {
+  color: #43536c;
+  background: #fff;
+  border: 1px solid #e1e7f0;
+}
+.atlas-secondary-action:hover { background: #f6f8fc; border-color: #cbd6e6; }
+.atlas-row-action {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  font-size: 10px;
+  font-weight: 650;
+  color: #315fba;
+  background: #f0f5ff;
+  white-space: nowrap;
+  transition: background 140ms ease;
+}
+.atlas-row-action:hover { background: #e5eeff; }
+
+.atlas-attention-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  flex: none;
+  border-radius: 999px;
+  background: #8b95a5;
+}
+.atlas-attention-critical,
+.atlas-attention-high { background: #d34d48; }
+.atlas-attention-medium { background: #d79a32; }
+.atlas-attention-low { background: #8b95a5; }
+
+@media (max-width: 639px) {
+  .atlas-row-action { padding: 6px 7px; font-size: 9px; }
+}
