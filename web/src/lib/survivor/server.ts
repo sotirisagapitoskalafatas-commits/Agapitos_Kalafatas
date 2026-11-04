@@ -88,8 +88,8 @@ export async function getWalletView(): Promise<WalletView> {
     .eq("agent_id", agent.id)
     .in("status", ["won", "in_progress", "delivered"]);
 
-  const pendingBids = (pending || []).reduce((sum, a) => sum + Number(a.payload?.value || 0), 0);
-  const reserved = (jobs || []).reduce((sum, j) => sum + Number(j.value || 0), 0);
+  const pendingBids = (pending || []).reduce((sum: number, a: any) => sum + Number(a.payload?.value || 0), 0);
+  const reserved = (jobs || []).reduce((sum: number, j: any) => sum + Number(j.value || 0), 0);
 
   return {
     agentId: agent.id,
