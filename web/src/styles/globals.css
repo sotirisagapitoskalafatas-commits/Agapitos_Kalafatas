@@ -1167,3 +1167,90 @@ section {
 @media (max-width: 639px) {
   .atlas-row-action { padding: 6px 7px; font-size: 9px; }
 }
+
+
+/* ─── Personalization controls ─────────────────────────────────────────────── */
+.atlas-appearance-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #e4eaf2;
+  border-radius: 14px;
+  background: #fff;
+  text-align: left;
+  transition: border-color 140ms ease, background 140ms ease, box-shadow 140ms ease;
+}
+.atlas-appearance-option:hover {
+  border-color: #c7d5ea;
+  background: #fbfcff;
+}
+.atlas-appearance-option-active {
+  border-color: #6b99e6;
+  background: #f5f8ff;
+  box-shadow: inset 0 0 0 1px rgba(49, 95, 186, 0.12);
+}
+.atlas-appearance-sample {
+  width: 58px;
+  height: 38px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 1px rgba(10, 20, 35, 0.12);
+}
+.atlas-appearance-sample span:first-child {
+  width: 8px;
+  align-self: stretch;
+  border-radius: 3px;
+  background: rgba(255,255,255,.3);
+}
+.atlas-appearance-sample span:nth-child(2),
+.atlas-appearance-sample span:nth-child(3) {
+  height: 5px;
+  flex: 1;
+  border-radius: 3px;
+  background: rgba(255,255,255,.55);
+}
+.atlas-preference-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e9edf3;
+  border-radius: 12px;
+  background: #fff;
+}
+.atlas-order-button {
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e0e6ef;
+  border-radius: 8px;
+  background: #fff;
+  color: #4c5d75;
+  font-size: 14px;
+  font-weight: 700;
+}
+.atlas-order-button:hover:not(:disabled) { background: #f3f6fb; border-color: #cbd6e5; }
+.atlas-order-button:disabled { opacity: .35; cursor: not-allowed; }
+.atlas-size-option {
+  padding: 5px 8px;
+  border-radius: 7px;
+  color: #6a778a;
+  font-size: 10px;
+  font-weight: 600;
+}
+.atlas-size-option-active {
+  color: #264f96;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(20, 35, 58, .1);
+}
+@media (max-width: 640px) {
+  .atlas-preference-row { align-items: flex-start; }
+}
