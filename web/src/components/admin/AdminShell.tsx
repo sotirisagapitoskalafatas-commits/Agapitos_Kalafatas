@@ -624,15 +624,6 @@ function AdminShellInner({ breadcrumbs, headerRight, children }: AdminShellProps
           </button>
         </div>
 
-        {/* Search affordance (global search is a later foundation) */}
-        <div className={`px-4 pb-2 ${effCollapsed ? "hidden" : ""}`}>
-          <div className="atlas-glass-pill flex items-center gap-2 h-9 px-3" title={t.search}>
-            <Search className="w-4 h-4 flex-none opacity-70" />
-            <span className="flex-1 text-[12.5px] truncate">{t.search}</span>
-            <span className="atlas-mono text-[9.5px] px-1.5 py-0.5 rounded flex-none" style={{ background: "var(--cc-card)", color: "var(--cc-glass-ink-dim)" }}>⌘K</span>
-          </div>
-        </div>
-
         {/* Navigation */}
         <nav className="flex-1 px-3 py-1 space-y-2 overflow-y-auto">
           {NAV_GROUPS.map((group) => {
