@@ -13,6 +13,10 @@ function getAdminClient(): any {
 
   adminClient = createClient(url, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: {
+      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
+        fetch(input as any, { ...init, cache: "no-store" }),
+    },
   });
   return adminClient;
 }
