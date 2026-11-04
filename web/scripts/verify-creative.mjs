@@ -29,7 +29,7 @@ async function login() {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Origin: origin },
-    body: JSON.stringify({ username: env.ADMIN_USERNAME, password: env.ADMIN_PASSWORD }),
+    body: JSON.stringify({ username: env.ADMIN_USER || env.ADMIN_USERNAME, password: env.ADMIN_PASS || env.ADMIN_PASSWORD }),
   });
   const body = await res.json().catch(() => ({}));
   const setCookie = res.headers.get("set-cookie");
@@ -121,7 +121,7 @@ async function run() {
 }
 
 async function runFlow(session, assetId) {
-  const copy = await api(token, "/api/creative/copy", {
+  const copy = await api(session, "/api/creative/copy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId, platforms: ["facebook", "instagram"], languages: ["gr"] }),
@@ -130,7 +130,7 @@ async function runFlow(session, assetId) {
   const variants = copy.body.variants || [];
   step("variants AI_GENERATED (real Gemini)", copy.status === 200 && variants.length > 0 && variants.every((v) => v.status === "AI_GENERATED"), `variants=${variants.length} platforms=${JSON.stringify(variants.map((v) => v.platform))}`);
 
-  const verify = await api(token, "/api/creative/verify", {
+  const verify = await api(session, "/api/creative/verify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId }),
@@ -139,7 +139,7 @@ async function runFlow(session, assetId) {
   step("verify -> PENDING_APPROVAL", verify.status === 200 && verify.body.asset?.status === "PENDING_APPROVAL", `status=${verify.body.asset?.status}`);
   step("checks recorded (real Gemini guard)", !!(verify.body.result?.summary) && typeof verify.body.result?.deterministic_pii === "object", `pii=${verify.body.result?.deterministic_pii?.found} summary="${(verify.body.result?.summary || "").slice(0, 60)}"`);
 
-  const approve = await api(token, "/api/creative/approve", {
+  const approve = await api(session, "/api/creative/approve", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId, action: "approve", note: "verification auto-approve" }),
@@ -188,7 +188,7 @@ async function cleanup(assetId, campaignId) {
 let assetId = null;
 let campaignId = null;
 try {
-  const token = await login();
+  const session = await login();
   const seeded = await run();
   assetId = seeded.assetId;
   campaignId = seeded.campaignId;

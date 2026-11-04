@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
 -- =============================================================================
 -- 2026-09-08 — Renewal Materialization (additive, reversible)
 --

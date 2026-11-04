@@ -26,30 +26,14 @@ create table if not exists public.agent_action_approvals (
 
 alter table public.agent_action_approvals enable row level security;
 
--- Admins (own org) can see & decide their org's pending actions.
--- auth.jwt() ->> 'org_id' is used to scope multi-tenant; when the JWT has no
--- org_id, fall back to allowing (deployment currently single-org with service key).
-create policy "admin read own org approvals"
+-- The CRM exposes approvals only through authenticated server routes that use
+-- the service role. Keep all proposal reads and decisions out of the browser.
+drop policy if exists "admin read own org approvals" on public.agent_action_approvals;
+drop policy if exists "service role insert approvals" on public.agent_action_approvals;
+drop policy if exists "service role update approvals" on public.agent_action_approvals;
+drop policy if exists "service role manages approvals" on public.agent_action_approvals;
+create policy "service role manages approvals"
   on public.agent_action_approvals
-  for select
-  using (
-    coalesce(nullif(auth.jwt() ->> 'org_id', '')::uuid, organization_id) = organization_id
-    or organization_id is null
-  );
-
--- Backend (service role) creates proposals + authorizes execution, so allow inserts
--- from the service role only. The anon key cannot inject proposals.
-create policy "service role insert approvals"
-  on public.agent_action_approvals
-  for insert
-  to service_role
-  with check (true);
-
--- Only the service role (via the authenticated /api/agent/approvals endpoint)
--- may update an approval's status. Anonymous/external users cannot decide approvals.
-create policy "service role update approvals"
-  on public.agent_action_approvals
-  for update
-  to service_role
+  for all to service_role
   using (true)
   with check (true);

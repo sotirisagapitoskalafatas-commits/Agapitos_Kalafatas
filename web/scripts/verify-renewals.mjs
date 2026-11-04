@@ -19,6 +19,7 @@ const A = "11111111-1111-4111-8111-111111111111";
 const B = "22222222-2222-4222-8222-222222222222";
 
 const out = [];
+let baselineLeadCount = 0;
 const step = (name, ok, detail) => {
   out.push(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? `  (${detail})` : ""}`);
   console.log(out[out.length - 1]);
@@ -26,6 +27,11 @@ const step = (name, ok, detail) => {
 
 async function setup() {
   await supabase.from("leads").delete().in("id", [A, B]);
+  const { count, error: baselineError } = await supabase
+    .from("leads")
+    .select("id", { count: "exact", head: true });
+  if (baselineError) throw new Error(`baseline count: ${baselineError.message}`);
+  baselineLeadCount = count ?? 0;
   const tomorrow10 = new Date(Date.now() + 10 * 864e5).toISOString().slice(0, 10);
   const past5 = new Date(Date.now() - 5 * 864e5).toISOString().slice(0, 10);
   const { error } = await supabase.from("leads").insert([
@@ -40,7 +46,7 @@ async function login() {
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Origin: origin },
-    body: JSON.stringify({ username: env.ADMIN_USERNAME, password: env.ADMIN_PASSWORD }),
+    body: JSON.stringify({ username: env.ADMIN_USER || env.ADMIN_USERNAME, password: env.ADMIN_PASS || env.ADMIN_PASSWORD }),
   });
   const body = await res.json().catch(() => ({}));
   const setCookie = res.headers.get("set-cookie");
@@ -82,7 +88,7 @@ async function run() {
   step("run #1 materialized 1", Number(r1.materialized) === 1, `materialized=${r1.materialized}`);
   step("run #1 owner emails skipped (unconfigured)", Array.isArray(r1.ownerEmailSkipped) && r1.ownerEmailSkipped.includes("owner-email-not-configured"), `sent=${r1.ownerEmailsSent} skipped=${JSON.stringify(r1.ownerEmailSkipped)}`);
 
-  const upcoming = await api(token, "/api/crm/renewals/upcoming?days=30&overdue=1");
+  const upcoming = await api(session, "/api/crm/renewals/upcoming?days=30&overdue=1");
   const u = upcoming.body;
   step("upcoming http 200", upcoming.status === 200);
   const hitA = (u.renewals || []).find((x) => x.leadId === A);
@@ -91,7 +97,7 @@ async function run() {
   step("overdue includes lead B", !!hitB, hitB ? `daysOverdue=${hitB.daysOverdue}` : "not found");
   step("counts present", !!u.counts && typeof u.counts.total === "number", `total=${u.counts?.total} overdue=${u.counts?.overdue} byWindow=${JSON.stringify(u.counts?.byWindow)}`);
 
-  const run2 = await api(token, "/api/crm/renewals/run", {
+  const run2 = await api(session, "/api/crm/renewals/run", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ windows: [90, 60, 30, 14, 7, 3, 1], actionWindows: [14, 7, 3, 1], email: true }),
@@ -149,6 +155,6 @@ try {
   const { count } = await supabase
     .from("leads")
     .select("id", { count: "exact", head: true });
-  step("leads count back to baseline", count === 1, `leads=${count}`);
+  step("leads count back to baseline", count === baselineLeadCount, `baseline=${baselineLeadCount} leads=${count}`);
   console.log(out.join("\n"));
 }

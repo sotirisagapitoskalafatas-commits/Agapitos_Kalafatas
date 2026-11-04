@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 );
 
 -- Index for fast recent queries
-CREATE INDEX idx_notifications_created_at ON notifications (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications (created_at DESC);
 
 -- RLS policies
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;

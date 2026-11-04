@@ -21,13 +21,12 @@ ON CONFLICT (id) DO NOTHING;
 -- RLS policies
 ALTER TABLE system_settings ENABLE ROW LEVEL SECURITY;
 
--- Public site reads system_settings (homepage content) via anon key: allow SELECT only.
-CREATE POLICY "Public read system_settings"
-  ON system_settings FOR SELECT
-  USING (true);
-
--- Writes (insert/update/delete) restricted to the service role: anon cannot modify.
-CREATE POLICY "Service role write system_settings"
+-- system_settings contains private values (bank details, webhook secrets and AI prompts).
+-- The public website must access any deliberately public settings through a
+-- separate allowlisted endpoint/view, never by exposing this whole row.
+DROP POLICY IF EXISTS "Public read system_settings" ON system_settings;
+DROP POLICY IF EXISTS "Service role write system_settings" ON system_settings;
+CREATE POLICY "Service role manages system_settings"
   ON system_settings FOR ALL
   TO service_role
   USING (true) WITH CHECK (true);
