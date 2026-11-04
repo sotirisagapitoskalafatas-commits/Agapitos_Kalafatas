@@ -69,9 +69,9 @@ async function api(session, path, opts = {}) {
 }
 
 async function run() {
-  const token = await login();
+  const session = await login();
 
-  const run1 = await api(token, "/api/crm/renewals/run", {
+  const run1 = await api(session, "/api/crm/renewals/run", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ windows: [90, 60, 30, 14, 7, 3, 1], actionWindows: [14, 7, 3, 1], email: true }),
