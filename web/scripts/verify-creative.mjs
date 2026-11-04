@@ -25,20 +25,33 @@ const step = (name, ok, detail) => {
 };
 
 async function login() {
+  const origin = new URL(BASE).origin;
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Origin: origin },
     body: JSON.stringify({ username: env.ADMIN_USERNAME, password: env.ADMIN_PASSWORD }),
   });
-  const body = await res.json();
-  if (!res.ok || !body.token) throw new Error(`login failed (${res.status})`);
-  return body.token;
+  const body = await res.json().catch(() => ({}));
+  const setCookie = res.headers.get("set-cookie");
+  const sessionCookie = setCookie ? setCookie.split(";")[0] : "";
+  if (!res.ok || !sessionCookie.startsWith("atlas_session=")) {
+    throw new Error(`login failed (${res.status}): ${body.error || "session cookie missing"}`);
+  }
+  return { sessionCookie, origin };
 }
 
-async function api(token, path, opts = {}) {
+async function api(session, path, opts = {}) {
+  const method = String(opts.method || "GET").toUpperCase();
+  const headers = {
+    ...(opts.headers || {}),
+    Cookie: session.sessionCookie,
+  };
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) headers.Origin = session.origin;
+
   const res = await fetch(`${BASE}${path}`, {
     ...opts,
-    headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) },
+    headers,
+    cache: "no-store",
   });
   const body = await res.json().catch(() => ({}));
   return { status: res.status, body };
