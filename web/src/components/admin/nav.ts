@@ -86,6 +86,7 @@ export type CrmTab =
   | "ai"
   | "survivor"
   | "settings"
+  | "preferences"
   | "planned";
 
 export interface NavItem {
@@ -231,6 +232,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { key: "notifications", label: "Ειδοποιήσεις", state: "live", icon: Bell, tab: "notifications", description: "Ειδοποιήσεις συστήματος." },
       { key: "social-accounts", label: "Συνδεδεμένοι λογαριασμοί", state: "live", icon: Share2, href: "/admin/social", description: "Συνδεδεμένοι λογαριασμοί social media." },
       { key: "settings", label: "Ρυθμίσεις συστήματος", state: "live", icon: Settings2, tab: "settings", description: "Ρυθμίσεις εταιρείας, AI, επικοινωνίας και αναφορών." },
+      { key: "preferences", label: "Προσαρμογή CRM", state: "live", icon: MonitorCog, tab: "preferences", description: "Εμφάνιση και διάταξη της προσωπικής αρχικής σελίδας." },
       { key: "users", label: "Χρήστες & Ρόλοι", state: "planned", icon: UsersRound, description: "Διαχείριση χρηστών και δικαιωμάτων. " + PLANNED_EXAMPLE },
       { key: "integrations", label: "Ενσωματώσεις", state: "planned", icon: PlugZap, description: "Συνδέσεις εξωτερικών υπηρεσιών. " + PLANNED_EXAMPLE },
       { key: "audit-log", label: "Ιστορικό ενεργειών", state: "planned", icon: ClipboardCheck, description: "Αναλυτικό αρχείο ενεργειών. " + PLANNED_EXAMPLE },
