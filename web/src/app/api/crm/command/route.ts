@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
-import { buildCommandCenter, type ActivityRow } from "@/lib/spine/command";
+import {
+  buildCommandCenter,
+  type LeadRow,
+  type TaskRow,
+  type InvoiceRow,
+  type CommunicationRow,
+  type ApprovalRow,
+  type AgentRunRow,
+  type NotificationRow,
+  type CreativeRunRow,
+  type ActivityRow,
+  type DealRow,
+} from "@/lib/spine/command";
 
 
 
@@ -72,16 +84,16 @@ export async function GET(req: NextRequest) {
   }
 
   const data = buildCommandCenter({
-    leads: leadsRes.data ?? [],
-    tasks: tasksRes.data ?? [],
-    invoices: invoicesRes.data ?? [],
-    communications: commsRes.data ?? [],
-    approvals: approvalsRes.data ?? [],
-    agentAudit: auditRes.data ?? [],
-    notifications: notifRes.data ?? [],
-    creativeRuns: creativeRes.data ?? [],
+    leads: (leadsRes.data ?? []) as LeadRow[],
+    tasks: (tasksRes.data ?? []) as TaskRow[],
+    invoices: (invoicesRes.data ?? []) as InvoiceRow[],
+    communications: (commsRes.data ?? []) as CommunicationRow[],
+    approvals: (approvalsRes.data ?? []) as ApprovalRow[],
+    agentAudit: (auditRes.data ?? []) as AgentRunRow[],
+    notifications: (notifRes.data ?? []) as NotificationRow[],
+    creativeRuns: (creativeRes.data ?? []) as CreativeRunRow[],
     activity: (activityRes.data ?? []) as ActivityRow[],
-    deals: dealsRes.data ?? [],
+    deals: (dealsRes.data ?? []) as DealRow[],
     now,
   });
 
