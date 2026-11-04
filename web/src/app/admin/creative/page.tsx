@@ -208,7 +208,7 @@ function CreativeStudioInner() {
   }, [api, authenticated, mounted, filterType, filterStatus, filterQ]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!authenticated || !mounted) return;
     loadCampaigns();
     loadAssets();
   }, [authenticated, mounted, loadCampaigns, loadAssets]);
