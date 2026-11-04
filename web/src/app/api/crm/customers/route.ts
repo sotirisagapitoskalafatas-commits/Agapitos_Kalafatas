@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
-import { buildCustomerIndex, buildCustomer360 } from "@/lib/spine/customers";
+import { buildCustomerIndex, buildCustomer360, type Customer360Input } from "@/lib/spine/customers";
 
 
 
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     reminders: remindersRes.data ?? [],
     activity: activityRes.data ?? [],
     now,
-  };
+  } as unknown as Customer360Input;
 
   const index = buildCustomerIndex(input);
   const customer360 = leadId ? buildCustomer360(input, leadId) : null;
