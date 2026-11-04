@@ -29,8 +29,8 @@ import {
 } from "@/lib/spine/customers";
 
 function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+  // Browser fetch sends the HttpOnly ATLAS session cookie automatically.
+  return { ...extra };
 }
 
 interface Lead {
@@ -359,8 +359,8 @@ export default function CRMDashboard() {
 }
 
 function CRMDashboardInner() {
-  const { token, logout } = useAdminAuth();
-  const isLoggedIn = !!token;
+  const { authenticated, logout } = useAdminAuth();
+  const isLoggedIn = authenticated;
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -426,10 +426,8 @@ function CRMDashboardInner() {
   const [renewalsError, setRenewalsError] = useState("");
 
   const fetchRenewals = useCallback(async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     try {
-      const res = await fetch(`/api/crm/renewals/upcoming?days=${renewalsRange}&overdue=1`, { headers: authHeaders });
+      const res = await fetch(`/api/crm/renewals/upcoming?days=${renewalsRange}&overdue=1`, { credentials: "same-origin", cache: "no-store" });
       const data = await res.json();
       if (!res.ok) { setRenewalsError(data.error || "Failed to load renewals"); return; }
       setRenewals(data.renewals ?? []);
@@ -442,14 +440,13 @@ function CRMDashboardInner() {
   }, [renewalsRange]);
 
   const runRenewals = async () => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-    const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     setRenewalsBusy(true);
     setRenewalsError("");
     try {
       const res = await fetch("/api/crm/renewals/run", {
         method: "POST",
-        headers: { ...authHeaders, "Content-Type": "application/json" },
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ windows: [90, 60, 30, 14, 7, 3, 1], actionWindows: [14, 7, 3, 1], email: true }),
       });
       const data = await res.json();
@@ -481,19 +478,16 @@ function CRMDashboardInner() {
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
-    const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-    const authHeaders: Record<string, string> = token
-      ? { Authorization: `Bearer ${token}` }
-      : {};
+    const credentials: RequestInit = { credentials: "same-origin", cache: "no-store" };
     const requests: Promise<{ status: number; body: any }>[] = [
-      fetch("/api/crm/leads", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
-      fetch("/api/crm/deals", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
-      fetch("/api/crm/events", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
-      fetch("/api/crm/communications", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
-      fetch("/api/crm/invoices", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
-      fetch("/api/crm/dashboard", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => null) })),
-      fetch("/api/crm/notifications", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
-      fetch("/api/crm/command", { headers: authHeaders }).then(async r => ({ status: r.status, body: await r.json().catch(() => null) })),
+      fetch("/api/crm/leads", credentials).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/deals", credentials).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/events", credentials).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/communications", credentials).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/invoices", credentials).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/dashboard", credentials).then(async r => ({ status: r.status, body: await r.json().catch(() => null) })),
+      fetch("/api/crm/notifications", credentials).then(async r => ({ status: r.status, body: await r.json().catch(() => []) })),
+      fetch("/api/crm/command", credentials).then(async r => ({ status: r.status, body: await r.json().catch(() => null) })),
     ];
 
     const results = await Promise.all(requests);
