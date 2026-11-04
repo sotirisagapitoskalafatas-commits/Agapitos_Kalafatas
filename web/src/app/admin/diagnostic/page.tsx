@@ -105,10 +105,11 @@ export default function DiagnosticPage() {
   async function fetchDiagnostic(narrative: boolean) {
     setLoading(true);
     setError(null);
-    const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-    const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     try {
-      const res = await fetch(`/api/diagnostic${narrative ? "?narrative=1" : ""}`, { headers });
+      const res = await fetch(`/api/diagnostic${narrative ? "?narrative=1" : ""}`, {
+        credentials: "same-origin",
+        cache: "no-store",
+      });
       if (!res.ok) {
         setError(`Αποτυχία λήψης διάγνωσης (${res.status})`);
         setLoading(false);
