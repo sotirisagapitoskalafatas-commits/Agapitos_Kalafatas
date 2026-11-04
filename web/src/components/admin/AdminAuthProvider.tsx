@@ -2,73 +2,89 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
-const TOKEN_KEY = "crm_token";
-
 type AdminAuthValue = {
-  token: string | null;
+  authenticated: boolean;
   mounted: boolean;
-  login: (username: string, password: string) => Promise<string | null>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const AdminAuthContext = createContext<AdminAuthValue>({
-  token: null,
+  authenticated: false,
   mounted: false,
-  login: async () => "auth provider is not mounted",
-  logout: () => {},
+  logout: async () => {},
 });
 
-// Single shared auth state for the whole /admin tree. The pages themselves are
-// also behind server-side HTTP Basic auth (middleware) and every API route
-// re-verifies the Bearer session token (requireAuth); this gate only controls
-// which surface renders in the browser and never the security decision.
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [authenticated, setAuthenticated] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    try {
-      setToken(localStorage.getItem(TOKEN_KEY));
-    } catch {
-      setToken(null);
-    }
-    setMounted(true);
-  }, []);
+    let cancelled = false;
 
-  const login = useCallback(async (username: string, password: string) => {
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (data.success && data.token) {
-        try {
-          localStorage.setItem(TOKEN_KEY, data.token);
-        } catch {
-          /* storage unavailable — token still usable for this session */
+    async function restoreSession() {
+      try {
+        const response = await fetch("/api/auth/session", {
+          method: "GET",
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => ({}));
+        if (cancelled) return;
+
+        const valid = response.ok && data.authenticated === true;
+        setAuthenticated(valid);
+        setMounted(true);
+
+        if (!valid) {
+          const next = window.location.pathname + window.location.search;
+          window.location.replace(`/auth/login?next=${encodeURIComponent(next)}`);
         }
-        setToken(data.token);
-        return null;
+      } catch {
+        if (cancelled) return;
+        setAuthenticated(false);
+        setMounted(true);
+        const next = window.location.pathname + window.location.search;
+        window.location.replace(`/auth/login?next=${encodeURIComponent(next)}`);
       }
-      return (data.error as string) || "Login failed";
-    } catch {
-      return "Unable to reach authentication service";
     }
+
+    // Remove any previous JavaScript-readable bearer token left by the old
+    // authentication implementation. The new session lives only in an
+    // HttpOnly cookie and is never exposed to client JavaScript.
+    try {
+      localStorage.removeItem("crm_token");
+    } catch {
+      /* storage may be unavailable */
+    }
+
+    restoreSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     try {
-      localStorage.removeItem(TOKEN_KEY);
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
+        cache: "no-store",
+      });
     } catch {
-      /* ignore */
+      // Redirect regardless; the server-side session expires after 12 hours.
+    } finally {
+      setAuthenticated(false);
+      try {
+        localStorage.removeItem("crm_token");
+      } catch {
+        /* ignore */
+      }
+      window.location.assign("/auth/login");
     }
-    setToken(null);
   }, []);
 
   return (
-    <AdminAuthContext.Provider value={{ token, mounted, login, logout }}>
+    <AdminAuthContext.Provider value={{ authenticated, mounted, logout }}>
       {children}
     </AdminAuthContext.Provider>
   );
