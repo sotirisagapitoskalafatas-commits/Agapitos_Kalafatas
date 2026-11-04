@@ -87,10 +87,11 @@ async function hmacBase64Url(data: string, key: string): Promise<string> {
 
 async function getCredentialVersion(): Promise<string> {
   const credentials = getAdminCredentials();
-  if (!credentials) return "";
-  const value = `${credentials.user}\0${credentials.pass}`;
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  const key = signingKey();
+  if (!credentials || !key) return "";
+  // Key the fingerprint so the public (base64url) session payload does not
+  // reveal an offline password-verification hash.
+  return hmacBase64Url(`${credentials.user}\0${credentials.pass}`, key);
 }
 
 export async function verifyAdminCredentials(username: string, password: string): Promise<boolean> {
