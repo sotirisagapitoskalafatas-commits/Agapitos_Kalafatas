@@ -30,6 +30,7 @@ continuing:
 16. `web/config/2026-10-19-security-hardening.sql` — explicit service-role RLS policies, browser-role revocation, pinned function search paths and function execution grants.
 17. `web/config/2026-10-19-performance-indexes.sql` — indexes frequently joined CRM foreign keys.
 18. `web/config/2026-10-19-survivor-module.sql` — private service-role-only sandbox agent, ledger, opportunity, proposal, job, strategy, memory and experiment tables.
+19. `web/config/2026-11-04-survivor-foreign-key-indexes.sql` — indexes the Survivor ledger foreign keys used by joins; this is already applied to the live project.
 
 **Do not run `config/apply-security-migration.sql` on this fresh project.** It is a
 historical upgrade script for older schemas and overlaps the canonical schema.
