@@ -306,11 +306,11 @@ export async function getDashboard(): Promise<SurvivorDashboard> {
     survival: status,
     transactions,
     opportunities: parseOpportunityRows(opportunities.data),
-    proposals: proposals.data || [],
-    jobs: jobs.data || [],
+    proposals: parseProposalRows(proposals.data),
+    jobs: parseJobRows(jobs.data),
     strategy: (strategy.data as Strategy) || null,
-    memory: memory.data || [],
-    experiments: experiments.data || [],
+    memory: parseMemoryRows(memory.data),
+    experiments: parseExperimentRows(experiments.data),
   };
 }
 
@@ -357,6 +357,127 @@ function parseOpportunityRows(rows: unknown): Opportunity[] {
     });
   }
 
+  return parsed;
+}
+
+function parseProposalRows(rows: unknown): Proposal[] {
+  if (!Array.isArray(rows)) return [];
+  const parsed: Proposal[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    const score = Number(value.score);
+    if (
+      typeof value.id !== "string" ||
+      typeof value.agent_id !== "string" ||
+      typeof value.source !== "string" ||
+      (value.decision !== "bid" && value.decision !== "skip") ||
+      !["proposed", "approved", "rejected", "expired"].includes(String(value.status)) ||
+      !Number.isFinite(score) ||
+      typeof value.created_at !== "string"
+    ) continue;
+    parsed.push({
+      id: value.id,
+      agent_id: value.agent_id,
+      opportunity_id: typeof value.opportunity_id === "string" ? value.opportunity_id : null,
+      source: value.source,
+      score,
+      decision: value.decision,
+      status: value.status as Proposal["status"],
+      rationale: typeof value.rationale === "string" ? value.rationale : null,
+      approval_id: typeof value.approval_id === "string" ? value.approval_id : null,
+      created_at: value.created_at,
+    });
+  }
+  return parsed;
+}
+
+function parseJobRows(rows: unknown): Job[] {
+  if (!Array.isArray(rows)) return [];
+  const parsed: Job[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    const amount = Number(value.value);
+    const winRate = Number(value.win_rate);
+    if (
+      typeof value.id !== "string" ||
+      typeof value.agent_id !== "string" ||
+      typeof value.title !== "string" ||
+      !["proposed", "won", "in_progress", "delivered", "paid", "failed"].includes(String(value.status)) ||
+      !Number.isFinite(amount) ||
+      !Number.isFinite(winRate) ||
+      typeof value.created_at !== "string" ||
+      typeof value.updated_at !== "string"
+    ) continue;
+    parsed.push({
+      id: value.id,
+      agent_id: value.agent_id,
+      opportunity_id: typeof value.opportunity_id === "string" ? value.opportunity_id : null,
+      proposal_id: typeof value.proposal_id === "string" ? value.proposal_id : null,
+      title: value.title,
+      client: typeof value.client === "string" ? value.client : null,
+      value: amount,
+      status: value.status as Job["status"],
+      win_rate: winRate,
+      created_at: value.created_at,
+      updated_at: value.updated_at,
+    });
+  }
+  return parsed;
+}
+
+function parseMemoryRows(rows: unknown): MemoryRecord[] {
+  if (!Array.isArray(rows)) return [];
+  const parsed: MemoryRecord[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    const confidence = Number(value.confidence);
+    if (
+      typeof value.id !== "string" ||
+      typeof value.agent_id !== "string" ||
+      !["lesson", "postmortem", "fact"].includes(String(value.kind)) ||
+      typeof value.content !== "string" ||
+      !Number.isFinite(confidence) ||
+      typeof value.created_at !== "string"
+    ) continue;
+    parsed.push({
+      id: value.id,
+      agent_id: value.agent_id,
+      kind: value.kind as MemoryRecord["kind"],
+      content: value.content,
+      source: typeof value.source === "string" ? value.source : null,
+      confidence,
+      created_at: value.created_at,
+    });
+  }
+  return parsed;
+}
+
+function parseExperimentRows(rows: unknown): Experiment[] {
+  if (!Array.isArray(rows)) return [];
+  const parsed: Experiment[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    if (
+      typeof value.id !== "string" ||
+      typeof value.name !== "string" ||
+      !["running", "complete", "failed"].includes(String(value.status)) ||
+      typeof value.started_at !== "string" ||
+      typeof value.created_at !== "string"
+    ) continue;
+    parsed.push({
+      id: value.id,
+      name: value.name,
+      status: value.status as Experiment["status"],
+      started_at: value.started_at,
+      finished_at: typeof value.finished_at === "string" ? value.finished_at : null,
+      summary: typeof value.summary === "string" ? value.summary : null,
+      created_at: value.created_at,
+    });
+  }
   return parsed;
 }
 
