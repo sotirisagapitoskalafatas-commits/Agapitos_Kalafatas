@@ -1,29 +1,85 @@
+import { randomUUID } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 
-
-
 const BUCKET = "client_documents";
+const MAX_FILE_BYTES = 25 * 1024 * 1024;
+const ALLOWED_MIME_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
 
-// Known typed slots. Files are stored at `${leadId}/${docType}/${filename}`.
-// Anything uploaded without a doc_type stays at `${leadId}/${filename}` (legacy
-// flat layout) and is reported under the "other" group.
 const KNOWN_TYPES = [
-  "taftotita",           // Ταυτότητα
-  "e9",                  // Ε9
-  "misthotirio",         // Μισθωτήριο
-  "symvolaio",           // Συμβόλαιο
-  "logariasmos_current", // Τρέχων Λογαριασμός
-  "logariasmos_prev",    // Προηγούμενος Λογαριασμός
-  "prosfores",           // Προσφορές
-  "other",               // Άλλα έγγραφα
-];
+  "taftotita",
+  "e9",
+  "misthotirio",
+  "symvolaio",
+  "logariasmos_current",
+  "logariasmos_prev",
+  "prosfores",
+  "other",
+] as const;
 
-type Doc = { name: string; url: string; path: string; type: string };
+type DocType = (typeof KNOWN_TYPES)[number];
+type Doc = { name: string; url: string; path: string; type: DocType };
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isLeadId(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
+
+function isSafeFileName(value: string): boolean {
+  return (
+    value.length > 0 &&
+    value.length <= 180 &&
+    value !== "." &&
+    value !== ".." &&
+    !/[\\/\u0000-\u001f\u007f]/.test(value)
+  );
+}
+
+function storageFileName(originalName: string): string {
+  const baseName = originalName.normalize("NFKC").split(/[\\/]/).pop() || "document";
+  const safeBase = baseName
+    .replace(/[^\p{L}\p{N}._-]+/gu, "_")
+    .replace(/^\.+/, "")
+    .slice(0, 110) || "document";
+  return `${Date.now()}-${randomUUID().slice(0, 8)}-${safeBase}`;
+}
+
+function isKnownDocType(value: string): value is DocType {
+  return (KNOWN_TYPES as readonly string[]).includes(value);
+}
+
+function json(body: unknown, status = 200) {
+  return NextResponse.json(body, {
+    status,
+    headers: { "Cache-Control": "no-store" },
+  });
+}
+
+async function leadExists(leadId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from("leads")
+    .select("id")
+    .eq("id", leadId)
+    .maybeSingle();
+  if (error) throw error;
+  return Boolean(data);
+}
 
 async function sign(path: string): Promise<string> {
-  const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, 3600);
+  if (error) return "";
   return data?.signedUrl ?? "";
 }
 
@@ -31,87 +87,138 @@ export async function GET(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.ok) return unauthorizedResponse();
 
-  const { searchParams } = new URL(req.url);
-  const leadId = searchParams.get("lead_id");
-  if (!leadId) return NextResponse.json({ error: "lead_id required" }, { status: 400 });
+  const leadId = new URL(req.url).searchParams.get("lead_id") || "";
+  if (!isLeadId(leadId)) return json({ error: "A valid lead_id is required" }, 400);
 
-  const { data: rootEntries, error } = await supabase.storage.from(BUCKET).list(leadId, {
-    limit: 200,
-    sortBy: { column: "created_at", order: "desc" },
-  });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    if (!(await leadExists(leadId))) return json({ error: "Lead not found" }, 404);
 
-  const flat: Doc[] = [];
-  const groups: Record<string, Doc[]> = {};
-  const pushGroup = (type: string, doc: Doc) => {
-    (groups[type] ||= []).push(doc);
-  };
+    const { data: rootEntries, error } = await supabase.storage.from(BUCKET).list(leadId, {
+      limit: 200,
+      sortBy: { column: "created_at", order: "desc" },
+    });
+    if (error) return json({ error: "Unable to list lead documents" }, 500);
 
-  for (const entry of rootEntries || []) {
-    // Supabase returns folders as entries with a null `id`; real files carry an id.
-    const isFile = !!(entry as { id?: string | null }).id;
+    const flat: Doc[] = [];
+    const groups: Record<string, Doc[]> = {};
+    const pushGroup = (type: DocType, doc: Doc) => {
+      (groups[type] ||= []).push(doc);
+    };
 
-    if (isFile) {
-      // Legacy flat file directly under the lead folder → "other".
-      const path = `${leadId}/${entry.name}`;
-      const doc: Doc = { name: entry.name, url: await sign(path), path, type: "other" };
-      flat.push(doc);
-      pushGroup("other", doc);
-    } else {
-      // A "folder" whose name is the document type.
+    for (const entry of rootEntries || []) {
+      const isFile = Boolean((entry as { id?: string | null }).id);
+
+      if (isFile) {
+        if (!isSafeFileName(entry.name)) continue;
+        const path = `${leadId}/${entry.name}`;
+        const doc: Doc = { name: entry.name, url: await sign(path), path, type: "other" };
+        flat.push(doc);
+        pushGroup("other", doc);
+        continue;
+      }
+
       const type = entry.name;
-      const { data: sub } = await supabase.storage.from(BUCKET).list(`${leadId}/${type}`, {
+      if (!isKnownDocType(type)) continue;
+      const { data: sub, error: subError } = await supabase.storage.from(BUCKET).list(`${leadId}/${type}`, {
         limit: 200,
         sortBy: { column: "created_at", order: "desc" },
       });
-      for (const f of sub || []) {
-        if (!(f as { id?: string | null }).id) continue;
-        const path = `${leadId}/${type}/${f.name}`;
-        const doc: Doc = { name: f.name, url: await sign(path), path, type };
+      if (subError) continue;
+
+      for (const file of sub || []) {
+        if (!(file as { id?: string | null }).id || !isSafeFileName(file.name)) continue;
+        const path = `${leadId}/${type}/${file.name}`;
+        const doc: Doc = { name: file.name, url: await sign(path), path, type };
         flat.push(doc);
         pushGroup(type, doc);
       }
     }
-  }
 
-  return NextResponse.json({ documents: flat, groups });
+    return json({ documents: flat, groups });
+  } catch (error) {
+    console.error("Document list error:", error);
+    return json({ error: "Unable to list lead documents" }, 500);
+  }
 }
 
 export async function POST(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.ok) return unauthorizedResponse();
 
-  const formData = await req.formData();
-  const file = formData.get("file") as File | null;
-  const leadId = formData.get("lead_id") as string | null;
-  const rawType = (formData.get("doc_type") as string | null)?.trim() || "";
-  if (!file || !leadId) return NextResponse.json({ error: "file and lead_id required" }, { status: 400 });
+  try {
+    const formData = await req.formData();
+    const fileEntry = formData.get("file");
+    const leadId = String(formData.get("lead_id") || "");
+    const rawType = String(formData.get("doc_type") || "").trim();
 
-  // Only allow a known slot as a path segment; unknown/empty → legacy flat path.
-  const docType = KNOWN_TYPES.includes(rawType) ? rawType : "";
-  const filePath = docType ? `${leadId}/${docType}/${file.name}` : `${leadId}/${file.name}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+    if (!(fileEntry instanceof File) || !isLeadId(leadId)) {
+      return json({ error: "A valid file and lead_id are required" }, 400);
+    }
+    if (rawType && !isKnownDocType(rawType)) {
+      return json({ error: "Unsupported document type" }, 400);
+    }
+    if (fileEntry.size <= 0 || fileEntry.size > MAX_FILE_BYTES) {
+      return json({ error: "Files must be between 1 byte and 25 MB" }, 413);
+    }
+    if (!ALLOWED_MIME_TYPES.has(fileEntry.type)) {
+      return json({ error: "Unsupported document file type" }, 415);
+    }
+    if (!(await leadExists(leadId))) return json({ error: "Lead not found" }, 404);
 
-  const { error } = await supabase.storage.from(BUCKET).upload(filePath, buffer, {
-    contentType: file.type,
-    upsert: true,
-  });
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    const docType = rawType ? rawType as DocType : "";
+    const filename = storageFileName(fileEntry.name);
+    const filePath = docType ? `${leadId}/${docType}/${filename}` : `${leadId}/${filename}`;
+    const buffer = Buffer.from(await fileEntry.arrayBuffer());
 
-  return NextResponse.json({
-    document: { name: file.name, url: await sign(filePath), path: filePath, type: docType || "other" },
-  });
+    const { error } = await supabase.storage.from(BUCKET).upload(filePath, buffer, {
+      contentType: fileEntry.type,
+      upsert: false,
+    });
+    if (error) return json({ error: "Unable to upload document" }, 500);
+
+    return json({
+      document: {
+        name: filename,
+        url: await sign(filePath),
+        path: filePath,
+        type: docType || "other",
+      },
+    });
+  } catch (error) {
+    console.error("Document upload error:", error);
+    return json({ error: "Unable to upload document" }, 500);
+  }
 }
 
 export async function DELETE(req: NextRequest) {
   const auth = await requireAuth(req);
   if (!auth.ok) return unauthorizedResponse();
 
-  const { path } = await req.json();
-  if (!path) return NextResponse.json({ error: "path required" }, { status: 400 });
+  try {
+    const body = await req.json().catch(() => null);
+    const path = typeof body?.path === "string" ? body.path : "";
+    const segments = path.split("/");
 
-  const { error } = await supabase.storage.from(BUCKET).remove([path]);
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (
+      (segments.length !== 2 && segments.length !== 3) ||
+      !isLeadId(segments[0]) ||
+      !isSafeFileName(segments[segments.length - 1]) ||
+      segments.some((segment) => !segment || segment === "." || segment === "..")
+    ) {
+      return json({ error: "Invalid document path" }, 400);
+    }
 
-  return NextResponse.json({ ok: true });
+    if (segments.length === 3 && !isKnownDocType(segments[1])) {
+      return json({ error: "Invalid document type" }, 400);
+    }
+    if (!(await leadExists(segments[0]))) return json({ error: "Lead not found" }, 404);
+
+    const { error } = await supabase.storage.from(BUCKET).remove([path]);
+    if (error) return json({ error: "Unable to delete document" }, 500);
+
+    return json({ ok: true });
+  } catch (error) {
+    console.error("Document delete error:", error);
+    return json({ error: "Unable to delete document" }, 500);
+  }
 }

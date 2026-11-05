@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { rateLimit } from "@/lib/rate-limit";
@@ -12,6 +13,30 @@ function getSupabase() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) return null;
   return createClient(url, key);
+}
+
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+const MAX_TOTAL_UPLOAD_BYTES = 50 * 1024 * 1024;
+const MAX_UPLOAD_FILES = 5;
+const ALLOWED_UPLOAD_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/heic",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.ms-excel",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+]);
+
+function safeUploadName(originalName: string): string {
+  const baseName = originalName.normalize("NFKC").split(/[\\/]/).pop() || "attachment";
+  const safeBase = baseName
+    .replace(/[^\p{L}\p{N}._-]+/gu, "_")
+    .replace(/^\.+/, "")
+    .slice(0, 110) || "attachment";
+  return `${randomUUID()}-${safeBase}`;
 }
 
 function clientIp(req: Request): string | null {
@@ -53,12 +78,18 @@ export async function POST(req: Request) {
     if (!firstName || !phone || !serviceCategory) {
       return NextResponse.json({ error: "Παρακαλώ συμπληρώστε τα υποχρεωτικά πεδία." }, { status: 400 });
     }
+    if (!gdprConsent) {
+      return NextResponse.json({ error: "Απαιτείται συγκατάθεση για την αποστολή του αιτήματος." }, { status: 400 });
+    }
 
     const fullName = lastName ? `${firstName} ${lastName}` : firstName;
 
     // ── Foundation spine: idempotency, consent version, source/UTM attribution ──
+    const submittedIdempotencyKey = str(formData.get("idempotency_key"), 64);
     const idempotencyKey =
-      (formData.get("idempotency_key") as string) || newIdempotencyKey();
+      submittedIdempotencyKey && isValidIdempotencyKey(submittedIdempotencyKey)
+        ? submittedIdempotencyKey
+        : newIdempotencyKey();
     const consentVersion = str(formData.get("consent_version"), 32) || "v1";
     const consentSource = str(formData.get("consent_source"), 256) || "website_form";
     const locale = str(formData.get("locale"), 8) || "el";
@@ -92,20 +123,31 @@ export async function POST(req: Request) {
     }
 
     // Extract and upload files
-    const files = formData.getAll("files") as File[];
+    const files = formData.getAll("files").filter((entry): entry is File =>
+      typeof entry !== "string" && entry instanceof File && entry.size > 0
+    );
     const uploadedFiles: { name: string; url: string; path: string }[] = [];
+    const totalUploadBytes = files.reduce((total, file) => total + file.size, 0);
+
+    if (files.length > MAX_UPLOAD_FILES || totalUploadBytes > MAX_TOTAL_UPLOAD_BYTES) {
+      return NextResponse.json({ error: "Επιτρέπονται έως 5 αρχεία με συνολικό μέγεθος έως 50MB." }, { status: 413 });
+    }
 
     for (const file of files) {
-      if (file && file.size > 0) {
-        if (file.size > 25 * 1024 * 1024) {
-          return NextResponse.json(
-            { error: `To αρχείο ${file.name} υπερβαίνει το όριο των 25MB.` },
-            { status: 400 }
-          );
-        }
+      if (file.size > MAX_UPLOAD_BYTES) {
+        return NextResponse.json(
+          { error: `To αρχείο ${file.name} υπερβαίνει το όριο των 25MB.` },
+          { status: 413 }
+        );
+      }
+      if (!ALLOWED_UPLOAD_TYPES.has(file.type)) {
+        return NextResponse.json(
+          { error: `Μη υποστηριζόμενος τύπος αρχείου: ${file.name}.` },
+          { status: 415 }
+        );
+      }
 
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const fileName = safeUploadName(file.name);
         const filePath = `leads/${fileName}`;
 
         const buffer = Buffer.from(await file.arrayBuffer());
@@ -164,6 +206,7 @@ export async function POST(req: Request) {
           status: "new_lead",
           source: "website",
           gdpr_consent: gdprConsent,
+          idempotency_key: idempotencyKey,
           notes,
           tags: [serviceCategory],
         },
