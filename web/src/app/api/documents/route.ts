@@ -50,7 +50,7 @@ function isSafeFileName(value: string): boolean {
 function storageFileName(originalName: string): string {
   const baseName = originalName.normalize("NFKC").split(/[\\/]/).pop() || "document";
   const safeBase = baseName
-    .replace(/[^\p{L}\p{N}._-]+/gu, "_")
+    .replace(/[^A-Za-z0-9._-]+/g, "_")
     .replace(/^\.+/, "")
     .slice(0, 110) || "document";
   return `${Date.now()}-${randomUUID().slice(0, 8)}-${safeBase}`;

@@ -33,7 +33,7 @@ const ALLOWED_UPLOAD_TYPES = new Set([
 function safeUploadName(originalName: string): string {
   const baseName = originalName.normalize("NFKC").split(/[\\/]/).pop() || "attachment";
   const safeBase = baseName
-    .replace(/[^\p{L}\p{N}._-]+/gu, "_")
+    .replace(/[^A-Za-z0-9._-]+/g, "_")
     .replace(/^\.+/, "")
     .slice(0, 110) || "attachment";
   return `${randomUUID()}-${safeBase}`;
