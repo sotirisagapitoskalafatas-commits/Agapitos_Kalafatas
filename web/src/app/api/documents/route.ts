@@ -203,7 +203,7 @@ export async function DELETE(req: NextRequest) {
       (segments.length !== 2 && segments.length !== 3) ||
       !isLeadId(segments[0]) ||
       !isSafeFileName(segments[segments.length - 1]) ||
-      segments.some((segment) => !segment || segment === "." || segment === "..")
+      segments.some((segment: string) => !segment || segment === "." || segment === "..")
     ) {
       return json({ error: "Invalid document path" }, 400);
     }
