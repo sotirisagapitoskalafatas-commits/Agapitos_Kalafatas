@@ -4429,8 +4429,8 @@ function SettingsView() {
     tax_office: "",
     address: "",
     bank_iban: "",
-    slack_webhook_url: "",
-    supabase_webhook_secret: "",
+    slack_webhook_configured: false,
+    supabase_webhook_configured: false,
     notify_email: "kalafatasagapitos@gmail.com",
     ga_measurement_id: "",
     ai_system_prompt: "You tone and focus guidance for Atlas: You are professional, warm, concrete and concise. You speak the user's language (Greek or English). You help with technology services (e-shops, websites, SaaS, AI agents), energy (electricity, gas, photovoltaics, EV charging), and insurance (life, health, car, home). Use the company knowledge base and the user's CRM data for grounded answers. You never fabricate facts, prices, or statistics.",
@@ -4450,8 +4450,8 @@ function SettingsView() {
           tax_office: data.tax_office || "",
           address: data.address || "",
           bank_iban: data.bank_iban || "",
-          slack_webhook_url: data.slack_webhook_url || "",
-          supabase_webhook_secret: data.supabase_webhook_secret || "",
+          slack_webhook_configured: Boolean(data.slack_webhook_configured),
+          supabase_webhook_configured: Boolean(data.supabase_webhook_configured),
           notify_email: data.notify_email || settings.notify_email,
           ga_measurement_id: data.ga_measurement_id || "",
           ai_system_prompt: data.ai_system_prompt || settings.ai_system_prompt,
@@ -4475,7 +4475,17 @@ function SettingsView() {
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: getAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify(settings),
+        body: JSON.stringify({
+          company_name: settings.company_name,
+          vat_number: settings.vat_number,
+          tax_office: settings.tax_office,
+          address: settings.address,
+          bank_iban: settings.bank_iban,
+          notify_email: settings.notify_email,
+          ga_measurement_id: settings.ga_measurement_id,
+          ai_system_prompt: settings.ai_system_prompt,
+          pipeline_stages: settings.pipeline_stages,
+        }),
       });
       if (res.ok) setSaveMsg("Settings saved successfully!");
       else setSaveMsg("Error saving settings");
@@ -4604,9 +4614,22 @@ function SettingsView() {
                   <label className={labelCls}>AI System Prompt</label>
                   <textarea rows={6} className={inputCls + " resize-none"} value={settings.ai_system_prompt} onChange={(e) => setSettings({...settings, ai_system_prompt: e.target.value})} />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div><label className={labelCls}>Slack Webhook URL</label><input className={inputCls} value={settings.slack_webhook_url} onChange={(e) => setSettings({...settings, slack_webhook_url: e.target.value})} placeholder="https://hooks.slack.com/services/..." /></div>
-                  <div><label className={labelCls}>Supabase Webhook Secret</label><input type="password" className={inputCls} value={settings.supabase_webhook_secret} onChange={(e) => setSettings({...settings, supabase_webhook_secret: e.target.value})} placeholder="••••••••••••" /></div>
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-slate-700">Slack Webhook</span>
+                    <span className={settings.slack_webhook_configured ? "text-xs font-semibold text-emerald-700" : "text-xs font-semibold text-slate-500"}>
+                      {settings.slack_webhook_configured ? "Configured" : "Not configured"}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-semibold text-slate-700">Supabase Webhook Secret</span>
+                    <span className={settings.supabase_webhook_configured ? "text-xs font-semibold text-emerald-700" : "text-xs font-semibold text-slate-500"}>
+                      {settings.supabase_webhook_configured ? "Configured" : "Not configured"}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-slate-500">
+                    Τα webhook URLs και secrets δεν εμφανίζονται στο CRM. Διαχειρίζονται αποκλειστικά ως server-side environment variables στο Vercel.
+                  </p>
                 </div>
               </>
             )}

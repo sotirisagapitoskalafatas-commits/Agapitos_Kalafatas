@@ -7,6 +7,8 @@ The active Supabase project for this repository is **`jqaxebkyroxqhcisvrvs`**:
 
 The CRM uses a server-side service-role client for private data. Do not expose the
 service-role/secret key in browser code, `NEXT_PUBLIC_*` variables, or Git.
+Keep real Production keys scoped to Vercel Production only. Preview builds use
+non-working placeholder Supabase keys, never the Production service-role key.
 
 Apply the following SQL files in order in Supabase SQL Editor. Run each file as
 a separate transaction/submission and verify it finishes successfully before
@@ -31,6 +33,7 @@ continuing:
 17. `web/config/2026-10-19-performance-indexes.sql` — indexes frequently joined CRM foreign keys.
 18. `web/config/2026-10-19-survivor-module.sql` — private service-role-only sandbox agent, ledger, opportunity, proposal, job, strategy, memory and experiment tables.
 19. `web/config/2026-11-04-survivor-foreign-key-indexes.sql` — indexes the Survivor ledger foreign keys used by joins; this is already applied to the live project.
+20. `web/config/2026-11-05-storage-upload-limits.sql` — caps private client uploads at 25 MB and restricts accepted file types; this is already applied to the live project.
 
 **Do not run `config/apply-security-migration.sql` on this fresh project.** It is a
 historical upgrade script for older schemas and overlaps the canonical schema.
