@@ -173,7 +173,6 @@ export async function POST(req: Request) {
           url: urlData.data?.signedUrl || "",
           path: filePath,
         });
-      }
     }
 
     // Build notes from the extra fields
