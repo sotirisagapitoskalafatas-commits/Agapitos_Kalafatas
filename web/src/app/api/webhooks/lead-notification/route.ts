@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/agents/db";
 import { timingSafeEqual } from "crypto";
 import { escapeHtml, safeUrl } from "@/lib/html";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+
 
 // Constant-time comparison for the shared webhook secret so the header check
 // does not leak timing information about a guessed prefix.

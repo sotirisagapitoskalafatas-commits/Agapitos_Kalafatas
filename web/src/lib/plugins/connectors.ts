@@ -164,7 +164,7 @@ async function readStripe(kind: string): Promise<ConnectorData> {
         connector: "stripe",
         stub: false,
         kind: "settlements",
-        items: data.data.map((t) => ({
+        items: data.data.map((t: any) => ({
           id: t.id,
           type: t.type,
           amount: t.amount,
@@ -181,7 +181,7 @@ async function readStripe(kind: string): Promise<ConnectorData> {
         connector: "stripe",
         stub: false,
         kind: "disputes",
-        items: data.data.map((d) => ({
+        items: data.data.map((d: any) => ({
           id: d.id,
           status: d.status,
           reason: d.reason,
@@ -197,7 +197,7 @@ async function readStripe(kind: string): Promise<ConnectorData> {
         connector: "stripe",
         stub: false,
         kind: "payments",
-        items: data.data.map((c) => ({
+        items: data.data.map((c: any) => ({
           id: c.id,
           client: c.billing_details?.name || undefined,
           email: c.receipt_email || undefined,

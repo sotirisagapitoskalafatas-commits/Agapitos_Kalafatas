@@ -1,18 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
-import { buildCustomerIndex, buildCustomer360 } from "@/lib/spine/customers";
+import { buildCustomerIndex, buildCustomer360, type Customer360Input } from "@/lib/spine/customers";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    global: {
-      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
-        fetch(input as any, { ...init, cache: "no-store" }),
-    },
-  }
-);
+
 
 export const dynamic = "force-dynamic";
 
@@ -75,7 +66,7 @@ export async function GET(req: NextRequest) {
     reminders: remindersRes.data ?? [],
     activity: activityRes.data ?? [],
     now,
-  };
+  } as unknown as Customer360Input;
 
   const index = buildCustomerIndex(input);
   const customer360 = leadId ? buildCustomer360(input, leadId) : null;

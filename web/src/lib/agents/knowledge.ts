@@ -153,7 +153,7 @@ export async function getTasks(
   const { data, error } = await q;
   if (error) return { error: error.message };
   return {
-    results: (data || []).map((t) => ({
+    results: (data || []).map((t: any) => ({
       id: t.id,
       title: t.title,
       description: t.description,

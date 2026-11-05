@@ -2,11 +2,11 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-// Atlas Command Center finish: "warm" = 2a warm paper, "night" = 2b night console.
-// Stored per browser so the user's chosen finish sticks across the shell + CRM.
-export type AtlasFinish = "warm" | "night";
+// The workspace chrome can change independently from the always-light content area.
+export type AtlasFinish = "navy" | "ocean" | "graphite" | "forest" | "plum" | "light";
 
 const STORAGE_KEY = "atlas_finish";
+const THEMES: AtlasFinish[] = ["navy", "ocean", "graphite", "forest", "plum", "light"];
 
 type AtlasThemeValue = {
   finish: AtlasFinish;
@@ -16,28 +16,39 @@ type AtlasThemeValue = {
 
 const AtlasThemeContext = createContext<AtlasThemeValue | null>(null);
 
+function normalizeTheme(value: string | null): AtlasFinish | null {
+  if (value && THEMES.includes(value as AtlasFinish)) return value as AtlasFinish;
+  // Migrate the previous Paper / Console preference without breaking existing browsers.
+  if (value === "warm") return "light";
+  if (value === "night") return "graphite";
+  return null;
+}
+
 export function AtlasThemeProvider({ children }: { children: ReactNode }) {
-  const [finish, setFinish] = useState<AtlasFinish>("warm");
+  const [finish, setFinish] = useState<AtlasFinish>("navy");
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw === "warm" || raw === "night") setFinish(raw);
+      const stored = normalizeTheme(localStorage.getItem(STORAGE_KEY));
+      if (stored) setFinish(stored);
     } catch {
-      /* ignore */
+      /* Browser storage may be unavailable; keep the default theme. */
     }
   }, []);
 
-  const apply = (f: AtlasFinish) => {
-    setFinish(f);
+  const apply = (next: AtlasFinish) => {
+    setFinish(next);
     try {
-      localStorage.setItem(STORAGE_KEY, f);
+      localStorage.setItem(STORAGE_KEY, next);
     } catch {
-      /* ignore */
+      /* Keep the current session usable if storage is unavailable. */
     }
   };
 
-  const toggle = () => apply(finish === "warm" ? "night" : "warm");
+  const toggle = () => {
+    const index = THEMES.indexOf(finish);
+    apply(THEMES[(index + 1) % THEMES.length]);
+  };
 
   return (
     <AtlasThemeContext.Provider value={{ finish, setFinish: apply, toggle }}>
