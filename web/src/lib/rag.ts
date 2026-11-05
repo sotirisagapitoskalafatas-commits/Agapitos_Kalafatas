@@ -1,12 +1,7 @@
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/agents/db";
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 // Generate embedding using OpenAI text-embedding-3-small
 async function getOpenAIEmbedding(text: string): Promise<number[]> {

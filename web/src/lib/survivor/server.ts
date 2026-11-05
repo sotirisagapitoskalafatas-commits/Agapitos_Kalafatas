@@ -35,9 +35,10 @@ export async function ensureAgent(): Promise<SurvivorAgent> {
     .maybeSingle();
   if (exErr) throw new Error(exErr.message);
 
-  if (existing) {
-    if (existing.status === "dead") return existing;
-    return existing;
+  const existingAgent = existing as SurvivorAgent | null;
+  if (existingAgent) {
+    if (existingAgent.status === "dead") return existingAgent;
+    return existingAgent;
   }
 
   const { data: agent, error: insErr } = await supabase
@@ -46,29 +47,30 @@ export async function ensureAgent(): Promise<SurvivorAgent> {
     .select()
     .single();
   if (insErr) throw new Error(insErr.message);
+  const createdAgent = agent as SurvivorAgent;
 
   // Seed the ledger with starting capital (immutable first entry).
   const { error: txErr } = await supabase.from("survivor_transactions").insert({
-    agent_id: agent.id,
+    agent_id: createdAgent.id,
     type: "deposit",
     amount: cfg.startingCapital,
     currency: "EUR",
     description: "Starting capital (sandbox)",
-    reference_id: `seed:${agent.id}:0`,
+    reference_id: `seed:${createdAgent.id}:0`,
     balance_after: cfg.startingCapital,
   });
   if (txErr) throw new Error(txErr.message);
 
   // Default balanced profile.
   const { error: stratErr } = await supabase.from("survivor_strategies").insert({
-    agent_id: agent.id,
+    agent_id: createdAgent.id,
     profile: "balanced",
     active: true,
     params: { valueWeight: 0.3, deadlineWeight: 0.2, complexityWeight: 0.2, riskTolerance: 0.2, minScore: 55 },
   });
   if (stratErr) throw new Error(stratErr.message);
 
-  return agent;
+  return createdAgent;
 }
 
 export async function getWalletView(): Promise<WalletView> {
@@ -88,8 +90,8 @@ export async function getWalletView(): Promise<WalletView> {
     .eq("agent_id", agent.id)
     .in("status", ["won", "in_progress", "delivered"]);
 
-  const pendingBids = (pending || []).reduce((sum, a) => sum + Number(a.payload?.value || 0), 0);
-  const reserved = (jobs || []).reduce((sum, j) => sum + Number(j.value || 0), 0);
+  const pendingBids = (pending || []).reduce((sum: number, a: any) => sum + Number(a.payload?.value || 0), 0);
+  const reserved = (jobs || []).reduce((sum: number, j: any) => sum + Number(j.value || 0), 0);
 
   return {
     agentId: agent.id,
@@ -303,13 +305,180 @@ export async function getDashboard(): Promise<SurvivorDashboard> {
     wallet,
     survival: status,
     transactions,
-    opportunities: opportunities.data || [],
-    proposals: proposals.data || [],
-    jobs: jobs.data || [],
+    opportunities: parseOpportunityRows(opportunities.data),
+    proposals: parseProposalRows(proposals.data),
+    jobs: parseJobRows(jobs.data),
     strategy: (strategy.data as Strategy) || null,
-    memory: memory.data || [],
-    experiments: experiments.data || [],
+    memory: parseMemoryRows(memory.data),
+    experiments: parseExperimentRows(experiments.data),
   };
+}
+
+// Convert persisted rows into the domain contract at the database boundary.
+// The legacy generated types are permissive, so validate each row before
+// passing it to the typed Survivor domain layer.
+function parseOpportunityRows(rows: unknown): Opportunity[] {
+  if (!Array.isArray(rows)) return [];
+
+  const parsed: Opportunity[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    const complexity = value.complexity;
+    const estimatedValue = Number(value.estimated_value);
+    const riskPercent = Number(value.risk_percent);
+    const deadlineDays = Number(value.deadline_days);
+
+    if (
+      typeof value.id !== "string" ||
+      typeof value.source !== "string" ||
+      typeof value.title !== "string" ||
+      typeof value.active !== "boolean" ||
+      typeof value.created_at !== "string" ||
+      !Number.isFinite(estimatedValue) ||
+      !Number.isFinite(riskPercent) ||
+      !Number.isFinite(deadlineDays)
+    ) {
+      continue;
+    }
+
+    parsed.push({
+      id: value.id,
+      source: value.source,
+      title: value.title,
+      description: typeof value.description === "string" ? value.description : null,
+      service_category: typeof value.service_category === "string" ? value.service_category : null,
+      estimated_value: estimatedValue,
+      complexity: complexity === "low" || complexity === "high" ? complexity : "medium",
+      risk_percent: riskPercent,
+      deadline_days: deadlineDays,
+      active: value.active,
+      created_at: value.created_at,
+    });
+  }
+
+  return parsed;
+}
+
+function parseProposalRows(rows: unknown): Proposal[] {
+  if (!Array.isArray(rows)) return [];
+  const parsed: Proposal[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    const score = Number(value.score);
+    if (
+      typeof value.id !== "string" ||
+      typeof value.agent_id !== "string" ||
+      typeof value.source !== "string" ||
+      (value.decision !== "bid" && value.decision !== "skip") ||
+      !["proposed", "approved", "rejected", "expired"].includes(String(value.status)) ||
+      !Number.isFinite(score) ||
+      typeof value.created_at !== "string"
+    ) continue;
+    parsed.push({
+      id: value.id,
+      agent_id: value.agent_id,
+      opportunity_id: typeof value.opportunity_id === "string" ? value.opportunity_id : null,
+      source: value.source,
+      score,
+      decision: value.decision,
+      status: value.status as Proposal["status"],
+      rationale: typeof value.rationale === "string" ? value.rationale : null,
+      approval_id: typeof value.approval_id === "string" ? value.approval_id : null,
+      created_at: value.created_at,
+    });
+  }
+  return parsed;
+}
+
+function parseJobRows(rows: unknown): Job[] {
+  if (!Array.isArray(rows)) return [];
+  const parsed: Job[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    const amount = Number(value.value);
+    const winRate = Number(value.win_rate);
+    if (
+      typeof value.id !== "string" ||
+      typeof value.agent_id !== "string" ||
+      typeof value.title !== "string" ||
+      !["proposed", "won", "in_progress", "delivered", "paid", "failed"].includes(String(value.status)) ||
+      !Number.isFinite(amount) ||
+      !Number.isFinite(winRate) ||
+      typeof value.created_at !== "string" ||
+      typeof value.updated_at !== "string"
+    ) continue;
+    parsed.push({
+      id: value.id,
+      agent_id: value.agent_id,
+      opportunity_id: typeof value.opportunity_id === "string" ? value.opportunity_id : null,
+      proposal_id: typeof value.proposal_id === "string" ? value.proposal_id : null,
+      title: value.title,
+      client: typeof value.client === "string" ? value.client : null,
+      value: amount,
+      status: value.status as Job["status"],
+      win_rate: winRate,
+      created_at: value.created_at,
+      updated_at: value.updated_at,
+    });
+  }
+  return parsed;
+}
+
+function parseMemoryRows(rows: unknown): MemoryRecord[] {
+  if (!Array.isArray(rows)) return [];
+  const parsed: MemoryRecord[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    const confidence = Number(value.confidence);
+    if (
+      typeof value.id !== "string" ||
+      typeof value.agent_id !== "string" ||
+      !["lesson", "postmortem", "fact"].includes(String(value.kind)) ||
+      typeof value.content !== "string" ||
+      !Number.isFinite(confidence) ||
+      typeof value.created_at !== "string"
+    ) continue;
+    parsed.push({
+      id: value.id,
+      agent_id: value.agent_id,
+      kind: value.kind as MemoryRecord["kind"],
+      content: value.content,
+      source: typeof value.source === "string" ? value.source : null,
+      confidence,
+      created_at: value.created_at,
+    });
+  }
+  return parsed;
+}
+
+function parseExperimentRows(rows: unknown): Experiment[] {
+  if (!Array.isArray(rows)) return [];
+  const parsed: Experiment[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    if (
+      typeof value.id !== "string" ||
+      typeof value.name !== "string" ||
+      !["running", "complete", "failed"].includes(String(value.status)) ||
+      typeof value.started_at !== "string" ||
+      typeof value.created_at !== "string"
+    ) continue;
+    parsed.push({
+      id: value.id,
+      name: value.name,
+      status: value.status as Experiment["status"],
+      started_at: value.started_at,
+      finished_at: typeof value.finished_at === "string" ? value.finished_at : null,
+      summary: typeof value.summary === "string" ? value.summary : null,
+      created_at: value.created_at,
+    });
+  }
+  return parsed;
 }
 
 // ── Private helpers ──────────────────────────────────────────────────────────

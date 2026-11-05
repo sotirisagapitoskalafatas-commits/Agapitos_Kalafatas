@@ -13,17 +13,12 @@
 //     reaches an email body or subject.
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/agents/db";
 import { Resend } from "resend";
 import { orchestrate } from "@/lib/agents/orchestrator";
 import { rateLimit } from "@/lib/rate-limit";
 import { getMarketingSystemPrompt } from "@/lib/marketingInjector";
 import type { AgentContext, Tool } from "@/lib/agents/types";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
 
 const NOTIFY_EMAIL = process.env.NOTIFY_EMAIL_TO || "kalafatasagapitos@gmail.com";
 

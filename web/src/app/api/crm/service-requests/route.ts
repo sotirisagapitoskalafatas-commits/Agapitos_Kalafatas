@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabase } from "@/lib/agents/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/admin-auth";
 import {
   applyRequestPatch,
@@ -13,16 +13,7 @@ import {
   type ServiceRequestRow,
 } from "@/lib/spine/customers";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    global: {
-      fetch: (input: RequestInfo | URL, init?: RequestInit) =>
-        fetch(input as any, { ...init, cache: "no-store" }),
-    },
-  }
-);
+
 
 export const dynamic = "force-dynamic";
 
@@ -60,7 +51,7 @@ export async function GET(req: NextRequest) {
   if (leadId) query = query.eq("lead_id", leadId);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ requests: (data ?? []).map(requestView) });
+  return NextResponse.json({ requests: ((data ?? []) as ServiceRequestRow[]).map(requestView) });
 }
 
 export async function POST(req: NextRequest) {
@@ -115,7 +106,7 @@ export async function POST(req: NextRequest) {
     },
   ]);
 
-  return NextResponse.json({ request: requestView(data) }, { status: 201 });
+  return NextResponse.json({ request: requestView(data as ServiceRequestRow) }, { status: 201 });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -175,5 +166,5 @@ export async function PATCH(req: NextRequest) {
 
   await logEvents(id, events);
 
-  return NextResponse.json({ request: requestView(data) });
+  return NextResponse.json({ request: requestView(data as ServiceRequestRow) });
 }

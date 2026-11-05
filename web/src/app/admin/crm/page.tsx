@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import AdminShell from "@/components/admin/AdminShell";
+import { useAtlasTheme, type AtlasFinish } from "@/components/admin/atlasTheme";
 import { useAdminAuth } from "@/components/admin/AdminAuthProvider";
 import SurvivorView from "@/components/admin/survivor/SurvivorView";
 import { resolveCrmTab, plannedModuleByKey, type CrmTab } from "@/components/admin/nav";
@@ -183,6 +184,23 @@ const STAGES = [
   { key: "closed_won", label: "Won", color: "bg-green-50 border-green-300" },
   { key: "closed_lost", label: "Lost", color: "bg-red-50 border-red-300" },
 ];
+
+type DashboardWidgetId = "metrics" | "attention" | "jarvis" | "pipeline" | "activity";
+type DashboardWidgetPreference = {
+  id: DashboardWidgetId;
+  label: string;
+  description: string;
+  visible: boolean;
+  size: "half" | "full";
+};
+const DEFAULT_DASHBOARD_LAYOUT: DashboardWidgetPreference[] = [
+  { id: "metrics", label: "Βασικοί δείκτες", description: "Leads, Pipeline, ανανεώσεις και σημερινές εργασίες.", visible: true, size: "full" },
+  { id: "attention", label: "Χρειάζεται την προσοχή σου", description: "Εκκρεμότητες που χρειάζονται ενέργεια.", visible: true, size: "half" },
+  { id: "jarvis", label: "ATLAS AI · JARVIS", description: "Κατάσταση AI, εγκρίσεις και αποτυχίες.", visible: true, size: "half" },
+  { id: "pipeline", label: "Pipeline πωλήσεων", description: "Deals ανά στάδιο και βασικές υπηρεσίες.", visible: true, size: "half" },
+  { id: "activity", label: "Πρόσφατη δραστηριότητα", description: "Οι τελευταίες αλλαγές στο CRM.", visible: true, size: "half" },
+];
+const DASHBOARD_LAYOUT_STORAGE = "atlas_home_layout";
 
 // ── Lead pipeline statuses (Greek labels + emoji + chip colors) ──
 const LEAD_STATUSES = [
@@ -408,6 +426,36 @@ function CRMDashboardInner() {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer360Data | null>(null);
   const [customersBusy, setCustomersBusy] = useState(false);
   const [reqSignal, setReqSignal] = useState(0);
+  const [dashboardLayout, setDashboardLayout] = useState<DashboardWidgetPreference[]>(DEFAULT_DASHBOARD_LAYOUT);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(DASHBOARD_LAYOUT_STORAGE);
+      if (!stored) return;
+      const parsed = JSON.parse(stored);
+      if (!Array.isArray(parsed)) return;
+      const allowed = new Set(DEFAULT_DASHBOARD_LAYOUT.map((item) => item.id));
+      const normalized = parsed
+        .filter((item: any) => item && allowed.has(item.id))
+        .map((item: any) => {
+          const fallback = DEFAULT_DASHBOARD_LAYOUT.find((entry) => entry.id === item.id)!;
+          return {
+            ...fallback,
+            visible: typeof item.visible === "boolean" ? item.visible : fallback.visible,
+            size: item.size === "full" || item.size === "half" ? item.size : fallback.size,
+          } as DashboardWidgetPreference;
+        });
+      const present = new Set(normalized.map((item) => item.id));
+      setDashboardLayout([...normalized, ...DEFAULT_DASHBOARD_LAYOUT.filter((item) => !present.has(item.id))]);
+    } catch {
+      /* Use the default layout if browser preferences are invalid. */
+    }
+  }, []);
+
+  const saveDashboardLayout = useCallback((next: DashboardWidgetPreference[]) => {
+    setDashboardLayout(next);
+    try { localStorage.setItem(DASHBOARD_LAYOUT_STORAGE, JSON.stringify(next)); } catch { /* session state still applies */ }
+  }, []);
 
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showNewDeal, setShowNewDeal] = useState(false);
@@ -634,19 +682,26 @@ function CRMDashboardInner() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-0">
           <div>
             <h2 className="atlas-plex text-[20px] font-semibold" style={{ color: "var(--cc-ink)" }}>
-              {tab === "planned" ? (plannedModule?.label ?? "Planned") : tab === "renewals" ? "Renewals" : tab === "dashboard" ? "Command Center" : tab === "survivor" ? "AI Survivor" : tab}
+              {tab === "planned" ? (plannedModule?.label ?? "Προγραμματισμένη ενότητα") : tab === "renewals" ? "Ανανεώσεις" : tab === "dashboard" ? "Αρχική" : tab === "preferences" ? "Προσαρμογή CRM" : tab}
             </h2>
             <p className="text-sm mt-1" style={{ color: "var(--cc-muted)" }}>
               {new Date().toLocaleDateString("el-GR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
             </p>
           </div>
-          <button
-            onClick={() => { fetchAll(); fetchRenewals(); }}
-            className="text-sm font-semibold transition-opacity px-4 py-2 rounded-xl"
-            style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}
-          >
-            ↻ Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            {tab === "dashboard" && (
+              <button onClick={() => setTab("preferences")} className="text-xs font-semibold px-3.5 py-2 rounded-xl border" style={{ background: "#fff", color: "#44536a", borderColor: "#e0e7f0" }}>
+                ⚙ Προσαρμογή αρχικής
+              </button>
+            )}
+            <button
+              onClick={() => { fetchAll(); fetchRenewals(); }}
+              className="text-sm font-semibold transition-opacity px-4 py-2 rounded-xl"
+              style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}
+            >
+              ↻ Ανανέωση
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -655,7 +710,7 @@ function CRMDashboardInner() {
           </div>
         ) : (
           <>
-            {tab === "dashboard" && <DashboardView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} />}
+            {tab === "dashboard" && <DashboardView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} layout={dashboardLayout} />}
             {tab === "attention" && <AttentionView data={command} error={commandError} formatCurrency={formatCurrency} onAction={goAction} />}
             {tab === "leads" && <LeadsView leads={leads} onSelect={setSelectedLead} onNew={() => setShowNewLead(true)} updateFields={updateLeadFields} />}
             {tab === "customers" && (
@@ -697,6 +752,7 @@ function CRMDashboardInner() {
             {tab === "ai" && <AgentView />}
             {tab === "survivor" && <SurvivorView />}
             {tab === "settings" && <SettingsView />}
+            {tab === "preferences" && <PreferencesView layout={dashboardLayout} onLayoutChange={saveDashboardLayout} />}
             {tab === "planned" && <PlannedModuleView module={plannedModule} onBack={() => setTab("dashboard")} />}
           </>
         )}
@@ -969,359 +1025,286 @@ function PlannedModuleView({ module, onBack }: { module: { label: string; descri
   );
 }
 
-/* ─── DASHBOARD VIEW (Command Center, design 2a/2b) ─── */
-function DashboardView({ data, error, formatCurrency, onAction }: {
+/* ─── DASHBOARD VIEW (calm, configurable command center) ─── */
+function DashboardView({ data, error, formatCurrency, onAction, layout }: {
   data: CommandCenterData | null;
   error: string;
   formatCurrency: (n: number) => string;
   onAction: (a: AttentionAction) => void;
+  layout: DashboardWidgetPreference[];
 }) {
   if (!data) {
     return (
       <div className="atlas-surface rounded-2xl p-8 flex items-center justify-center min-h-40 text-sm">
-        {error ? (
-          <span style={{ color: "var(--cc-red-ink)" }}>Δεν μπόρεσαν να φορτωθούν τα δεδομένα: {error}</span>
-        ) : (
-          <span style={{ color: "var(--cc-faint)" }}>Φορτώνουμε πραγματικά δεδομένα από το CRM…</span>
-        )}
+        {error ? <span style={{ color: "var(--cc-red-ink)" }}>Δεν ήταν δυνατή η φόρτωση των δεδομένων: {error}</span> : <span style={{ color: "var(--cc-faint)" }}>Φορτώνουμε την εικόνα του CRM…</span>}
       </div>
     );
   }
-  const { vitals, attention, jarvis, serviceBreakdown } = data;
-  const next = jarvis.next;
-  const queue = attention.items.slice(0, 9);
-  const hasCritical = attention.critical > 0;
 
-  const vitalsCards = [
-    {
-      label: "Leads",
-      value: String(vitals.leads.total),
-      sub:
-        Object.entries(vitals.leads.statuses)
-          .filter(([k]) => STATUS_META[k])
-          .slice(0, 3)
-          .map(([k, c]) => `${STATUS_META[k].label} ${c}`)
-          .join(" · ") || "κανένα lead",
-      tone: "indigo" as const,
-    },
-    {
-      label: "Pipeline weighted",
-      value: formatCurrency(vitals.pipeline.weighted),
-      sub: `${vitals.pipeline.count} ανοιχτά deals`,
-      tone: "blue" as const,
-    },
-    {
-      label: "Ανανεώσεις",
-      value: `${vitals.renewals.overdue} εκπρόθεσμες`,
-      sub: `σε 14 ημέρες: ${vitals.renewals.in14} · σε 30: ${vitals.renewals.in30}`,
-      tone: "green" as const,
-    },
-    {
-      label: "Ανοιχτά τιμολόγια",
-      value: formatCurrency(vitals.finance.openAmount),
-      sub: `${vitals.finance.open} ανοιχτά · ${formatCurrency(vitals.finance.overdueAmount)} εκπρόθεσμα (${vitals.finance.overdue})`,
-      tone: "red" as const,
-    },
-    {
-      label: "Εργασίες σήμερα",
-      value: String(vitals.operations.dueToday),
-      sub: `${vitals.operations.overdue} εκπρόθεσμες · ${vitals.operations.doneToday} ολοκληρωμένες`,
-      tone: "amber" as const,
-    },
-    {
-      label: "JARVIS 24h",
-      value: String(vitals.ai.runs24h),
-      sub: `${vitals.ai.pendingApprovals} εγκρίσεις · ${vitals.ai.failures24h} αποτυχίες`,
-      tone: "indigo" as const,
-    },
-    {
-      label: "Επικοινωνίες μήνα",
-      value: String(vitals.comms.thisMonth),
-      sub: `${vitals.comms.inbound} εισερχόμενες`,
-      tone: "green" as const,
-    },
+  const { vitals, attention, jarvis, serviceBreakdown, recentActivity } = data;
+  const queue = attention.items.slice(0, 4);
+  const maxStage = Math.max(1, ...Object.values(vitals.pipeline.byStage));
+  const services = Object.entries(serviceBreakdown).sort((a, b) => b[1] - a[1]).slice(0, 4);
+  const stageLabels: Record<string, string> = {
+    lead: "Νέο", qualified: "Εξειδίκευση", proposal: "Προσφορά",
+    negotiation: "Διαπραγμάτευση", closed_won: "Κερδισμένο", closed_lost: "Χαμένο",
+  };
+
+  const metrics = [
+    { label: "Σύνολο leads", value: String(vitals.leads.total), detail: `${vitals.leads.uncontacted} χωρίς πρώτη επικοινωνία`, tone: "blue", icon: "↗" },
+    { label: "Pipeline", value: formatCurrency(vitals.pipeline.weighted), detail: `${vitals.pipeline.count} ενεργά deals`, tone: "violet", icon: "◎" },
+    { label: "Ανανεώσεις που έληξαν", value: String(vitals.renewals.overdue), detail: `${vitals.renewals.in14} μέσα στις επόμενες 14 ημέρες`, tone: "amber", icon: "↻" },
+    { label: "Εργασίες σήμερα", value: String(vitals.operations.dueToday), detail: `${vitals.operations.overdue} εκπρόθεσμες · ${vitals.operations.doneToday} ολοκληρωμένες`, tone: "green", icon: "✓" },
   ];
 
-  return (
-    <div className="space-y-5">
-      {/* JARVIS foundation card — honest, no invented intelligence */}
-      <div className="atlas-surface rounded-2xl p-5 border-l-4" style={{ borderLeftColor: "var(--cc-indigo)" }}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          <div className="flex items-start gap-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center atlas-plex text-sm font-bold flex-none" style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}>
-              J
+  const widgets: Record<DashboardWidgetId, React.ReactNode> = {
+    metrics: (
+      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3" aria-label="Βασικοί δείκτες">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="atlas-surface atlas-metric-card rounded-2xl p-4">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium" style={{ color: "var(--cc-muted)" }}>{metric.label}</p>
+              <span className={`atlas-metric-icon atlas-metric-${metric.tone}`} aria-hidden>{metric.icon}</span>
             </div>
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="atlas-plex text-[15px] font-semibold" style={{ color: "var(--cc-ink)" }}>JARVIS</h3>
-                <AtlasChip tone="indigo">foundation ready</AtlasChip>
-              </div>
-              <p className="text-xs mt-1 max-w-2xl" style={{ color: "var(--cc-muted)" }}>{jarvis.note}</p>
-            </div>
+            <p className="atlas-plex text-[27px] font-semibold tracking-tight mt-3 leading-none" style={{ color: "var(--cc-ink)" }}>{metric.value}</p>
+            <p className="text-[11px] mt-2" style={{ color: "var(--cc-faint)" }}>{metric.detail}</p>
           </div>
-          {next && (
-            <button
-              onClick={() => onAction({ label: next.actionLabel, kind: next.actionKind, target: next.actionTarget })}
-              className="shrink-0 text-sm px-4 py-2 rounded-xl font-semibold shadow-md hover:shadow-lg transition"
-              style={{ background: "var(--cc-indigo)", color: "#fff" }}
-            >
-              {next.actionLabel} → {next.title}
-            </button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          <MetricCell value={String(vitals.ai.runs24h)} label="εκτελέσεις 24h" tone="indigo" />
-          <MetricCell value={String(vitals.ai.pendingApprovals)} label="εγκρίσεις σε εκκρεμότητα" tone="amber" />
-          <MetricCell value={String(vitals.ai.failures24h)} label="αποτυχίες 24h" tone="red" />
-          <MetricCell value={String(attention.total)} label="θέματα προσοχής" tone="neutral" />
-        </div>
-
-        {jarvis.atRisk.length > 0 && (
-          <div className="mt-4">
-            <p className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-2" style={{ color: "var(--cc-faint)" }}>
-              Σε κίνδυνο τώρα
-            </p>
-            <ul className="space-y-1.5">
-              {jarvis.atRisk.map((r, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--cc-ink-2)" }}>
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-none" style={{ background: "var(--cc-red)" }} />
-                  {r}
-                </li>
-              ))}
-            </ul>
+        ))}
+      </section>
+    ),
+    attention: (
+      <section className="atlas-surface rounded-2xl overflow-hidden h-full">
+        <div className="flex items-center gap-3 px-5 py-4 border-b" style={{ borderColor: "var(--cc-line)" }}>
+          <div className="min-w-0">
+            <h2 className="atlas-plex text-[15px] font-semibold" style={{ color: "var(--cc-ink)" }}>Χρειάζεται την προσοχή σου</h2>
+            <p className="text-[11px] mt-0.5" style={{ color: "var(--cc-faint)" }}>Τα σημαντικότερα θέματα πρώτα</p>
           </div>
-        )}
-      </div>
-
-      {/* Needs you — ranked queue with severity spines, from real rows */}
-      <div className="atlas-surface rounded-2xl overflow-hidden">
-        <div className="flex items-center gap-3 px-5 py-4" style={{ borderBottom: "1px solid var(--cc-line)" }}>
-          <h3 className="atlas-plex text-[15px] font-semibold" style={{ color: "var(--cc-ink)" }}>Needs you</h3>
-          <span className="atlas-mono text-[10px]" style={{ color: "var(--cc-faint)" }}>Πρώτα πιο κρίσιμα</span>
           <div className="flex-1" />
-          <span
-            className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-full"
-            style={{ background: hasCritical ? "var(--cc-red-chip)" : "var(--cc-chip)", color: hasCritical ? "var(--cc-red-ink)" : "var(--cc-chip-ink)" }}
-          >
-            {hasCritical && <span className="w-1.5 h-1.5 rounded-full" style={{ background: "var(--cc-red)" }} />}
-            {attention.total} ανοιχτά
-          </span>
-          <button
-            onClick={() => onAction({ label: "My Attention", kind: "tab", target: "attention" })}
-            className="atlas-mono text-[11px] font-semibold hover:underline"
-            style={{ color: "var(--cc-indigo-ink)" }}
-          >
-            ALL →
-          </button>
+          <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ background: attention.critical > 0 ? "var(--cc-red-chip)" : "var(--cc-chip)", color: attention.critical > 0 ? "var(--cc-red-ink)" : "var(--cc-chip-ink)" }}>{attention.total} εκκρεμότητες</span>
+          <button onClick={() => onAction({ label: "Όλα τα θέματα", kind: "tab", target: "attention" })} className="text-xs font-semibold hover:underline hidden sm:block" style={{ color: "var(--cc-indigo-ink)" }}>Όλα →</button>
         </div>
-
         {queue.length === 0 ? (
-          <div className="px-5 py-10 text-center">
-            <p className="atlas-plex text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>Τίποτα δεν χρειάζεται την προσοχή σου τώρα</p>
-            <p className="text-xs mt-1" style={{ color: "var(--cc-muted)" }}>Η ουρά προκύπτει από πραγματικά δεδομένα — κανένα εικονικό στοιχείο.</p>
+          <div className="px-5 py-9 text-center">
+            <span className="inline-flex w-10 h-10 items-center justify-center rounded-full mb-3" style={{ background: "var(--cc-live-glow)", color: "var(--cc-live)" }}>✓</span>
+            <p className="atlas-plex text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>Όλα είναι υπό έλεγχο</p>
+            <p className="text-xs mt-1" style={{ color: "var(--cc-muted)" }}>Δεν υπάρχουν θέματα που χρειάζονται άμεση ενέργεια.</p>
           </div>
         ) : (
-          <div className="divide-y divide-[color:var(--cc-line)]">
+          <div className="divide-y" style={{ borderColor: "var(--cc-line)" }}>
             {queue.map((item) => {
-              const sev = SEV_SPINE[item.severity];
-              const breach = potentialBreachChip(item);
+              const tone = item.severity === "critical" || item.severity === "high" ? "red" : item.severity === "medium" ? "amber" : "neutral";
+              const action = item.actions[0];
               return (
-                <div key={item.id} className="flex">
-                  <div className="w-[3px] flex-none" style={{ background: sev.color }} />
-                  <div className="flex-1 flex flex-col lg:flex-row lg:items-center gap-3 px-4 py-3.5 min-w-0">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <AtlasChip tone={item.severity === "critical" ? "red" : item.severity === "high" ? "amber" : item.severity === "medium" ? "indigo" : "neutral"}>
-                          {ATTENTION_KIND_LABELS[item.kind] ?? item.kind}
-                        </AtlasChip>
-                        {breach}
-                      </div>
-                      <p className="atlas-plex text-[13.5px] font-semibold mt-1 truncate" style={{ color: "var(--cc-ink)" }}>{item.title}</p>
-                      <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "var(--cc-muted)" }}>{item.reason}</p>
-                      <div className="flex flex-wrap items-center gap-3 text-[11px] mt-1.5" style={{ color: "var(--cc-faint)" }}>
-                        {item.timestamp && <span>🕒 {relTime(item.timestamp)}</span>}
-                        {item.owner && <span>👤 {item.owner}</span>}
-                      </div>
+                <div key={item.id} className="flex items-start gap-3 px-5 py-3.5">
+                  <span className={`atlas-attention-dot atlas-attention-${item.severity}`} aria-hidden />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <AtlasChip tone={tone}>{ATTENTION_KIND_LABELS[item.kind] ?? item.kind}</AtlasChip>
+                      {potentialBreachChip(item)}
                     </div>
-                    <div className="flex flex-wrap gap-2 lg:shrink-0">
-                      {item.actions.map((a, i) => (
-                        <button
-                          key={i}
-                          onClick={() => onAction(a)}
-                          className="text-xs px-3 py-1.5 rounded-lg font-semibold transition-opacity"
-                          style={
-                            i === 0
-                              ? { background: "var(--cc-indigo)", color: "#fff" }
-                              : { background: "var(--cc-chip)", color: "var(--cc-chip-ink)", border: "1px solid var(--cc-line-2)" }
-                          }
-                        >
-                          {a.label}
-                        </button>
-                      ))}
+                    <p className="text-[13px] font-semibold mt-1.5 truncate" style={{ color: "var(--cc-ink)" }}>{item.title}</p>
+                    <p className="text-xs mt-0.5 line-clamp-2" style={{ color: "var(--cc-muted)" }}>{item.reason}</p>
+                    <div className="flex items-center gap-3 text-[10px] mt-1.5" style={{ color: "var(--cc-faint)" }}>
+                      {item.timestamp && <span>{relTime(item.timestamp)}</span>}
+                      {item.owner && <span>{item.owner}</span>}
                     </div>
                   </div>
+                  {action && <button onClick={() => onAction(action)} className="atlas-row-action shrink-0">{action.label} <span aria-hidden>→</span></button>}
                 </div>
               );
             })}
           </div>
         )}
-      </div>
-
-      {/* Vitals grid */}
-      <div>
-        <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-3" style={{ color: "var(--cc-faint)" }}>Vitals</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          {vitalsCards.map((c) => (
-            <div key={c.label} className="atlas-surface rounded-xl p-4">
-              <div className="atlas-plex text-[22px] font-bold leading-none" style={{ color: "var(--cc-ink)" }}>{c.value}</div>
-              <div className="atlas-mono text-[10px] uppercase tracking-wide mt-2 font-semibold" style={{ color: CARD_TONE[c.tone] }}>{c.label}</div>
-              <div className="text-[11px] mt-1" style={{ color: "var(--cc-faint)" }}>{c.sub}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Market composition: service + pipeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="atlas-surface rounded-2xl p-5">
-          <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-4" style={{ color: "var(--cc-faint)" }}>Leads by Service</h3>
-          {Object.entries(serviceBreakdown).length === 0 ? (
-            <p className="text-sm" style={{ color: "var(--cc-faint)" }}>No data yet</p>
-          ) : (
-            <div className="space-y-3">
-              {Object.entries(serviceBreakdown)
-                .sort(([, a], [, b]) => b - a)
-                .map(([service, count]) => {
-                  const max = Math.max(...Object.values(serviceBreakdown));
-                  const pct = (count / max) * 100;
-                  return (
-                    <div key={service}>
-                      <div className="flex justify-between text-xs mb-1">
-                        <span style={{ color: "var(--cc-ink-2)" }}>{service}</span>
-                        <span className="atlas-mono" style={{ color: "var(--cc-faint)" }}>{count}</span>
-                      </div>
-                      <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line)" }}>
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${pct}%`, background: "linear-gradient(90deg, var(--cc-indigo), var(--cc-beta))" }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          )}
-        </div>
-
-        <div className="atlas-surface rounded-2xl p-5">
-          <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-4" style={{ color: "var(--cc-faint)" }}>Pipeline Stages</h3>
-          {Object.keys(vitals.pipeline.byStage).length === 0 ? (
-            <p className="text-sm" style={{ color: "var(--cc-faint)" }}>No deals yet</p>
-          ) : (
-            <div className="space-y-3">
-              {STAGES.map((s) => {
-                const count = vitals.pipeline.byStage[s.key] || 0;
-                const max = Math.max(...Object.values(vitals.pipeline.byStage), 1);
-                const pct = (count / max) * 100;
-                return (
-                  <div key={s.key}>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span style={{ color: "var(--cc-ink-2)" }}>{s.label}</span>
-                      <span className="atlas-mono" style={{ color: "var(--cc-faint)" }}>{count}</span>
-                    </div>
-                    <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line)" }}>
-                      <div
-                        className="h-full rounded-full transition-all"
-                        style={{
-                          width: `${pct}%`,
-                          background: s.key === "closed_won"
-                            ? "var(--cc-live)"
-                            : s.key === "closed_lost"
-                            ? "var(--cc-red)"
-                            : "linear-gradient(90deg, var(--cc-amber-bright), var(--cc-amber))",
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* What changed + recent activity (real rows, not invented) */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="atlas-surface rounded-2xl p-5">
-          <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-4" style={{ color: "var(--cc-faint)" }}>Τι άλλαξε</h3>
-          {jarvis.changed.length === 0 ? (
-            <p className="text-sm" style={{ color: "var(--cc-faint)" }}>Καμία πρόσφατη αλλαγή ακόμα.</p>
-          ) : (
-            <ul className="space-y-2.5">
-              {jarvis.changed.map((c, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--cc-ink-2)" }}>
-                  <span className="mt-1.5 w-1.5 h-1.5 rounded-full flex-none" style={{ background: "var(--cc-indigo)" }} />
-                  {c}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="atlas-surface rounded-2xl p-5">
-          <h3 className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.14em] mb-4" style={{ color: "var(--cc-faint)" }}>Recent Activity</h3>
-          {data.recentActivity.length === 0 ? (
-            <p className="text-sm" style={{ color: "var(--cc-faint)" }}>No recent activity</p>
-          ) : (
-            <div className="space-y-2.5">
-              {data.recentActivity.slice(0, 8).map((a) => (
-                <div key={a.id} className="flex items-center gap-3 rounded-xl px-3 py-2" style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line)" }}>
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center atlas-plex text-[11px] font-semibold flex-none" style={{ background: "var(--cc-chip)", color: "var(--cc-chip-ink)" }}>
-                    {(a.entity_type ?? "?").slice(0, 1).toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate" style={{ color: "var(--cc-ink-2)" }}>{a.action} {a.entity_type}</p>
-                    <p className="atlas-mono text-[10px]" style={{ color: "var(--cc-faint)" }}>{new Date(a.created_at).toLocaleString("el-GR")}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Ask JARVIS — commands open the real JARVIS surface (tab:ai) */}
-      <div className="atlas-surface rounded-2xl p-4 border-l-4" style={{ borderLeftColor: "var(--cc-indigo)" }}>
-        <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <span className="atlas-plex text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>✦ Ask JARVIS</span>
-          <div
-            className="flex-1 flex items-center px-3 h-10 rounded-xl text-sm"
-            style={{ background: "var(--cc-card-2)", border: "1px solid var(--cc-line-2)", color: "var(--cc-faint)" }}
-          >
-            Ρώτα τι θέλεις — π.χ. «ποια τιμολόγια είναι εκπρόθεσμα;»
+      </section>
+    ),
+    jarvis: (
+      <aside className="atlas-surface rounded-2xl p-5 flex flex-col h-full">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center font-semibold" style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)" }}>✦</div>
+          <div>
+            <p className="atlas-plex text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>ATLAS AI · JARVIS</p>
+            <p className="text-[10px]" style={{ color: "var(--cc-faint)" }}>Με ανθρώπινη εποπτεία</p>
           </div>
-          <button
-            onClick={() => onAction({ label: "Ask JARVIS", kind: "tab", target: "ai" })}
-            className="shrink-0 text-sm px-4 py-2 rounded-xl font-semibold shadow-md hover:shadow-lg transition"
-            style={{ background: "var(--cc-indigo)", color: "#fff" }}
-          >
-            Ask
-          </button>
+          <div className="flex-1" />
+          <span className="w-2 h-2 rounded-full" style={{ background: "var(--cc-live)" }} />
         </div>
-        <div className="flex flex-wrap gap-2 mt-3">
-          {["/monday-brief", "/invoice-chase", "/lead-triage"].map((s) => (
-            <button
-              key={s}
-              onClick={() => onAction({ label: s, kind: "tab", target: "ai" })}
-              className="atlas-mono text-[10.5px] px-2.5 py-1 rounded-lg border"
-              style={{ background: "var(--cc-indigo-bg)", color: "var(--cc-indigo-ink)", borderColor: "var(--cc-blue-line)" }}
-            >
-              {s}
+        <p className="text-xs leading-relaxed mt-4" style={{ color: "var(--cc-muted)" }}>{jarvis.note}</p>
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <div className="rounded-xl p-2.5" style={{ background: "var(--cc-card-2)" }}><p className="atlas-plex text-lg font-semibold" style={{ color: "var(--cc-ink)" }}>{vitals.ai.runs24h}</p><p className="text-[10px]" style={{ color: "var(--cc-faint)" }}>Εκτελέσεις</p></div>
+          <div className="rounded-xl p-2.5" style={{ background: "var(--cc-card-2)" }}><p className="atlas-plex text-lg font-semibold" style={{ color: "var(--cc-ink)" }}>{vitals.ai.pendingApprovals}</p><p className="text-[10px]" style={{ color: "var(--cc-faint)" }}>Εγκρίσεις</p></div>
+          <div className="rounded-xl p-2.5" style={{ background: "var(--cc-card-2)" }}><p className="atlas-plex text-lg font-semibold" style={{ color: vitals.ai.failures24h > 0 ? "var(--cc-red-ink)" : "var(--cc-ink)" }}>{vitals.ai.failures24h}</p><p className="text-[10px]" style={{ color: "var(--cc-faint)" }}>Αποτυχίες</p></div>
+        </div>
+        {jarvis.atRisk.length > 0 && <div className="mt-3 text-[11px] space-y-1" style={{ color: "var(--cc-red-ink)" }}>{jarvis.atRisk.slice(0, 2).map((risk, index) => <p key={index}>• {risk}</p>)}</div>}
+        <div className="flex-1" />
+        <button onClick={() => onAction({ label: "Άνοιγμα JARVIS", kind: "tab", target: "ai" })} className="atlas-secondary-action w-full mt-4 justify-center">Άνοιγμα JARVIS →</button>
+      </aside>
+    ),
+    pipeline: (
+      <section className="atlas-surface rounded-2xl p-5 h-full">
+        <div className="flex items-center gap-3 mb-4">
+          <div><h2 className="atlas-plex text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>Pipeline πωλήσεων</h2><p className="text-[11px] mt-0.5" style={{ color: "var(--cc-faint)" }}>{vitals.pipeline.count} ενεργά deals</p></div>
+          <div className="flex-1" />
+          <button onClick={() => onAction({ label: "Άνοιγμα Pipeline", kind: "tab", target: "pipeline" })} className="text-xs font-semibold" style={{ color: "var(--cc-indigo-ink)" }}>Προβολή →</button>
+        </div>
+        <div className="space-y-3">
+          {STAGES.map((stage) => {
+            const count = vitals.pipeline.byStage[stage.key] || 0;
+            return (
+              <div key={stage.key}>
+                <div className="flex items-center justify-between text-xs mb-1.5"><span style={{ color: "var(--cc-ink-2)" }}>{stageLabels[stage.key] ?? stage.label}</span><span className="atlas-mono" style={{ color: "var(--cc-faint)" }}>{count}</span></div>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--cc-card-2)" }}>
+                  <div className="h-full rounded-full" style={{ width: `${(count / maxStage) * 100}%`, background: stage.key === "closed_won" ? "var(--cc-live)" : stage.key === "closed_lost" ? "var(--cc-red)" : "var(--cc-indigo)" }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        {services.length > 0 && <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t" style={{ borderColor: "var(--cc-line)" }}>{services.map(([service, count]) => <span key={service} className="text-[10px] px-2.5 py-1 rounded-full" style={{ background: "var(--cc-card-2)", color: "var(--cc-muted)" }}>{service} · {count}</span>)}</div>}
+      </section>
+    ),
+    activity: (
+      <section className="atlas-surface rounded-2xl p-5 h-full">
+        <div className="flex items-center gap-3 mb-4">
+          <div><h2 className="atlas-plex text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>Πρόσφατη δραστηριότητα</h2><p className="text-[11px] mt-0.5" style={{ color: "var(--cc-faint)" }}>Οι τελευταίες αλλαγές στο CRM</p></div>
+          <div className="flex-1" />
+          <span className="text-[10px]" style={{ color: "var(--cc-faint)" }}>{recentActivity.length} καταγραφές</span>
+        </div>
+        {recentActivity.length === 0 ? (
+          <div className="py-8 text-center"><p className="text-xs" style={{ color: "var(--cc-faint)" }}>Δεν υπάρχει πρόσφατη δραστηριότητα ακόμη.</p></div>
+        ) : (
+          <div className="space-y-2.5">
+            {recentActivity.slice(0, 5).map((activity) => (
+              <div key={activity.id} className="flex items-center gap-3">
+                <span className="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-semibold shrink-0" style={{ background: "var(--cc-card-2)", color: "var(--cc-indigo-ink)" }}>{(activity.entity_type || "•").slice(0, 1).toUpperCase()}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate" style={{ color: "var(--cc-ink-2)" }}>{activity.action || "Ενημέρωση"} {activity.entity_type || ""}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: "var(--cc-faint)" }}>{new Date(activity.created_at).toLocaleString("el-GR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+    ),
+  };
+
+  const visibleLayout = layout.filter((item) => item.visible);
+  return (
+    <div className="atlas-dashboard flex flex-col gap-5">
+      <header className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.16em] mb-2" style={{ color: "var(--cc-faint)" }}>ATLAS · ΚΕΝΤΡΟ ΕΛΕΓΧΟΥ</p>
+          <h1 className="atlas-plex text-2xl md:text-[28px] font-semibold tracking-tight" style={{ color: "var(--cc-ink)" }}>Η εικόνα της ημέρας</h1>
+          <p className="text-sm mt-1" style={{ color: "var(--cc-muted)" }}>{new Intl.DateTimeFormat("el-GR", { weekday: "long", day: "numeric", month: "long", year: "numeric" }).format(new Date())}<span className="mx-2 opacity-40">·</span>Όσα χρειάζονται την προσοχή σου, σε μία καθαρή εικόνα.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={() => onAction({ label: "Άνοιγμα ημερολογίου", kind: "tab", target: "calendar" })} className="atlas-secondary-action">▦ Ημερολόγιο</button>
+          <button onClick={() => onAction({ label: "Άνοιγμα leads", kind: "tab", target: "leads" })} className="atlas-primary-action">＋ Προβολή leads</button>
+          <button onClick={() => onAction({ label: "Προσαρμογή CRM", kind: "tab", target: "preferences" })} className="atlas-secondary-action">⚙ Προσαρμογή</button>
+        </div>
+      </header>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {visibleLayout.map((widget) => <div key={widget.id} className={widget.size === "full" ? "xl:col-span-2" : "xl:col-span-1"}>{widgets[widget.id]}</div>)}
+      </div>
+      {visibleLayout.length === 0 && (
+        <div className="atlas-surface rounded-2xl p-10 text-center">
+          <p className="atlas-plex font-semibold" style={{ color: "var(--cc-ink)" }}>Η αρχική σου είναι άδεια</p>
+          <p className="text-sm mt-1" style={{ color: "var(--cc-muted)" }}>Άνοιξε την προσαρμογή και πρόσθεσε τις κάρτες που χρειάζεσαι.</p>
+          <button onClick={() => onAction({ label: "Προσαρμογή CRM", kind: "tab", target: "preferences" })} className="atlas-primary-action mt-4">Προσαρμογή αρχικής</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── PERSONAL CRM PREFERENCES ─── */
+function PreferencesView({ layout, onLayoutChange }: {
+  layout: DashboardWidgetPreference[];
+  onLayoutChange: (next: DashboardWidgetPreference[]) => void;
+}) {
+  const { finish, setFinish } = useAtlasTheme();
+  const themes: { key: AtlasFinish; label: string; description: string; color: string }[] = [
+    { key: "navy", label: "Navy", description: "Κλασικό σκούρο μπλε", color: "#17365d" },
+    { key: "ocean", label: "Ωκεανός", description: "Βαθύ πετρόλ", color: "#087f9c" },
+    { key: "graphite", label: "Γραφίτης", description: "Ουδέτερο ανθρακί", color: "#3c4655" },
+    { key: "forest", label: "Δάσος", description: "Σκούρο πράσινο", color: "#25624c" },
+    { key: "plum", label: "Δαμάσκηνο", description: "Βαθύ μωβ", color: "#704b7d" },
+    { key: "light", label: "Φωτεινό", description: "Απαλό ανοιχτό μπλε", color: "#dce5f2" },
+  ];
+  const move = (index: number, direction: -1 | 1) => {
+    const next = [...layout];
+    const target = index + direction;
+    if (target < 0 || target >= next.length) return;
+    [next[index], next[target]] = [next[target], next[index]];
+    onLayoutChange(next);
+  };
+  const updateWidget = (index: number, patch: Partial<DashboardWidgetPreference>) => onLayoutChange(layout.map((item, i) => i === index ? { ...item, ...patch } : item));
+  const reset = () => onLayoutChange(DEFAULT_DASHBOARD_LAYOUT.map((item) => ({ ...item })));
+
+  return (
+    <div className="max-w-5xl mx-auto space-y-5">
+      <header>
+        <p className="atlas-mono text-[10px] font-semibold uppercase tracking-[0.16em] mb-2" style={{ color: "var(--cc-faint)" }}>ΠΡΟΣΩΠΙΚΟΣ ΧΩΡΟΣ ΕΡΓΑΣΙΑΣ</p>
+        <h1 className="atlas-plex text-2xl font-semibold tracking-tight" style={{ color: "var(--cc-ink)" }}>Προσαρμογή CRM</h1>
+        <p className="text-sm mt-1" style={{ color: "var(--cc-muted)" }}>Ρύθμισε την εμφάνιση και την αρχική σου, χωρίς να αλλάζουν τα δεδομένα ή οι λειτουργίες του CRM.</p>
+      </header>
+
+      <section className="atlas-surface rounded-2xl p-5 md:p-6">
+        <div className="flex items-start gap-3 mb-5">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#edf3ff", color: "#315fba" }}>◐</div>
+          <div>
+            <h2 className="atlas-plex text-base font-semibold" style={{ color: "var(--cc-ink)" }}>Εμφάνιση</h2>
+            <p className="text-xs mt-1" style={{ color: "var(--cc-muted)" }}>Επίλεξε χρώμα για την πλαϊνή και την επάνω μπάρα. Η περιοχή περιεχομένου παραμένει πάντα φωτεινή.</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {themes.map((theme) => (
+            <button key={theme.key} type="button" onClick={() => setFinish(theme.key)} aria-pressed={finish === theme.key} className={`atlas-appearance-option ${finish === theme.key ? "atlas-appearance-option-active" : ""}`}>
+              <span className="atlas-appearance-sample" style={{ background: theme.color }}><span /><span /><span /></span>
+              <span className="min-w-0 flex-1 text-left">
+                <span className="block text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>{theme.label}</span>
+                <span className="block text-[11px] mt-0.5" style={{ color: "var(--cc-muted)" }}>{theme.description}</span>
+              </span>
+              {finish === theme.key && <span className="text-sm font-bold" style={{ color: "#2866d7" }}>✓</span>}
             </button>
           ))}
         </div>
-      </div>
+      </section>
+
+      <section className="atlas-surface rounded-2xl p-5 md:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-5">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style={{ background: "#eaf4ef", color: "#287b59" }}>▦</div>
+          <div className="min-w-0">
+            <h2 className="atlas-plex text-base font-semibold" style={{ color: "var(--cc-ink)" }}>Αρχική σελίδα</h2>
+            <p className="text-xs mt-1" style={{ color: "var(--cc-muted)" }}>Διάλεξε ποιες κάρτες εμφανίζονται, άλλαξε τη σειρά τους και όρισε το πλάτος τους.</p>
+          </div>
+          <div className="flex-1" />
+          <button type="button" onClick={reset} className="atlas-secondary-action shrink-0">Επαναφορά προεπιλογών</button>
+        </div>
+
+        <div className="space-y-2">
+          {layout.map((widget, index) => (
+            <div key={widget.id} className="atlas-preference-row">
+              <label className="flex min-w-0 flex-1 items-start gap-3 cursor-pointer">
+                <input type="checkbox" checked={widget.visible} onChange={(event) => updateWidget(index, { visible: event.target.checked })} className="mt-1 h-4 w-4 rounded border-slate-300 accent-blue-600" />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold" style={{ color: "var(--cc-ink)" }}>{widget.label}</span>
+                  <span className="block text-[11px] mt-0.5" style={{ color: "var(--cc-muted)" }}>{widget.description}</span>
+                </span>
+              </label>
+              <div className="flex items-center gap-1 shrink-0">
+                <button type="button" onClick={() => move(index, -1)} disabled={index === 0} className="atlas-order-button" aria-label={`Μετακίνηση ${widget.label} επάνω`} title="Μετακίνηση επάνω">↑</button>
+                <button type="button" onClick={() => move(index, 1)} disabled={index === layout.length - 1} className="atlas-order-button" aria-label={`Μετακίνηση ${widget.label} κάτω`} title="Μετακίνηση κάτω">↓</button>
+                <div className="hidden sm:flex items-center rounded-lg p-0.5 ml-1" style={{ background: "#f1f4f8" }}>
+                  <button type="button" onClick={() => updateWidget(index, { size: "half" })} aria-pressed={widget.size === "half"} className={`atlas-size-option ${widget.size === "half" ? "atlas-size-option-active" : ""}`}>Μισό</button>
+                  <button type="button" onClick={() => updateWidget(index, { size: "full" })} aria-pressed={widget.size === "full"} className={`atlas-size-option ${widget.size === "full" ? "atlas-size-option-active" : ""}`}>Πλήρες</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-[11px] mt-4" style={{ color: "var(--cc-faint)" }}>Οι επιλογές εφαρμόζονται αμέσως και αποθηκεύονται σε αυτόν τον browser.</p>
+      </section>
     </div>
   );
 }
