@@ -75,7 +75,7 @@ export async function ensureAgent(): Promise<SurvivorAgent> {
 
 export async function getWalletView(): Promise<WalletView> {
   const agent = await getAgentOrThrow();
-  const txs = await listTransactions(createdAgent.id);
+  const txs = await listTransactions(agent.id);
   const balance = computeBalance(txs);
 
   // Sum of staged-but-undecided bid payloads (pending) and approved jobs (reserved).
@@ -87,14 +87,14 @@ export async function getWalletView(): Promise<WalletView> {
   const { data: jobs } = await supabase
     .from("survivor_jobs")
     .select("value,status")
-    .eq("agent_id", createdAgent.id)
+    .eq("agent_id", agent.id)
     .in("status", ["won", "in_progress", "delivered"]);
 
   const pendingBids = (pending || []).reduce((sum: number, a: any) => sum + Number(a.payload?.value || 0), 0);
   const reserved = (jobs || []).reduce((sum: number, j: any) => sum + Number(j.value || 0), 0);
 
   return {
-    agentId: createdAgent.id,
+    agentId: agent.id,
     name: agent.name,
     status: agent.status as SurvivalState,
     balance,
@@ -135,7 +135,7 @@ export async function runExperiment(): Promise<{
   const { data: strategy } = await supabase
     .from("survivor_strategies")
     .select("*")
-    .eq("agent_id", createdAgent.id)
+    .eq("agent_id", agent.id)
     .eq("active", true)
     .order("updated_at", { ascending: false })
     .limit(1)
@@ -146,7 +146,7 @@ export async function runExperiment(): Promise<{
   const plan = planProposals(opportunities, params, cfg, wallet.pendingBids);
   const approvalIds = await stageProposals(
     { requestId: `sbx:run:${Date.now()}`, organizationId: "", userId: "", role: "admin" },
-    createdAgent.id,
+    agent.id,
     plan,
   );
 
@@ -161,7 +161,7 @@ export async function runExperiment(): Promise<{
     }),
   }).select().single();
 
-  await remember(createdAgent.id, "fact", `Experiment run: ${plan.bidsStaged.length} bids staged, ${plan.skipped.length} skipped.`);
+  await remember(agent.id, "fact", `Experiment run: ${plan.bidsStaged.length} bids staged, ${plan.skipped.length} skipped.`);
 
   return { agent, plan: { bidsStaged: plan.bidsStaged.length, skipped: plan.skipped.length }, experiment: experiment as Experiment };
 }
@@ -172,7 +172,7 @@ export async function simulateJobs(): Promise<{ advanced: number; payments: numb
   const { data: jobs, error } = await supabase
     .from("survivor_jobs")
     .select("*")
-    .eq("agent_id", createdAgent.id)
+    .eq("agent_id", agent.id)
     .in("status", ["won", "in_progress", "delivered"])
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
@@ -190,9 +190,9 @@ export async function simulateJobs(): Promise<{ advanced: number; payments: numb
     advanced++;
 
     if (credit) {
-      const txs = await listTransactions(createdAgent.id);
+      const txs = await listTransactions(agent.id);
       const balanceBefore = computeBalance(txs);
-      const entry = buildPaymentEntry(createdAgent.id, { ...next, status: "paid" }, balanceBefore);
+      const entry = buildPaymentEntry(agent.id, { ...next, status: "paid" }, balanceBefore);
       const { error: txErr } = await supabase.from("survivor_transactions").insert(entry);
       if (txErr) throw new Error(txErr.message);
       payments++;
@@ -205,14 +205,14 @@ export async function simulateJobs(): Promise<{ advanced: number; payments: numb
   const { data: finished } = await supabase
     .from("survivor_jobs")
     .select("*")
-    .eq("agent_id", createdAgent.id)
+    .eq("agent_id", agent.id)
     .in("status", ["paid", "failed"]);
   for (const job of (finished || []) as Job[]) {
-    const memo = remember(createdAgent.id, "postmortem", buildPostmortem(job, job.status === "paid").lesson);
+    const memo = remember(agent.id, "postmortem", buildPostmortem(job, job.status === "paid").lesson);
     const pm = buildPostmortem(job, job.status === "paid");
-    await adjustStrategy(createdAgent.id, pm.delta);
+    await adjustStrategy(agent.id, pm.delta);
   }
-  for (const m of memories) await remember(createdAgent.id, "lesson", m);
+  for (const m of memories) await remember(agent.id, "lesson", m);
 
   return { advanced, payments, credits };
 }
@@ -290,12 +290,12 @@ export async function getDashboard(): Promise<SurvivorDashboard> {
 
   const [transactions, opportunities, proposals, jobs, strategy, memory, experiments] =
     await Promise.all([
-      listTransactions(createdAgent.id),
+      listTransactions(agent.id),
       supabase.from("survivor_opportunities").select("*").eq("active", true).order("created_at", { ascending: false }).limit(50),
-      supabase.from("survivor_proposals").select("*").eq("agent_id", createdAgent.id).order("created_at", { ascending: false }).limit(50),
-      supabase.from("survivor_jobs").select("*").eq("agent_id", createdAgent.id).order("created_at", { ascending: false }).limit(50),
-      supabase.from("survivor_strategies").select("*").eq("agent_id", createdAgent.id).eq("active", true).limit(1).maybeSingle(),
-      supabase.from("survivor_memory").select("*").eq("agent_id", createdAgent.id).order("created_at", { ascending: false }).limit(25),
+      supabase.from("survivor_proposals").select("*").eq("agent_id", agent.id).order("created_at", { ascending: false }).limit(50),
+      supabase.from("survivor_jobs").select("*").eq("agent_id", agent.id).order("created_at", { ascending: false }).limit(50),
+      supabase.from("survivor_strategies").select("*").eq("agent_id", agent.id).eq("active", true).limit(1).maybeSingle(),
+      supabase.from("survivor_memory").select("*").eq("agent_id", agent.id).order("created_at", { ascending: false }).limit(25),
       supabase.from("survivor_experiments").select("*").order("created_at", { ascending: false }).limit(20),
     ]);
 
