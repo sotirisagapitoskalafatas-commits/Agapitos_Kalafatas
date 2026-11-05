@@ -305,13 +305,59 @@ export async function getDashboard(): Promise<SurvivorDashboard> {
     wallet,
     survival: status,
     transactions,
-    opportunities: opportunities.data || [],
+    opportunities: parseOpportunityRows(opportunities.data),
     proposals: proposals.data || [],
     jobs: jobs.data || [],
     strategy: (strategy.data as Strategy) || null,
     memory: memory.data || [],
     experiments: experiments.data || [],
   };
+}
+
+// Convert persisted rows into the domain contract at the database boundary.
+// The legacy generated types are permissive, so validate each row before
+// passing it to the typed Survivor domain layer.
+function parseOpportunityRows(rows: unknown): Opportunity[] {
+  if (!Array.isArray(rows)) return [];
+
+  const parsed: Opportunity[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = row as Record<string, unknown>;
+    const complexity = value.complexity;
+    const estimatedValue = Number(value.estimated_value);
+    const riskPercent = Number(value.risk_percent);
+    const deadlineDays = Number(value.deadline_days);
+
+    if (
+      typeof value.id !== "string" ||
+      typeof value.source !== "string" ||
+      typeof value.title !== "string" ||
+      typeof value.active !== "boolean" ||
+      typeof value.created_at !== "string" ||
+      !Number.isFinite(estimatedValue) ||
+      !Number.isFinite(riskPercent) ||
+      !Number.isFinite(deadlineDays)
+    ) {
+      continue;
+    }
+
+    parsed.push({
+      id: value.id,
+      source: value.source,
+      title: value.title,
+      description: typeof value.description === "string" ? value.description : null,
+      service_category: typeof value.service_category === "string" ? value.service_category : null,
+      estimated_value: estimatedValue,
+      complexity: complexity === "low" || complexity === "high" ? complexity : "medium",
+      risk_percent: riskPercent,
+      deadline_days: deadlineDays,
+      active: value.active,
+      created_at: value.created_at,
+    });
+  }
+
+  return parsed;
 }
 
 // ── Private helpers ──────────────────────────────────────────────────────────
