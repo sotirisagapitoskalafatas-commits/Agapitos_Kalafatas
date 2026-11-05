@@ -18,18 +18,12 @@ create table if not exists public.agent_audit (
 
 alter table public.agent_audit enable row level security;
 
--- Service role bypasses RLS; admin can read own org's audit
-create policy "admin read own org audit"
+-- CRM accesses this table only through authenticated server routes that use
+-- the service role. Do not grant anon/authenticated arbitrary audit insertion.
+drop policy if exists "admin read own org audit" on public.agent_audit;
+drop policy if exists "insert audit" on public.agent_audit;
+drop policy if exists "service role manages agent audit" on public.agent_audit;
+create policy "service role manages agent audit"
   on public.agent_audit
-  for select
-  using (
-    organization_id = (
-      nullif(auth.jwt() ->> 'org_id', '')::uuid
-    )
-  );
-
--- Allow inserts (service role inserts on behalf of tenant)
-create policy "insert audit"
-  on public.agent_audit
-  for insert
-  with check (true);
+  for all to service_role
+  using (true) with check (true);

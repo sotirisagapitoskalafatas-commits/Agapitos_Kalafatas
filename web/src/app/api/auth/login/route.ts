@@ -57,6 +57,6 @@ export async function POST(request: NextRequest) {
 
 export async function GET() {
   // Expose whether admin auth is configured so the client can fail-closed.
-  const configured = getAdminCredentials() !== null;
+  const configured = getAdminCredentials() !== null && Boolean(process.env.AUTH_SECRET);
   return NextResponse.json({ configured });
 }

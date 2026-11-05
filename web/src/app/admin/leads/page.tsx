@@ -6,18 +6,28 @@ import Link from "next/link";
 interface Lead {
   id: string;
   created_at: string;
-  client_name: string;
-  client_contact: string;
-  project_details: string;
+  client_name: string | null;
+  client_contact: string | null;
+  project_details: string | null;
   status: string;
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  New: "bg-blue-50 text-blue-700 border-blue-200",
-  Contacted: "bg-yellow-50 text-yellow-700 border-yellow-200",
-  "In Progress": "bg-purple-50 text-purple-700 border-purple-200",
-  Won: "bg-green-50 text-green-700 border-green-200",
-  Lost: "bg-red-50 text-red-700 border-red-200",
+  new_lead: "bg-blue-50 text-blue-700 border-blue-200",
+  contacted: "bg-yellow-50 text-yellow-700 border-yellow-200",
+  qualified: "bg-purple-50 text-purple-700 border-purple-200",
+  customer: "bg-green-50 text-green-700 border-green-200",
+  lost: "bg-red-50 text-red-700 border-red-200",
+  archived: "bg-slate-50 text-slate-600 border-slate-200",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  new_lead: "New",
+  contacted: "Contacted",
+  qualified: "Qualified",
+  customer: "Customer",
+  lost: "Lost",
+  archived: "Archived",
 };
 
 export default function AdminLeadsPage() {
@@ -195,13 +205,20 @@ export default function AdminLeadsPage() {
 
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-5 gap-4 mb-8">
-          {["New", "Contacted", "In Progress", "Won", "Lost"].map((status) => (
-            <div key={status} className="bg-white rounded-xl border border-slate-200 p-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+          {[
+            { value: "new_lead", label: "New" },
+            { value: "contacted", label: "Contacted" },
+            { value: "qualified", label: "Qualified" },
+            { value: "customer", label: "Customer" },
+            { value: "lost", label: "Lost" },
+            { value: "archived", label: "Archived" },
+          ].map(({ value, label }) => (
+            <div key={value} className="bg-white rounded-xl border border-slate-200 p-4">
               <p className="text-2xl font-bold text-slate-900">
-                {leads.filter((l) => l.status === status).length}
+                {leads.filter((l) => l.status === value).length}
               </p>
-              <p className="text-xs text-slate-500 mt-1">{status}</p>
+              <p className="text-xs text-slate-500 mt-1">{label}</p>
             </div>
           ))}
         </div>
@@ -259,7 +276,7 @@ export default function AdminLeadsPage() {
                           STATUS_COLORS[lead.status] || "bg-slate-50 text-slate-700 border-slate-200"
                         }`}
                       >
-                        {lead.status}
+                        {STATUS_LABELS[lead.status] || lead.status}
                       </span>
                     </td>
                   </tr>
