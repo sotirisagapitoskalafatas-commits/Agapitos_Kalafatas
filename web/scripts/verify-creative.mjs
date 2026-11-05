@@ -25,20 +25,33 @@ const step = (name, ok, detail) => {
 };
 
 async function login() {
+  const origin = new URL(BASE).origin;
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Origin: origin },
     body: JSON.stringify({ username: env.ADMIN_USER || env.ADMIN_USERNAME, password: env.ADMIN_PASS || env.ADMIN_PASSWORD }),
   });
-  const body = await res.json();
-  if (!res.ok || !body.token) throw new Error(`login failed (${res.status})`);
-  return body.token;
+  const body = await res.json().catch(() => ({}));
+  const setCookie = res.headers.get("set-cookie");
+  const sessionCookie = setCookie ? setCookie.split(";")[0] : "";
+  if (!res.ok || !sessionCookie.startsWith("atlas_session=")) {
+    throw new Error(`login failed (${res.status}): ${body.error || "session cookie missing"}`);
+  }
+  return { sessionCookie, origin };
 }
 
-async function api(token, path, opts = {}) {
+async function api(session, path, opts = {}) {
+  const method = String(opts.method || "GET").toUpperCase();
+  const headers = {
+    ...(opts.headers || {}),
+    Cookie: session.sessionCookie,
+  };
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) headers.Origin = session.origin;
+
   const res = await fetch(`${BASE}${path}`, {
     ...opts,
-    headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) },
+    headers,
+    cache: "no-store",
   });
   const body = await res.json().catch(() => ({}));
   return { status: res.status, body };
@@ -76,9 +89,9 @@ async function ensureAssetRow() {
 }
 
 async function run() {
-  const token = await login();
+  const session = await login();
 
-  const image = await api(token, "/api/creative/image", {
+  const image = await api(session, "/api/creative/image", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -107,8 +120,8 @@ async function run() {
   return { assetId: seeded.assetId, campaignId: seeded.campaignId, imageGen: false };
 }
 
-async function runFlow(token, assetId) {
-  const copy = await api(token, "/api/creative/copy", {
+async function runFlow(session, assetId) {
+  const copy = await api(session, "/api/creative/copy", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId, platforms: ["facebook", "instagram"], languages: ["gr"] }),
@@ -117,7 +130,7 @@ async function runFlow(token, assetId) {
   const variants = copy.body.variants || [];
   step("variants AI_GENERATED (real Gemini)", copy.status === 200 && variants.length > 0 && variants.every((v) => v.status === "AI_GENERATED"), `variants=${variants.length} platforms=${JSON.stringify(variants.map((v) => v.platform))}`);
 
-  const verify = await api(token, "/api/creative/verify", {
+  const verify = await api(session, "/api/creative/verify", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId }),
@@ -126,7 +139,7 @@ async function runFlow(token, assetId) {
   step("verify -> PENDING_APPROVAL", verify.status === 200 && verify.body.asset?.status === "PENDING_APPROVAL", `status=${verify.body.asset?.status}`);
   step("checks recorded (real Gemini guard)", !!(verify.body.result?.summary) && typeof verify.body.result?.deterministic_pii === "object", `pii=${verify.body.result?.deterministic_pii?.found} summary="${(verify.body.result?.summary || "").slice(0, 60)}"`);
 
-  const approve = await api(token, "/api/creative/approve", {
+  const approve = await api(session, "/api/creative/approve", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId, action: "approve", note: "verification auto-approve" }),
@@ -175,11 +188,11 @@ async function cleanup(assetId, campaignId) {
 let assetId = null;
 let campaignId = null;
 try {
-  const token = await login();
+  const session = await login();
   const seeded = await run();
   assetId = seeded.assetId;
   campaignId = seeded.campaignId;
-  await runFlow(token, assetId);
+  await runFlow(session, assetId);
   await checkState(assetId, campaignId, seeded.imageGen);
 } catch (e) {
   step("error", false, e.message);

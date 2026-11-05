@@ -9,8 +9,8 @@ const InvoicePDFDownload = dynamic(
 );
 
 function invoiceAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+  // Same-origin fetches carry the HttpOnly ATLAS session cookie automatically.
+  return { ...extra };
 }
 
 interface InvoiceItem {

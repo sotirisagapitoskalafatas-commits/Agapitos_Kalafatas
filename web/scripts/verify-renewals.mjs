@@ -42,29 +42,42 @@ async function setup() {
 }
 
 async function login() {
+  const origin = new URL(BASE).origin;
   const res = await fetch(`${BASE}/api/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Origin: origin },
     body: JSON.stringify({ username: env.ADMIN_USER || env.ADMIN_USERNAME, password: env.ADMIN_PASS || env.ADMIN_PASSWORD }),
   });
-  const body = await res.json();
-  if (!res.ok || !body.token) throw new Error(`login failed (${res.status})`);
-  return body.token;
+  const body = await res.json().catch(() => ({}));
+  const setCookie = res.headers.get("set-cookie");
+  const sessionCookie = setCookie ? setCookie.split(";")[0] : "";
+  if (!res.ok || !sessionCookie.startsWith("atlas_session=")) {
+    throw new Error(`login failed (${res.status}): ${body.error || "session cookie missing"}`);
+  }
+  return { sessionCookie, origin };
 }
 
-async function api(token, path, opts = {}) {
+async function api(session, path, opts = {}) {
+  const method = String(opts.method || "GET").toUpperCase();
+  const headers = {
+    ...(opts.headers || {}),
+    Cookie: session.sessionCookie,
+  };
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) headers.Origin = session.origin;
+
   const res = await fetch(`${BASE}${path}`, {
     ...opts,
-    headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) },
+    headers,
+    cache: "no-store",
   });
   const body = await res.json().catch(() => ({}));
   return { status: res.status, body };
 }
 
 async function run() {
-  const token = await login();
+  const session = await login();
 
-  const run1 = await api(token, "/api/crm/renewals/run", {
+  const run1 = await api(session, "/api/crm/renewals/run", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ windows: [90, 60, 30, 14, 7, 3, 1], actionWindows: [14, 7, 3, 1], email: true }),
@@ -75,7 +88,7 @@ async function run() {
   step("run #1 materialized 1", Number(r1.materialized) === 1, `materialized=${r1.materialized}`);
   step("run #1 owner emails skipped (unconfigured)", Array.isArray(r1.ownerEmailSkipped) && r1.ownerEmailSkipped.includes("owner-email-not-configured"), `sent=${r1.ownerEmailsSent} skipped=${JSON.stringify(r1.ownerEmailSkipped)}`);
 
-  const upcoming = await api(token, "/api/crm/renewals/upcoming?days=30&overdue=1");
+  const upcoming = await api(session, "/api/crm/renewals/upcoming?days=30&overdue=1");
   const u = upcoming.body;
   step("upcoming http 200", upcoming.status === 200);
   const hitA = (u.renewals || []).find((x) => x.leadId === A);
@@ -84,7 +97,7 @@ async function run() {
   step("overdue includes lead B", !!hitB, hitB ? `daysOverdue=${hitB.daysOverdue}` : "not found");
   step("counts present", !!u.counts && typeof u.counts.total === "number", `total=${u.counts?.total} overdue=${u.counts?.overdue} byWindow=${JSON.stringify(u.counts?.byWindow)}`);
 
-  const run2 = await api(token, "/api/crm/renewals/run", {
+  const run2 = await api(session, "/api/crm/renewals/run", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ windows: [90, 60, 30, 14, 7, 3, 1], actionWindows: [14, 7, 3, 1], email: true }),

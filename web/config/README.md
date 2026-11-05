@@ -45,7 +45,7 @@ Render as applicable):
 - `SUPABASE_SERVICE_ROLE_KEY` — server-side only; retrieve it from the new project's API key settings. Never commit it.
 - `GEMINI_API_KEY` — required for agent/orchestrator features.
 - `OPENAI_API_KEY` — needed for semantic knowledge-base embeddings/RAG features.
-- `ADMIN_USER` and a strong `ADMIN_PASS` — required for CRM login in production. These are application login credentials, not your Supabase account login.
+- `ADMIN_USER` and a strong `ADMIN_PASS` — required for CRM login in production (legacy aliases `ADMIN_USERNAME` and `ADMIN_PASSWORD` are also supported). These are application login credentials, not your Supabase account login.
 - `AUTH_SECRET` — required to sign admin session tokens; set a new random value in the deployment environment. Do not store real values in Git.
 - `RESEND_API_KEY` and `NOTIFY_EMAIL_TO` — required for email notifications.
 - `SLACK_WEBHOOK_URL`, `SUPABASE_WEBHOOK_SECRET`, and/or Slack bot values only when those integrations are enabled.
@@ -56,7 +56,7 @@ token with database-write permission. Never use the service-role key as that tok
 
 ## Recovering a forgotten CRM login
 
-The application does not store or recover the administrator password in Supabase. Reset it at the hosting provider by replacing `ADMIN_USER`, `ADMIN_PASS`, and `AUTH_SECRET` together. Use a unique, random password and a separately generated random `AUTH_SECRET`; redeploy and test the login page. Changing `AUTH_SECRET` invalidates existing CRM session tokens. Do not add credentials to this repository, a SQL table, or a public issue. The app login form is protected by API-level bearer-token checks; there is no separate HTTP Basic password gate.
+The application does not store or recover the administrator password in Supabase. Reset it at the hosting provider by replacing `ADMIN_USER`, `ADMIN_PASS`, and `AUTH_SECRET` together. Use a unique, random password and a separately generated random `AUTH_SECRET`; redeploy and test the login page. Changing `AUTH_SECRET` invalidates existing CRM session tokens. Do not add credentials to this repository, a SQL table, or a public issue. The app uses a server-managed, HMAC-signed atlas_session cookie (HttpOnly, Secure in production, SameSite=Lax, 12-hour expiry). The session token is never returned to browser JavaScript or stored in localStorage. The middleware protects every /admin/* page, and each protected API validates the cookie and checks same-origin writes. There is no browser-native HTTP Basic password prompt.
 
 On Windows PowerShell, generate two distinct high-entropy values locally (run this in your terminal, not in chat):
 ```powershell

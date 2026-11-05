@@ -40,13 +40,15 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     async function fetchData() {
-      const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const requestOptions: RequestInit = {
+        credentials: "same-origin",
+        cache: "no-store",
+      };
 
       const [leadsRes, invoicesRes, dealsRes] = await Promise.all([
-        fetch("/api/crm/leads", { headers }).then(r => r.json()).catch(() => []),
-        fetch("/api/crm/invoices", { headers }).then(r => r.json()).catch(() => []),
-        fetch("/api/crm/deals", { headers }).then(r => r.json()).catch(() => []),
+        fetch("/api/crm/leads", requestOptions).then(r => r.json()).catch(() => []),
+        fetch("/api/crm/invoices", requestOptions).then(r => r.json()).catch(() => []),
+        fetch("/api/crm/deals", requestOptions).then(r => r.json()).catch(() => []),
       ]);
 
       if (Array.isArray(leadsRes)) setLeads(leadsRes as Lead[]);

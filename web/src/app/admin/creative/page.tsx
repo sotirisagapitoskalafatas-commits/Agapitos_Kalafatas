@@ -118,7 +118,7 @@ export default function CreativeStudioPage() {
 }
 
 function CreativeStudioInner() {
-  const { token } = useAdminAuth();
+  const { authenticated, mounted } = useAdminAuth();
 
   const [tab, setTab] = useUrlTab<(typeof TAB)[number]["id"]>(TAB_IDS, "generate");
 
@@ -163,18 +163,22 @@ function CreativeStudioInner() {
       const headers: Record<string, string> = {
         ...(opts.headers as Record<string, string>),
       };
-      if (token) headers.Authorization = `Bearer ${token}`;
       if (opts.body) headers["Content-Type"] = "application/json";
-      const res = await fetch(path, { ...opts, headers });
+      const res = await fetch(path, {
+        ...opts,
+        credentials: "same-origin",
+        cache: "no-store",
+        headers,
+      });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
       return data;
     },
-    [token]
+    []
   );
 
   const loadCampaigns = useCallback(async () => {
-    if (!token) return;
+    if (!authenticated || !mounted) return;
     setCampaignLoading(true);
     try {
       const d = await api("/api/creative/campaigns");
@@ -184,10 +188,10 @@ function CreativeStudioInner() {
     } finally {
       setCampaignLoading(false);
     }
-  }, [api, token]);
+  }, [api, authenticated, mounted]);
 
   const loadAssets = useCallback(async () => {
-    if (!token) return;
+    if (!authenticated || !mounted) return;
     setLibraryLoading(true);
     try {
       const params = new URLSearchParams();
@@ -201,13 +205,13 @@ function CreativeStudioInner() {
     } finally {
       setLibraryLoading(false);
     }
-  }, [api, token, filterType, filterStatus, filterQ]);
+  }, [api, authenticated, mounted, filterType, filterStatus, filterQ]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!authenticated || !mounted) return;
     loadCampaigns();
     loadAssets();
-  }, [token, loadCampaigns, loadAssets]);
+  }, [authenticated, mounted, loadCampaigns, loadAssets]);
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

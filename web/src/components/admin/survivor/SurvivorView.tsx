@@ -15,8 +15,8 @@ import type {
 } from "@/lib/survivor/types";
 
 function getAuthHeaders(extra: Record<string, string> = {}): Record<string, string> {
-  const token = typeof window !== "undefined" ? localStorage.getItem("crm_token") : null;
-  return token ? { ...extra, Authorization: `Bearer ${token}` } : extra;
+  // The browser sends the HttpOnly session cookie with same-origin requests.
+  return { ...extra };
 }
 
 interface DashboardPayload {

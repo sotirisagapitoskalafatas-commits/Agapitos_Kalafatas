@@ -145,15 +145,14 @@ type ShellStatus = {
   notificationCount?: number;
 };
 
-function useShellStatus(token: string | null): ShellStatus | null {
+function useShellStatus(authenticated: boolean): ShellStatus | null {
   const [status, setStatus] = useState<ShellStatus | null>(null);
   useEffect(() => {
-    if (!token) return;
+    if (!authenticated) return;
     let cancelled = false;
-    const headers = { Authorization: `Bearer ${token}` };
     Promise.all([
-      fetch("/api/crm/command", { headers }).then((r) => r.json().catch(() => null)),
-      fetch("/api/crm/notifications", { headers }).then((r) => r.json().catch(() => null)),
+      fetch("/api/crm/command", { credentials: "same-origin", cache: "no-store" }).then((r) => r.json().catch(() => null)),
+      fetch("/api/crm/notifications", { credentials: "same-origin", cache: "no-store" }).then((r) => r.json().catch(() => null)),
     ])
       .then(([cmd, notif]) => {
         if (cancelled) return;
@@ -170,7 +169,7 @@ function useShellStatus(token: string | null): ShellStatus | null {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [authenticated]);
   return status;
 }
 
@@ -503,13 +502,13 @@ function SidebarItem({ item, active, count, onClick }: { item: NavItem; active: 
 }
 
 function AdminShellInner({ breadcrumbs, headerRight, children }: AdminShellProps) {
-  const { token, mounted, login, logout } = useAdminAuth();
+  const { authenticated, mounted, logout } = useAdminAuth();
   const { finish, setFinish } = useAtlasTheme();
   const { lang, setLang, t } = useShellLang();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const status = useShellStatus(token);
+  const status = useShellStatus(authenticated);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [hidePlanned, setHidePlanned] = useState(false);
@@ -609,8 +608,12 @@ function AdminShellInner({ breadcrumbs, headerRight, children }: AdminShellProps
     );
   }
 
-  if (!token) {
-    return <LoginScreen onLogin={login} />;
+  if (!authenticated) {
+    return (
+      <main className="min-h-screen atlas-canvas flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[var(--cc-indigo)] border-t-transparent rounded-full" />
+      </main>
+    );
   }
 
   const counts = navCounts();
@@ -846,64 +849,3 @@ export default function AdminShell(props: AdminShellProps) {
   );
 }
 
-function LoginScreen({ onLogin }: { onLogin: (u: string, p: string) => Promise<string | null> }) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    const err = await onLogin(username, password);
-    if (err) setError(err);
-    setBusy(false);
-  };
-
-  return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-200 via-slate-300 to-slate-400 flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
-            <span className="text-white font-bold text-xl">A</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-900">Atlas</h1>
-          <p className="text-sm text-slate-500 mt-1">Agapitos Kalafatas</p>
-        </div>
-        <form onSubmit={submit} className="crm-card-3d rounded-3xl p-8 space-y-4">
-          {error && <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl">{error}</div>}
-          <div>
-            <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Username</label>
-            <input
-              type="text"
-              required
-              autoComplete="username"
-              className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold uppercase text-slate-500 mb-2">Password</label>
-            <input
-              type="password"
-              required
-              autoComplete="current-password"
-              className="w-full p-3.5 bg-slate-100/80 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none text-sm text-slate-900"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all shadow-lg shadow-indigo-500/25 disabled:opacity-60"
-          >
-            {busy ? "Signing in…" : "Login"}
-          </button>
-        </form>
-      </div>
-    </main>
-  );
-}
